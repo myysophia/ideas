@@ -190,8 +190,10 @@ function generateIndex() {
   let articlesHtml = '';
   for (const article of articles) {
     const tagHtml = article.tag ? `<span class="tag">${article.tag}</span>` : '';
+    const year = article.date ? article.date.split('-')[0] : '';
+    
     articlesHtml += `
-    <article>
+    <article class="article-item" data-tag="${article.tag || ''}" data-year="${year}">
       <h2><a href="${article.url}">${article.title}</a></h2>
       <div class="meta">
         ${article.date ? `<time datetime="${article.date}">${article.date}</time>` : ''}
@@ -202,6 +204,13 @@ function generateIndex() {
     `;
   }
   
+  // 收集所有唯一的 tags 和年份
+  const allTags = [...new Set(articles.map(a => a.tag).filter(Boolean))].sort();
+  const allYears = [...new Set(articles.map(a => {
+    if (!a.date) return null;
+    return a.date.split('-')[0];
+  }).filter(Boolean))].sort().reverse();
+  
   const indexHtml = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -209,6 +218,7 @@ function generateIndex() {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>思考集</title>
   <meta name="description" content="个人数字花园，记录有价值的思考与感受">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <style>
     * {
       margin: 0;
@@ -287,7 +297,7 @@ function generateIndex() {
     .meta {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      justify-content: space-between;
       margin-bottom: 0.5rem;
     }
 
@@ -304,11 +314,69 @@ function generateIndex() {
       background: #f0f0f0;
       border-radius: 3px;
       color: #666;
+      text-decoration: none;
+      display: inline-block;
     }
 
     article p {
       color: #333;
       margin-top: 0.5rem;
+    }
+
+    .filters {
+      margin-bottom: 2rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .filter-section {
+      margin-bottom: 1rem;
+    }
+
+    .filter-label {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .filter-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .filter-btn {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-size: 0.85rem;
+      padding: 0.3rem 0.75rem;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      color: #666;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+
+    .filter-btn:hover {
+      background: #f5f5f5;
+      border-color: #000;
+    }
+
+    .filter-btn.active {
+      background: #000;
+      color: #fff;
+      border-color: #000;
+    }
+
+    .article-item {
+      display: block;
+    }
+
+    .article-item.hidden {
+      display: none;
     }
 
     @media (max-width: 768px) {
@@ -340,8 +408,70 @@ function generateIndex() {
     <p>一座宁静的数字花园，记录有价值的思考与感受</p>
   </header>
   <main>
+    <div class="filters">
+      <div class="filter-section">
+        <span class="filter-label">标签：</span>
+        <div class="filter-buttons">
+          <button class="filter-btn active" data-filter-type="tag" data-filter-value="all">全部</button>
+          ${allTags.map(tag => `<button class="filter-btn" data-filter-type="tag" data-filter-value="${tag}">${tag}</button>`).join('\n          ')}
+        </div>
+      </div>
+      <div class="filter-section">
+        <span class="filter-label">时间：</span>
+        <div class="filter-buttons">
+          <button class="filter-btn active" data-filter-type="year" data-filter-value="all">全部</button>
+          ${allYears.map(year => `<button class="filter-btn" data-filter-type="year" data-filter-value="${year}">${year}</button>`).join('\n          ')}
+        </div>
+      </div>
+    </div>
     ${articlesHtml}
   </main>
+  <script>
+    // 简单的筛选功能
+    let currentTag = 'all';
+    let currentYear = 'all';
+
+    function updateFilters() {
+      const articles = document.querySelectorAll('.article-item');
+      
+      articles.forEach(article => {
+        const articleTag = article.dataset.tag;
+        const articleYear = article.dataset.year;
+        
+        const tagMatch = currentTag === 'all' || articleTag === currentTag;
+        const yearMatch = currentYear === 'all' || articleYear === currentYear;
+        
+        if (tagMatch && yearMatch) {
+          article.classList.remove('hidden');
+        } else {
+          article.classList.add('hidden');
+        }
+      });
+    }
+
+    // 绑定筛选按钮
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const filterType = e.target.dataset.filterType;
+        const filterValue = e.target.dataset.filterValue;
+        
+        // 更新按钮状态
+        document.querySelectorAll(\`[data-filter-type="\${filterType}"]\`).forEach(b => {
+          b.classList.remove('active');
+        });
+        e.target.classList.add('active');
+        
+        // 更新筛选条件
+        if (filterType === 'tag') {
+          currentTag = filterValue;
+        } else if (filterType === 'year') {
+          currentYear = filterValue;
+        }
+        
+        updateFilters();
+      });
+    });
+  </script>
 </body>
 </html>`;
   
@@ -372,6 +502,18 @@ function generateAbout() {
   console.log('✓ 生成关于页面');
 }
 
+// 复制静态资源
+function copyStaticAssets() {
+  // 复制 favicon
+  const faviconSrc = '_templates/favicon.svg';
+  const faviconDest = path.join(OUTPUT_DIR, 'favicon.svg');
+  
+  if (fs.existsSync(faviconSrc)) {
+    fs.copyFileSync(faviconSrc, faviconDest);
+    console.log('✓ 复制 favicon');
+  }
+}
+
 // 主流程
 console.log('开始构建...\n');
 
@@ -383,6 +525,9 @@ generateIndex();
 
 // 生成关于页面
 generateAbout();
+
+// 复制静态资源
+copyStaticAssets();
 
 console.log(`\n✓ 构建完成！共处理 ${articles.length} 篇文章`);
 console.log(`✓ 输出目录: ${OUTPUT_DIR}/`);
