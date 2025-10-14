@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="面向环境控制领域的工业互联网与数字孪生云平台一体化解决方案，提供从边缘设备接入到云端3D可视化、多租户运营的全方位服务。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <title>环境控制工业互联网与数字孪生云平台｜方案与术语手册</title>
+  <style>
+    :root{
+      --bg: #0b1020;           /* 背景深色 */
+      --panel: #11182d;        /* 面板底色 */
+      --muted: #98a2b3;        /* 次级文本 */
+      --text: #ecf2ff;         /* 主文本 */
+      --brand: #7c5cff;        /* 品牌色 */
+      --brand-2: #22d3ee;      /* 品牌渐变辅色 */
+      --ok: #10b981;           /* 成功 */
+      --warn: #f59e0b;         /* 警告 */
+      --danger: #ef4444;       /* 危险 */
+      --card: rgba(255,255,255,.04);
+      --card-border: rgba(255,255,255,.08);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --focus-ring: 0 0 0 3px rgba(124, 92, 255, 0.4);
+    }
+    [data-theme="light"]{
+      --bg:#f7f9fc; --panel:#ffffff; --text:#11182d; --muted:#475467; 
+      --card: rgba(0,0,0,.03); --card-border: rgba(0,0,0,.08);
+      --shadow: 0 6px 16px rgba(0,0,0,.08);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    html,body{height:100%}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+      color:var(--text); background: radial-gradient(1200px 600px at 10% -10%, rgba(124,92,255,.22), transparent 60%),
+                          radial-gradient(800px 500px at 90% 0%, rgba(34,211,238,.18), transparent 60%), var(--bg);
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .container{max-width:1100px; margin:0 auto; padding:28px 18px 80px; animation: fadeIn 0.6s ease-out forwards;}
+    .nav{
+      position:sticky; top:0; z-index:20; backdrop-filter: blur(8px);
+      background: rgba(11, 16, 32, 0.5); border-bottom:1px solid var(--card-border);
+    }
+    [data-theme="light"] .nav { background: rgba(247, 249, 252, 0.5); }
+    .nav-inner{display:flex; align-items:center; gap:16px; padding:10px 18px}
+    .brand{display:flex; align-items:center; gap:10px; font-weight:700}
+    .brand .logo{width:28px; height:28px; border-radius:10px; background:linear-gradient(135deg, var(--brand), var(--brand-2)); box-shadow: var(--shadow)}
+    .nav-links{display:flex; flex-wrap:wrap; gap:10px; margin-left:auto}
+    .nav-links a, .button, .btn{
+      transition: all 0.2s ease-in-out;
+      border:1px solid var(--card-border); background:var(--card); color:var(--text);
+      border-radius:10px; text-decoration:none; padding:8px 12px;
+    }
+    .nav-links a:hover, .button:hover, .btn:hover{
+      border-color:transparent; transform: translateY(-2px);
+      background:linear-gradient(135deg, rgba(124,92,255,.18), rgba(34,211,238,.18));
+    }
+    :is(.nav-links a, .button, .btn):focus-visible {
+      outline: none; box-shadow: var(--focus-ring);
+    }
+
+    header.hero{display:grid; grid-template-columns:1.1fr .9fr; gap:28px; align-items:center; padding:36px 0 8px}
+    @media (max-width: 900px){header.hero{grid-template-columns:1fr}}
+    .title{font-size: clamp(28px, 3.4vw, 44px); line-height:1.12; margin:0 0 14px; font-weight: 800;}
+    .subtitle{color:var(--muted); font-size:clamp(14px, 1.4vw, 16px); line-height: 1.6;}
+    .hero-card{border:1px solid var(--card-border); background:var(--card); padding:18px; border-radius:16px}
+    
+    .grid{display:grid; gap:18px}
+    .grid.cols-3{grid-template-columns: repeat(3, 1fr)}
+    .grid.cols-2{grid-template-columns: repeat(2, 1fr)}
+    @media (max-width: 900px){.grid.cols-3{grid-template-columns:1fr}}
+    @media (max-width: 640px){.grid.cols-2{grid-template-columns:1fr}}
+    
+    .card, details{
+      border:1px solid var(--card-border); background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01)); 
+      padding:18px; border-radius:16px; box-shadow:var(--shadow);
+      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .card:hover, details:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(0,0,0,.4); }
+    .card h3{margin:0 0 10px; font-size:18px; color: var(--text);}
+    .muted{color:var(--muted)}
+    .kpi{display:flex; align-items:baseline; gap:10px}
+    .kpi b{font-size:22px; color: var(--brand-2);}
+
+    .section{margin:36px 0 12px}
+    .section h2{font-size:22px; letter-spacing:.2px; margin:0 0 12px; font-weight: 700;}
+    .pill{display:inline-block; padding:4px 10px; border-radius:999px; background:rgba(124,92,255,.18); border:1px solid var(--card-border); font-size:12px; font-weight: 600;}
+
+    table{width:100%; border-collapse:collapse; overflow:hidden; border-radius:14px; border:1px solid var(--card-border)}
+    th, td{padding:12px 14px; text-align:left; transition: background-color 0.2s ease;}
+    thead th{background:linear-gradient(180deg, rgba(124,92,255,.18), rgba(124,92,255,.06)); font-weight:700}
+    tbody tr:nth-child(odd){background:rgba(255,255,255,.02)}
+    tbody tr:hover{background:rgba(34,211,238,.08)}
+
+    details{padding:12px 14px}
+    details + details{margin-top:10px}
+    summary{cursor:pointer; font-weight:600; list-style-type: '▸ '; transition: margin 0.2s ease-in-out;}
+    details[open] > summary { list-style-type: '▾ '; margin-bottom: 8px;}
+    .tag{display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid var(--card-border); background:rgba(255,255,255,.04); font-size:12px; margin-right:6px}
+
+    .svg-wrap{border:1px dashed var(--card-border); border-radius:16px; padding:16px; background:rgba(255,255,255,.02)}
+    .svg-wrap text { font-family: inherit; }
+
+    .footer{margin-top:36px; display:flex; flex-wrap: wrap; gap:10px; align-items:center; justify-content:space-between; color:var(--muted)}
+    .actions{display:flex; gap:10px; flex-wrap:wrap}
+    
+    /* 打印优化 */
+    @media print{
+      :root{
+        --bg:white; --panel:white; --text:black; --muted: #333;
+        --card-border: #ccc;
+      }
+      body{background:white; color:black}
+      .nav, .actions, .footer, .btn{display:none}
+      .card, .hero-card, details, .section{break-inside:avoid; box-shadow: none; border: 1px solid #ccc;}
+      header.hero, .svg-wrap { display: none; }
+      h1,h2,h3 { color: black; }
+      table { border: 1px solid #ccc; }
+      th, td { color: black !important; }
+      thead th { background: #eee; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner container">
+      <div class="brand"><div class="logo"></div> 环控工控物联网 & 数字孪生 云平台</div>
+      <div class="nav-links">
+        <a href="#tldr">快速概览</a>
+        <a href="#arch">总体架构</a>
+        <a href="#tech">技术选型</a>
+        <a href="#milestones">里程碑&报价</a>
+        <a href="#glossary">术语解释</a>
+      </div>
+      <button class="btn" id="theme-toggle" aria-label="切换主题">☀️</button>
+    </div>
+  </nav>
+
+  <main class="container">
+    <header class="hero">
+      <div>
+        <h1 class="title">环境控制工业互联网与数字孪生云平台｜一体化实施方案</h1>
+        <p class="subtitle">将现场“温湿压流/能耗/气体”等关键参数<strong>接入云端</strong>，实现<strong>开放控制</strong>、<strong>数据孪生 3D 可视化</strong>与<strong>多租户运营</strong>。面向洁净室、生产线、数据中心、冷链物流、实验室等多种应用场景。</p>
+        <div class="hero-card grid cols-2">
+          <div class="card">
+            <h3>业务价值</h3>
+            <ul class="muted">
+              <li>合规留痕与审计闭环</li>
+              <li>远程运维，降低停机/人力成本</li>
+              <li>节能优化，数据驱动调参</li>
+              <li>开放 API / 生态联动（CMMS/ITSM/BIM）</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>关键 KPI</h3>
+            <div class="kpi"><b>≥99.9%</b><span class="muted">平台可用性</span></div>
+            <div class="kpi"><b>&lt;500ms</b><span class="muted">p95 接口延迟</span></div>
+            <div class="kpi"><b>≥99.5%</b><span class="muted">数据完整率</span></div>
+            <div class="kpi"><b>&lt;10s</b><span class="muted">告警触达</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="svg-wrap">
+        <svg viewBox="0 0 840 420" width="100%" height="100%" aria-labelledby="svg-title" role="img">
+          <title id="svg-title">系统三层架构示意图：边缘与现场、云接入与消息域、数据与应用</title>
+          <defs>
+            <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="var(--brand)" stop-opacity="0.8"/>
+              <stop offset="100%" stop-color="var(--brand-2)" stop-opacity="0.8"/>
+            </linearGradient>
+             <marker id="arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--brand)" />
+            </marker>
+          </defs>
+          <style>
+            .layer-bg { fill: var(--card); stroke: var(--card-border); }
+            .layer-title { fill: var(--muted); font-size: 14px; text-anchor: middle; }
+            .box-bg { fill: rgba(124,92,255,0.18); stroke: rgba(255,255,255,0.12); }
+            .box-text { fill: var(--text); font-size: 14px; text-anchor: middle; dominant-baseline: middle; }
+            .box-highlight-bg { fill: url(#g1); }
+            .box-highlight-text { fill: #0b1020; font-size: 14px; font-weight: 600; text-anchor: middle; dominant-baseline: middle; }
+            .arrow-line { stroke: var(--brand); stroke-width: 2; marker-end: url(#arrow); }
+          </style>
+          <!-- Edge Layer -->
+          <rect x="20" y="30" width="240" height="360" rx="12" class="layer-bg"/>
+          <text x="140" y="55" class="layer-title">边缘与现场</text>
+          <g>
+            <rect x="40" y="80" width="200" height="60" rx="10" class="box-bg"/>
+            <text x="140" y="110" class="box-text">PLC / 传感器 / 仪表</text>
+            <rect x="40" y="180" width="200" height="60" rx="10" class="box-bg"/>
+            <text x="140" y="210" class="box-text">边缘盒子（mTLS / 缓存）</text>
+            <rect x="40" y="280" width="200" height="60" rx="10" class="box-bg"/>
+            <text x="140" y="310" class="box-text">数据聚合 / LTTB / DLQ</text>
+          </g>
+          <!-- MQTT / Hub Layer -->
+          <rect x="300" y="30" width="240" height="360" rx="12" class="layer-bg"/>
+          <text x="420" y="55" class="layer-title">云接入与消息域</text>
+          <g>
+            <rect x="320" y="80" width="200" height="60" rx="10" class="box-highlight-bg"/>
+            <text x="420" y="110" class="box-highlight-text">MQTT / IoT Hub</text>
+            <rect x="320" y="180" width="200" height="60" rx="10" class="box-bg"/>
+            <text x="420" y="210" class="box-text">Topic 规范 / ACL</text>
+            <rect x="320" y="280" width="200" height="60" rx="10" class="box-bg"/>
+            <text x="420" y="310" class="box-text">命令回执 / 幂等</text>
+          </g>
+          <!-- Data & Apps Layer -->
+          <rect x="580" y="30" width="240" height="360" rx="12" class="layer-bg"/>
+          <text x="700" y="55" class="layer-title">数据与应用</text>
+          <g>
+            <rect x="600" y="80" width="200" height="60" rx="10" class="box-bg"/>
+            <text x="700" y="110" class="box-text">设备影子 / 规则引擎</text>
+            <rect x="600" y="180" width="200" height="60" rx="10" class="box-bg"/>
+            <text x="700" y="210" class="box-text">ClickHouse / TSDB</text>
+            <rect x="600" y="280" width="200" height="60" rx="10" class="box-bg"/>
+            <text x="700" y="310" class="box-text">3D 孪生 / 报表 / 告警</text>
+          </g>
+          <!-- Arrows -->
+          <g class="arrow-line">
+            <line x1="260" y1="110" x2="300" y2="110" />
+            <line x1="260" y1="210" x2="300" y2="210" />
+            <line x1="260" y1="310" x2="300" y2="310" />
+            <line x1="540" y1="110" x2="580" y2="110" />
+            <line x1="540" y1="210" x2="580" y2="210" />
+            <line x1="540" y1="310" x2="580" y2="310" />
+          </g>
+        </svg>
+      </div>
+    </header>
+
+    <section class="section" id="tldr">
+      <h2><span style="color:var(--brand)">01</span>｜快速概览 <span class="pill">TL;DR</span></h2>
+      <div class="grid cols-3">
+        <div class="card"><h3>核心目标</h3><p class="muted">现场设备 <b>MQTT 上云</b>，实现 <b>开放控制</b> + <b>3D 数据孪生</b>，并具备多租户、影子、时序、告警、API、合规。</p></div>
+        <div class="card"><h3>场景覆盖</h3><p class="muted">洁净室/产线、机房/新风、空压站/锅炉房、冷链仓、实验室。</p></div>
+        <div class="card"><h3>安全治理</h3><p class="muted">mTLS、OIDC+RBAC/ABAC、WORM 审计、冷热分层留存、零信任边界。</p></div>
+      </div>
+    </section>
+
+    <section class="section" id="arch">
+      <h2><span style="color:var(--brand)">02</span>｜总体方案 (架构与分层)</h2>
+      <div class="grid cols-3">
+        <div class="card">
+          <h3>设备与边缘</h3>
+          <ul class="muted">
+            <li>PLC/仪表 → 边缘盒子</li>
+            <li>离线缓存、批量聚合、限流背压、死信队列</li>
+            <li>LTTB 降采样，减少上行峰值</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>云接入与消息域</h3>
+          <ul class="muted">
+            <li>托管 MQTT / IoT Hub（共享订阅/LWT/保留）</li>
+            <li>Topic 规范、ACL 隔离、命名空间</li>
+            <li>命令幂等、回执与重试、背压治理</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>数据与孪生</h3>
+          <ul class="muted">
+            <li>设备影子（Desired/Reported/Delta）与规则引擎</li>
+            <li>ClickHouse/TSDB + 对象存储，冷热分层</li>
+            <li>3D 门户、大屏报表、Webhook/CMMS/ITSM</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="tech">
+      <h2><span style="color:var(--brand)">03</span>｜技术选型与关键实现</h2>
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>建议技术栈</h3>
+          <p class="muted">
+            <b>接入：</b>EMQX / 云 IoT Core； <b>服务：</b>Go（Gin/Fiber）+ gRPC；
+            <b>数据：</b>ClickHouse + Redis； <b>前端：</b>Next.js + Three.js + ECharts；
+            <b>工程：</b>K8s + Helm/ArgoCD + OpenTelemetry（Prom/Grafana/Loki/Tempo）。
+          </p>
+        </div>
+        <div class="card">
+          <h3>MQTT 与 3D 可视化最佳实践</h3>
+          <ul class="muted">
+            <li>遥测 QoS1、回执 QoS2；1–5s 上报，边缘聚合；cmd_id 幂等</li>
+            <li>LOD/裁剪/分层加载；前端数据总线+合帧渲染（≥30 FPS）</li>
+            <li>单位/测点字典统一；异常值检测：缺失/尖刺/漂移</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="milestones">
+      <h2><span style="color:var(--brand)">04</span>｜交付物、里程碑与报价 (参考)</h2>
+      <div class="grid cols-3">
+        <div class="card">
+          <h3>PoC (4–6 周)</h3>
+          <ul class="muted">
+            <li>100 台设备接入</li>
+            <li>影子/规则最小闭环</li>
+            <li>3D 场景雏形，KPI 验证</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>试点 (8–10 周)</h3>
+          <ul class="muted">
+            <li>1,000 台设备接入</li>
+            <li>审批与审计闭环</li>
+            <li>Webhook/CMMS 联动</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>规模化 (12–16 周)</h3>
+          <ul class="muted">
+            <li>10,000+ 台设备接入</li>
+            <li>分区多活/容灾</li>
+            <li>BIM/IFC 联动 (可选)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h3>报价与周期 (不含税, RMB)</h3>
+        <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>套餐</th><th style="text-align:right">设备规模</th><th style="text-align:right">一次性实施费</th><th style="text-align:right">月度运维</th><th style="text-align:right">预计云资源/月</th><th style="text-align:right">周期(周)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Starter / PoC</td><td style="text-align:right">≤100</td><td style="text-align:right">¥120,000</td><td style="text-align:right">¥10,000</td><td style="text-align:right">¥2k–5k</td><td style="text-align:right">4–6</td></tr>
+            <tr><td>Pilot / Pro</td><td style="text-align:right">≈1,000</td><td style="text-align:right">¥380,000</td><td style="text-align:right">¥35,000</td><td style="text-align:right">¥15k–30k</td><td style="text-align:right">8–10</td></tr>
+            <tr><td>Enterprise</td><td style="text-align:right">≥10,000</td><td style="text-align:right">¥1,200,000</td><td style="text-align:right">¥120,000</td><td style="text-align:right">¥80k–150k</td><td style="text-align:right">12–16</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p class="muted" style="margin-top:10px; font-size:12px;">注：云资源含 MQTT、流量带宽、ClickHouse/TSDB、对象存储、日志监控；实际以点位/频率/三维深度为准。</p>
+      </div>
+    </section>
+
+    <section class="section" id="risk">
+      <h2><span style="color:var(--brand)">05</span>｜风险与应对</h2>
+      <div class="grid cols-3">
+        <div class="card">
+          <h3>网络风暴/抖动</h3>
+          <p class="muted">边缘缓存+限流+DLQ；云端共享订阅与背压治理；规则隔离与熔断。</p>
+        </div>
+        <div class="card">
+          <h3>越权/误操作</h3>
+          <p class="muted">控制审批双人制、强审计（WORM）、最小权限（RBAC/ABAC）。</p>
+        </div>
+        <div class="card">
+          <h3>3D 资产维护</h3>
+          <p class="muted">资产流水线、分层加载与版本化；多级 LOD（低/中/高）。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="glossary">
+      <h2><span style="color:var(--brand)">06</span>｜物联网关键术语解释</h2>
+      <p class="muted">懂术语，少踩坑。以下解释兼顾工程落地和核心概念。</p>
+
+      <details open>
+        <summary>MQTT (Message Queuing Telemetry Transport)</summary>
+        <p class="muted">轻量级发布/订阅协议，适合低带宽与不稳定网络。核心对象：客户端、Broker、Topic、Payload、会话。工业上常用 <b>QoS1</b>（至少一次）传遥测，控制回执用 <b>QoS2</b>（仅一次）。</p>
+      </details>
+      <details>
+        <summary>QoS / 保留消息 / 遗嘱 (LWT) / 共享订阅</summary>
+        <ul class="muted">
+          <li><b>QoS 0/1/2</b>：最多一次/至少一次/仅一次；级别越高，可靠性越强，开销越大。</li>
+          <li><b>保留消息</b>：Broker 保存最后一条消息，新订阅者也能立刻拿到。</li>
+          <li><b>遗嘱 (LWT)</b>：客户端异常断开时，由 Broker 自动发布的“告别消息”。</li>
+          <li><b>共享订阅</b>：同组消费者分摊消息，实现水平扩展。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>设备影子 (Device Shadow)</summary>
+        <p class="muted">在云端维护设备“期望态(Desired)/上报态(Reported)/差异(Delta)”，即使设备离线也可对其期望配置变更，在线后自动对齐。</p>
+      </details>
+      <details>
+        <summary>数字孪生 (Digital Twin)</summary>
+        <p class="muted">现实资产的数字化映射：结构（拓扑/坐标）+ 行为（状态/规则）+ 历史（时序/事件）。与 3D 场景结合，可回放与预测。</p>
+      </details>
+       <details>
+        <summary>幂等 (Idempotency) / 回执 / 重试退避</summary>
+        <p class="muted">通过 <code>cmd_id</code> 或指纹让重复命令只生效一次；回执含状态码与原因；重试采用指数退避+抖动，避免放大风暴。</p>
+      </details>
+      <details>
+        <summary>时序数据库 (TSDB) / 冷热分层</summary>
+        <p class="muted">TSDB 优化时间维度写入与聚合。热数据（30–90天）存高速盘，温/冷数据（1年以上）入对象存储，平衡成本与性能。</p>
+      </details>
+      <details>
+        <summary>可观测性 (日志/指标/追踪)</summary>
+        <p class="muted">通过 OpenTelemetry 统一采集：日志（Loki）、指标（Prometheus）、追踪（Tempo），用于定位“哪层慢、哪条链路抖动”。</p>
+      </details>
+       <details>
+        <summary>安全：mTLS / OIDC / RBAC & ABAC / 零信任</summary>
+        <p class="muted">mTLS 做双向证书认证；OIDC 对接企业 IdP；RBAC 基于角色授权，ABAC 基于属性授权；零信任强调“默认不信任、持续验证”。</p>
+      </details>
+    </section>
+
+    <footer class="footer">
+      <div>© 2025 环控 IoT & 数字孪生 方案 — 由 <span style="color:var(--brand)">Bisheng</span> 团队打造</div>
+      <div class="actions">
+        <a class="button" href="#">回到顶部 ⤴</a>
+        <a class="button" href="javascript:window.print()">打印 / 导出 PDF</a>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    function setupThemeSwitcher() {
+      const themeToggle = document.getElementById('theme-toggle');
+      if (!themeToggle) return;
+
+      const userPref = localStorage.getItem('theme');
+      const systemPref = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      let currentTheme = userPref || systemPref;
+
+      function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        themeToggle.textContent = theme === 'light' ? '🌙' : '☀️';
+        currentTheme = theme;
+      }
+
+      applyTheme(currentTheme);
+
+      themeToggle.addEventListener('click', () => {
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        localStorage.setItem('theme', newTheme);
+        applyTheme(newTheme);
+      });
+    }
+    document.addEventListener('DOMContentLoaded', setupThemeSwitcher);
+  </script>
+</body>
+</html>
