@@ -324,19 +324,30 @@ function generateIndex() {
     }
 
     .filters {
-      margin-bottom: 2rem;
-      padding-bottom: 2rem;
-      border-bottom: 1px solid #e0e0e0;
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: #fff;
+      border: 1px solid #000;
+      padding: 1rem;
+      max-width: 280px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 100;
     }
 
     .filter-section {
       margin-bottom: 1rem;
     }
 
+    .filter-section:last-child {
+      margin-bottom: 0;
+    }
+
     .filter-label {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
       font-size: 0.9rem;
-      color: #666;
+      color: #000;
+      font-weight: 600;
       margin-bottom: 0.5rem;
       display: block;
     }
@@ -385,7 +396,7 @@ function generateIndex() {
       }
 
       body {
-        padding: 3rem 1.5rem;
+        padding: 3rem 1.5rem 12rem 1.5rem;
       }
 
       header h1 {
@@ -394,6 +405,13 @@ function generateIndex() {
 
       article h2 {
         font-size: 1.25rem;
+      }
+
+      .filters {
+        bottom: 1rem;
+        right: 1rem;
+        left: 1rem;
+        max-width: none;
       }
     }
   </style>
