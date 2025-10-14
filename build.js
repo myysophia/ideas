@@ -77,68 +77,72 @@ function processFile(filePath) {
     content = marked(parsed.content);
     
   } else if (ext === '.html') {
-    // 处理 HTML 文件
+    // 处理 HTML 文件 - 直接复制原文件
     const fileContent = fs.readFileSync(filePath, 'utf-8');
     
-    // 提取标题
+    // 提取标题（用于首页列表）
     const titleMatch = fileContent.match(/<title>(.*?)<\/title>/i);
     title = titleMatch ? titleMatch[1] : path.basename(filePath, '.html');
     
-    // 提取日期
+    // 提取日期（用于首页列表）
     const timeMatch = fileContent.match(/<time[^>]*>(.*?)<\/time>/i);
     date = timeMatch ? timeMatch[1] : extractDateFromFilename(filePath);
     
-    // 提取描述
+    // 提取描述（用于首页列表）
     const descMatch = fileContent.match(/<meta name="description" content="(.*?)"/i);
     description = descMatch ? descMatch[1] : '';
     
-    // 提取 body 内容（移除 nav 和脚本）
-    const bodyMatch = fileContent.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-    if (bodyMatch) {
-      let bodyContent = bodyMatch[1];
-      // 移除 nav
-      bodyContent = bodyContent.replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '');
-      // 移除 script
-      bodyContent = bodyContent.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-      // 提取 article 内容，或使用整个 body
-      const articleMatch = bodyContent.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
-      if (articleMatch) {
-        content = articleMatch[1];
-        // 移除 article 中的 header（因为模板会添加）
-        content = content.replace(/<header[^>]*>[\s\S]*?<\/header>/i, '');
-      } else {
-        content = bodyContent;
-      }
+    // 直接复制 HTML 文件到输出目录
+    const outputPath = path.join(OUTPUT_DIR, relativePath);
+    const outputDir = path.dirname(outputPath);
+    
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
     }
+    
+    fs.writeFileSync(outputPath, fileContent, 'utf-8');
+    
+    // 添加到文章列表
+    articles.push({
+      title,
+      date: date || '',
+      url: '/' + relativePath,
+      description: description || extractFirstParagraph(fileContent)
+    });
+    
+    return; // 直接返回，不需要后续的模板处理
   }
   
-  // 生成输出路径
-  const outputPath = path.join(OUTPUT_DIR, relativePath.replace(/\.md$/, '.html'));
-  const outputDir = path.dirname(outputPath);
-  
-  // 创建输出目录
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
+  // 仅处理 Markdown 文件的模板应用
+  if (ext === '.md') {
+    // 生成输出路径
+    const outputPath = path.join(OUTPUT_DIR, relativePath.replace(/\.md$/, '.html'));
+    const outputDir = path.dirname(outputPath);
+    
+    // 创建输出目录
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+    
+    // 应用模板
+    const dateHtml = date ? `<time datetime="${date}">${date}</time>` : '';
+    const html = template
+      .replace(/\{\{TITLE\}\}/g, title)
+      .replace(/\{\{DATE_HTML\}\}/g, dateHtml)
+      .replace(/\{\{DESCRIPTION\}\}/g, description || title)
+      .replace(/\{\{CONTENT\}\}/g, content);
+    
+    // 写入文件
+    fs.writeFileSync(outputPath, html, 'utf-8');
+    
+    // 添加到文章列表
+    articles.push({
+      title,
+      date: date || '',
+      url: '/' + relativePath.replace(/\.md$/, '.html'),
+      description: description || extractFirstParagraph(content)
+    });
   }
-  
-  // 应用模板
-  const dateHtml = date ? `<time datetime="${date}">${date}</time>` : '';
-  const html = template
-    .replace(/\{\{TITLE\}\}/g, title)
-    .replace(/\{\{DATE_HTML\}\}/g, dateHtml)
-    .replace(/\{\{DESCRIPTION\}\}/g, description || title)
-    .replace(/\{\{CONTENT\}\}/g, content);
-  
-  // 写入文件
-  fs.writeFileSync(outputPath, html, 'utf-8');
-  
-  // 添加到文章列表
-  articles.push({
-    title,
-    date: date || '',
-    url: '/' + relativePath.replace(/\.md$/, '.html'),
-    description: description || extractFirstParagraph(content)
-  });
 }
 
 // 从文件名提取日期 (YYYY-MM-DD-title.md)
