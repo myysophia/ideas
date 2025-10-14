@@ -2,264 +2,111 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Access Token 与 Refresh Token 的区别</title>
-<script>MathJax={chtml:{fontURL:'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2'}}</script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/full.render.js" defer></script>
-<script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js" defer></script>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
-<style>html,body{height:100%;margin:0;scroll-behavior:smooth}body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.7;background-color:#f8faff;color:#374151;padding:10px;box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}.container{max-width:1100px;margin:10px auto;padding:20px;background-color:#fff;border-radius:.45rem;box-shadow:0 .4rem 1.2rem rgba(0,0,0,.06)}.material-icons-outlined{vertical-align:middle;font-size:1.15em;margin-right:.3em;line-height:1}h1>.material-icons-outlined,h2>.material-icons-outlined{font-size:1.1em;margin-right:.4em;color:#007bff}h3>.material-icons-outlined,h4>.material-icons-outlined,h5>.material-icons-outlined{font-size:1.1em;margin-right:.4em;color:#4a5568}h1,h2,h3,h4,h5{color:#1f2937;margin:1.8em 0 1em;font-weight:600;display:flex;align-items:center;line-height:1.3}h1{font-size:2.6rem;letter-spacing:-.7px;border-bottom:1px solid #dde2e9;padding-bottom:.5em;margin:0 0 .8em}h2{font-size:2.1rem;border-bottom:1px solid #eef2f5;padding-bottom:.55em}h3{font-size:1.7rem}h4{font-size:1.35rem;color:#525860}.prompt-container h5{font-size:1.1rem;margin:1.8em 0 1em;padding-bottom:.3em;border-bottom:1px solid #e0e6ed}.sub-topic-heading{font-weight:600;margin-top:1.5em;margin-bottom:.7em;font-size:1.1rem;display:flex;align-items:center;line-height:1.4}.sub-topic-heading .material-icons-outlined{font-size:1.2em;margin-right:.4em}.text-primary{color:#007bff}.text-secondary{color:#525860}.text-accent1{color:#17a2b8}.text-accent2{color:#28a745}.text-accent3{color:#ffc107}.text-danger{color:#dc3545;font-weight:700}.text-warning{color:#ff8f00;font-weight:700}.text-highlight-green{color:#20c997;font-weight:600}.text-highlight-blue{color:#339AF0;font-weight:600}.text-highlight-purple{color:#AE3EC9;font-weight:600}p{margin-bottom:1.4em;color:#4b5563;font-size:1.05rem}strong,.strong-emphasis{font-weight:600;color:#007bff}.prompt-container strong{color:#2d3748}.prompt-container .strong-emphasis{color:#0056b3}.math-formula{font-size:1.3em;padding:10px;background-color:#f0f3f7;border-radius:.45rem;text-align:center;margin:15px 0;overflow-x:auto;border:1px solid #dfe5ec}.prompt-container .math-formula{margin:1.5em 0 1.8em}.two-col-grid-container .col .math-formula{margin-top:.5em;margin-bottom:0;font-size:1.1em}pre[class*=language-]{padding:1.7em;margin:1.2em 0;overflow:auto;border-radius:.45rem;box-shadow:0 4px 12px rgba(0,0,0,.08);border:1px solid #dde2e9;background:#2d2d2d}code[class*=language-],pre[class*=language-]{font-family:"Fira Code","SFMono-Regular",Consolas,"Liberation Mono",Menlo,Courier,monospace;font-size:.93rem;line-height:1.5}:not(pre)>code{font-family:"Fira Code","SFMono-Regular",Consolas,"Liberation Mono",Menlo,Courier,monospace;background-color:#f8f0f2;padding:.2em .4em;border-radius:.25rem;font-size:.9em;color:#bf0045;border:1px solid #f0e4e7}.code-wrapper{position:relative;margin:1.2em 0}.prompt-container .code-wrapper{margin:1.5em 0 2em}.code-wrapper pre[class*=language-]{margin:0!important;padding-right:65px}.copy-button{position:absolute;top:.8em;right:.8em;z-index:5;padding:6px 12px;background-color:rgba(80,80,80,.8);color:#f0f4f8;border:1px solid rgba(255,255,255,.1);border-radius:.35rem;cursor:pointer;font-size:.78rem;opacity:.6;transition:opacity .25s ease,background-color .25s ease,transform .15s ease,box-shadow .25s ease;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:500;line-height:1.2;box-shadow:0 2px 4px rgba(0,0,0,.2);outline:0;user-select:none}.code-wrapper:hover .copy-button,.copy-button:focus,.copy-button:hover{opacity:1;background-color:rgba(50,50,50,.95);transform:translateY(-1px);box-shadow:0 4px 8px rgba(0,0,0,.25)}.copy-button:active{transform:translateY(0);box-shadow:0 1px 3px rgba(0,0,0,.15)}@media (max-width:768px){.copy-button{font-size:.75rem;padding:5px 9px;top:.6em;right:.6em}.code-wrapper pre[class*=language-]{padding-right:55px}}.prompt-container{background-color:#edf2f7;border:1px solid #cbd5e0;border-radius:.45rem;padding:25px;margin-bottom:25px;box-shadow:0 3px 8px rgba(0,0,0,.04)}.prompt-container>h2:first-of-type{margin-top:1em}.prompt-container h2,.prompt-container h3,.prompt-container h4,.prompt-container h5{color:#2d3748;border-bottom-color:#cbd5e0}.prompt-container h3>.material-icons-outlined{color:#2d3748}.prompt-container h3{margin-top:1.8em}.prompt-container h3+ul{margin-bottom:1em}.prompt-container .content-box h4{margin-bottom:.8em}.prompt-container h2>.material-icons-outlined,.prompt-container h5>.material-icons-outlined{color:#4a5868}.prompt-container h2{font-size:1.9rem}.prompt-container h3{font-size:1.55rem;margin-top:2.2em}.prompt-container h4{font-size:1.25rem;margin-top:1.8em}.prompt-container li,.prompt-container p{color:#34495e;font-size:1.05rem}.prompt-container .mandatory-requirement{font-weight:700;color:#721c24;padding:12px 18px;border:2px solid #dc3545;background-color:#fddfe2;border-radius:.45rem;display:flex;align-items:center;margin:1.2em 0}.prompt-container .mandatory-requirement .material-icons-outlined{color:#dc3545;font-size:1.6em;margin-right:.6em;flex-shrink:0}.prompt-container .mandatory-requirement .instruction-chinese{font-weight:700;color:#c0392b;display:block;margin-top:8px}.prompt-container .mandatory-requirement code{background-color:#fbecee;border-color:#f8d7da;color:#a92330}.prompt-container ul{list-style-type:none;padding-left:0;margin-bottom:0}.prompt-container ul li{margin-bottom:.8em;padding-left:1.5em;position:relative}.prompt-container ul li:last-child{margin-bottom:0}.prompt-container ul li .material-icons-outlined{position:absolute;left:0;top:4px;font-size:1.25em;color:#0277bd;margin-right:.5em}.prompt-container ul li:has(.material-icons-outlined){padding-left:2em}.prompt-container .manual-list-item{margin-bottom:.8em;padding-left:2em;position:relative;color:#34495e;font-size:1.05rem;line-height:1.6}.prompt-container .manual-list-item:last-child{margin-bottom:0}.prompt-container .manual-list-item .material-icons-outlined{position:absolute;left:0;top:4px;font-size:1.25em;margin-right:.5em;color:#0277bd}.prompt-container .config-color-note .material-icons-outlined{top:6px;color:#ff8f00;font-size:1.25em;vertical-align:text-bottom}.content-box .config-color-note ol,.two-col-grid-container ol{margin-top:.6em;margin-bottom:0;color:#34495e;font-size:1rem}.content-box .config-color-note ol li,.two-col-grid-container ol li{font-size:inherit;padding-left:0;margin-bottom:.5em;line-height:1.7}.content-box .config-color-note ol li:last-child,.two-col-grid-container ol li:last-child{margin-bottom:0}#graph-container{width:100%;max-width:900px;margin:25px auto;padding-top:70px;box-sizing:border-box;background-color:#fff;border:1px solid #dde2e9;border-radius:.45rem;box-shadow:0 .4rem 1.2rem rgba(0,0,0,.06);position:relative;overflow:hidden}.prompt-container #graph-container{margin:20px auto 30px;background-color:#fff}#graph-output{display:flex;justify-content:center;align-items:center;min-height:350px;padding:30px;background-color:#fff}#graph-output svg{display:block;width:100%;max-width:100%;height:auto}#graph-controls-container{position:absolute;top:20px;right:20px;display:flex;gap:14px;z-index:10}.graph-button{padding:9px 15px;background-color:rgba(50,50,50,.8);color:#f0f4f8;border:none;border-radius:.35rem;cursor:pointer;font-size:.88rem;opacity:.9;transition:opacity .2s ease,background-color .2s ease,transform .15s ease,box-shadow .15s ease;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:500;line-height:1.2;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 5px rgba(0,0,0,.12)}.graph-button:hover{opacity:1;background-color:rgba(30,30,30,.9);transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,.18)}.graph-button:active{transform:translateY(0);box-shadow:0 1px 3px rgba(0,0,0,.1)}.graph-button:disabled{opacity:.65;cursor:not-allowed;background-color:rgba(50,50,50,.8);transform:translateY(0);box-shadow:0 1px 3px rgba(0,0,0,.08)}.graph-button .svg-icon{width:1.25em;height:1.25em;fill:currentColor}.graph-button .material-icons-outlined{font-size:1.4em;margin-right:0}#layout-toggle-button{min-width:48px;font-weight:500;font-size:1rem}#layout-toggle-button.loading .material-icons-outlined{font-size:1.4em}@keyframes spin{to{transform:rotate(1turn)}}.icon-spin{animation:spin 1.5s linear infinite;display:inline-block}#zoom-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(25,28,32,.95);z-index:1000;justify-content:center;align-items:center;overflow:hidden;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}#zoom-content{position:relative;width:97%;height:97%;background-color:#fff;overflow:hidden;display:flex;justify-content:center;align-items:center;border-radius:calc(.45rem* 2);box-shadow:0 25px 60px rgba(0,0,0,.35)}#zoom-content svg{max-width:none;max-height:none;width:100%;height:100%;cursor:grab;display:block}#zoom-content svg:active{cursor:grabbing}#close-zoom{position:absolute;top:12px;right:12px;background:rgba(50,50,50,.85);color:#fff;border:none;border-radius:50%;width:48px;height:48px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1001;transition:background-color .25s ease;box-shadow:0 3px 12px rgba(0,0,0,.3)}#close-zoom:focus-visible,#close-zoom:hover{background:rgba(20,20,20,.95);outline:0}#close-zoom .material-icons-outlined{font-size:30px;margin-right:0}.two-col-grid-container .col p:last-of-type{margin-bottom:0}.section-divider{border:0;height:1px;background-color:#e2e8f0;margin:2.5em 0}.two-col-grid-container{display:grid;grid-template-columns:1fr;gap:25px;margin-bottom:1.5em;align-items:stretch}.two-col-grid-container .col>:first-child{margin-top:0}.two-col-grid-container .col>:last-child{margin-bottom:0}.two-col-grid-container h4{margin-top:.8em}.two-col-grid-container .col p{margin-bottom:.8em}.content-box{margin-top:1.5em;margin-bottom:1.5em}.content-box>:first-child{margin-top:0}.content-box>:last-child{margin-bottom:0}@media (min-width:769px){.two-col-grid-container{grid-template-columns:repeat(2,1fr);gap:30px}.content-box{background-color:#fff;border:1px solid #e2e8f0;border-radius:.45rem;padding:20px 22px;box-shadow:0 2px 5px rgba(0,0,0,.04);box-sizing:border-box}.two-col-grid-container .col{background-color:#fff;border:1px solid #e2e8f0;border-radius:.45rem;padding:20px 22px;box-shadow:0 2px 5px rgba(0,0,0,.04);box-sizing:border-box}}@media (max-width:768px){.content-box{margin-top:0}.content-box>h4:first-child{margin-top:1.8em}.content-box>.manual-list-item:last-child{margin-bottom:.8em}}@media (max-width:768px){body{padding:10px;font-size:.96rem}.container{padding:15px;margin:10px auto}h1{font-size:2rem;margin-bottom:.7em}h2{font-size:1.6rem}h3{font-size:1.35rem}h4{font-size:1.15rem}h5{font-size:1rem}.prompt-container>h2:first-of-type{margin-top:.8em}.prompt-container h2{font-size:1.5rem}.prompt-container h3{font-size:1.25rem;margin-top:2em}.prompt-container h4{font-size:1.1rem;margin-top:1.6em}.prompt-container h5{font-size:1rem;margin-top:1.5em}pre[class*=language-],.code-wrapper{font-size:.88rem;padding:1.2em}.math-formula{font-size:1.15em;padding:8px}#graph-container{padding-top:60px}.prompt-container #graph-container{margin:20px auto}#graph-output{min-height:280px}#graph-controls-container{top:12px;right:12px;gap:8px}.graph-button{font-size:.8rem;padding:7px 10px}.graph-button .material-icons-outlined,.graph-button .svg-icon{font-size:1.25em}#layout-toggle-button{min-width:40px;font-size:.9rem}#layout-toggle-button.loading .material-icons-outlined{font-size:1.25em}#close-zoom{width:40px;height:40px}#close-zoom .material-icons-outlined{font-size:24px}.section-divider{margin:2em 0}.two-col-grid-container{margin-bottom:1em}.content-box{margin-bottom:1em}.two-col-grid-container .col>:last-child{margin-bottom:1.4em}.two-col-grid-container .col:last-child>:last-child{margin-bottom:0}.two-col-grid-container .col .math-formula{margin-bottom:1.4em}.two-col-grid-container .col p:last-of-type{margin-bottom:1.4em}.two-col-grid-container .col:last-child p:last-of-type{margin-bottom:0}}@media (max-width:480px){body{padding:5px}.container{padding:10px;margin:5px auto}h1{font-size:1.7rem;margin-bottom:.6em}h2{font-size:1.4rem}h3{font-size:1.2rem}h4{font-size:1.05rem}h5{font-size:.95rem}.prompt-container{padding:15px}.prompt-container>h2:first-of-type{margin-top:.6em}.prompt-container h2{font-size:1.3rem}.prompt-container h3{font-size:1.1rem;margin-top:1.8em}.prompt-container h4{font-size:1rem;margin-top:1.5em}.prompt-container h5{font-size:.9rem}.prompt-container .manual-list-item,.prompt-container li,.prompt-container p,.two-col-grid-container ol,.content-box .config-color-note ol{font-size:.9rem}.prompt-container .mandatory-requirement{padding:8px 12px;font-size:.85rem}.prompt-container .mandatory-requirement .material-icons-outlined{font-size:1.2em}.prompt-container .manual-list-item,.prompt-container ul li{padding-left:1.2em}.prompt-container .manual-list-item,.prompt-container ul li:has(.material-icons-outlined){padding-left:1.8em}#graph-controls-container{flex-direction:column;align-items:flex-end;gap:8px}#graph-container{padding-top:140px}.graph-button{width:auto;min-width:130px;justify-content:flex-start}.section-divider{margin:1.8em 0}.two-col-grid-container{gap:20px}}
-</style>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Access Token 与 Refresh Token 的区别：深入解析</title>
+  <meta name="description" content="深入理解 OAuth 2.0 中 Access Token 和 Refresh Token 的核心区别、工作流程和安全策略">
 </head>
 <body>
-<div class="container">
-<h1><span class="material-icons-outlined">key</span> <span class="text-primary">Access Token</span> <span class="text-secondary">与</span> <span class="text-primary">Refresh Token</span><span class="text-secondary">：深入解析</span></h1>
-<p>在现代应用程序的安全认证体系中，特别是在使用 <strong class="strong-emphasis">OAuth 2.0</strong> 这样的授权框架时，Access Token (访问令牌) 和 Refresh Token (刷新令牌) 是两个核心且经常被同时提及的概念。 [10] 它们协同工作，旨在平衡<strong class="text-accent2">安全性</strong>与<strong class="text-accent1">用户体验</strong>，但它们各自的角色、生命周期和使用方式有着本质的区别。 [6, 7]</p>
+  <nav>
+    <a href="/">首页</a>
+    <a href="/about.html">关于</a>
+  </nav>
+  <article>
+    <header>
+      <h1>Access Token 与 Refresh Token 的区别：深入解析</h1>
+      <time datetime="2024-01-10">2024-01-10</time>
+    </header>
 
-<hr class="section-divider">
+    <p>在现代应用程序的安全认证体系中，特别是在使用 OAuth 2.0 这样的授权框架时，Access Token (访问令牌) 和 Refresh Token (刷新令牌) 是两个核心且经常被同时提及的概念。它们协同工作，旨在平衡<strong>安全性</strong>与<strong>用户体验</strong>，但它们各自的角色、生命周期和使用方式有着本质的区别。</p>
 
-<h2><span class="material-icons-outlined">verified_user</span>核心区别一览</h2>
-<div class="two-col-grid-container">
-    <div class="col">
-        <h3 style="color:#007bff;"><span class="material-icons-outlined">vpn_key</span>Access Token (访问令牌)</h3>
-        <p>可以把它想象成一把<strong class="text-highlight-blue">进入特定房间的“钥匙”</strong>。客户端（例如你的手机应用）每次需要访问受保护的资源（如你的个人信息、好友列表等）时，都必须出示这把“钥匙”。 [8]</p>
-        <ul>
-            <li><strong class="text-primary">用途：</strong> 用于<strong class="strong-emphasis">访问受保护的资源</strong>。客户端在向资源服务器（API）发起的每个请求中都会携带它。 [3, 8]</li>
-            <li><strong class="text-danger">生命周期：</strong> <strong class="strong-emphasis">非常短</strong>。通常设置为几分钟到一小时。 [2, 16]</li>
-            <li><strong class="text-warning">风险：</strong> 由于频繁在网络中传输，暴露的风险相对较高。其短暂的生命周期就是为了降低被盗用后所造成的损失。 [9, 19]</li>
+    <hr>
+
+    <h2>核心区别一览</h2>
+
+    <h3>Access Token (访问令牌)</h3>
+
+    <p>可以把它想象成一把<strong>进入特定房间的"钥匙"</strong>。客户端（例如你的手机应用）每次需要访问受保护的资源（如你的个人信息、好友列表等）时，都必须出示这把"钥匙"。</p>
+
+    <ul>
+      <li><strong>用途：</strong>用于访问受保护的资源。客户端在向资源服务器（API）发起的每个请求中都会携带它。</li>
+      <li><strong>生命周期：</strong>非常短。通常设置为几分钟到一小时。</li>
+      <li><strong>风险：</strong>由于频繁在网络中传输，暴露的风险相对较高。其短暂的生命周期就是为了降低被盗用后所造成的损失。</li>
         </ul>
-    </div>
-    <div class="col">
-        <h3 style="color:#28a745;"><span class="material-icons-outlined">autorenew</span>Refresh Token (刷新令牌)</h3>
-        <p>可以把它看作是<strong class="text-highlight-green">一张能“换取新钥匙”的长期凭证</strong>。当你的“房间钥匙”（Access Token）过期后，你不需要重新进行完整的登录流程，而是用这张凭证去换一把新的钥匙。 [1, 6]</p>
-        <ul>
-            <li><strong class="text-accent2">用途：</strong> 专门用于<strong class="strong-emphasis">获取新的 Access Token</strong>。它本身不能用于访问资源，只能与授权服务器交互。 [3, 4]</li>
-            <li><strong class="text-primary">生命周期：</strong> <strong class="strong-emphasis">相对较长</strong>。可以是几天、几周甚至几个月。 [7, 14]</li>
-            <li><strong class="text-secondary">风险：</strong> 暴露风险较低，因为它只在需要更新 Access Token 时才与授权服务器进行一次通信。但一旦泄露，危害巨大，因此必须被<strong class="text-danger">绝对安全地存储</strong>。 [9]</li>
+
+    <h3>Refresh Token (刷新令牌)</h3>
+
+    <p>可以把它看作是<strong>一张能"换取新钥匙"的长期凭证</strong>。当你的"房间钥匙"（Access Token）过期后，你不需要重新进行完整的登录流程，而是用这张凭证去换一把新的钥匙。</p>
+
+    <ul>
+      <li><strong>用途：</strong>专门用于获取新的 Access Token。它本身不能用于访问资源，只能与授权服务器交互。</li>
+      <li><strong>生命周期：</strong>相对较长。可以是几天、几周甚至几个月。</li>
+      <li><strong>风险：</strong>暴露风险较低，因为它只在需要更新 Access Token 时才与授权服务器进行一次通信。但一旦泄露，危害巨大，因此必须被<strong>绝对安全地存储</strong>。</li>
         </ul>
-    </div>
-</div>
 
-<hr class="section-divider">
+    <hr>
 
-<h2><span class="material-icons-outlined">sync_alt</span>它们如何协同工作？</h2>
-<p>Access Token 和 Refresh Token 的协同工作流程是 OAuth 2.0 框架中实现持久化登录和保障安全的关键。这个流程旨在最大化用户便利性（避免重复登录）的同时，最小化安全风险。 [6]</p>
+    <h2>它们如何协同工作？</h2>
 
-<div id="graph-container">
-    <div id="graph-controls-container">
-         <button id="zoom-button" class="graph-button" title="全屏查看与交互"><svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg> <span>全屏</span></button>
-        <button id="download-button" class="graph-button" title="下载 PNG 图片"><svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zm14-9h-4V3H9v8H5l7 7 7-7z"/></svg> <span>下载</span></button>
-    </div>
-    <div id="graph-output"></div>
-</div>
-<div id="zoom-modal" role="dialog" aria-modal="true" aria-labelledby="zoom-modal-title">
-    <div id="zoom-content"></div>
-    <button id="close-zoom" title="关闭全屏" aria-label="关闭全屏"><span class="material-icons-outlined">close</span></button>
-    <h2 id="zoom-modal-title" style="display:none">图表全屏交互视图</h2>
-</div>
+    <p>Access Token 和 Refresh Token 的协同工作流程是 OAuth 2.0 框架中实现持久化登录和保障安全的关键。这个流程旨在最大化用户便利性（避免重复登录）的同时，最小化安全风险。</p>
 
-<h4 style="margin-top:2em;"><span class="material-icons-outlined">checklist</span>工作流程步骤分解</h4>
-<ol style="padding-left: 20px; font-size: 1.05rem;">
-    <li style="margin-bottom: 0.8em;"><strong class="text-primary">1. 首次认证：</strong> 用户使用用户名和密码等凭据进行登录。</li>
-    <li style="margin-bottom: 0.8em;"><strong class="text-primary">2. 获取令牌对：</strong> 认证成功后，<strong class="strong-emphasis">授权服务器</strong>会同时签发一个短期的 <code class="language-bash">Access Token</code> 和一个长期的 <code class="language-bash">Refresh Token</code> 给客户端。 [15]</li>
-    <li style="margin-bottom: 0.8em;"><strong class="text-primary">3. 访问资源：</strong> 客户端存储这两个令牌，并使用 <code class="language-bash">Access Token</code> 访问受保护的资源（API）。资源服务器会验证此令牌的有效性。</li>
-    <li style="margin-bottom: 0.8em;"><strong class="text-primary">4. 访问令牌过期：</strong> 当 <code class="language-bash">Access Token</code> 过期后，资源服务器会拒绝访问并返回错误（例如 HTTP 401 Unauthorized）。</li>
-    <li style="margin-bottom: 0.8em;"><strong class="text-primary">5. 刷新令牌：</strong> 客户端检测到此错误后，会将之前保存的 <code class="language-bash">Refresh Token</code> 发送给<strong class="strong-emphasis">授权服务器</strong>的一个特定端点（Token Endpoint）。</li>
-    <li style="margin-bottom: 0em;"><strong class="text-primary">6. 获取新令牌对：</strong> 授权服务器验证 <code class="language-bash">Refresh Token</code> 的有效性。如果验证通过，它会签发<strong class="text-danger">一个新的 Access Token</strong>（有时也会签发一个新的 Refresh Token）并返回给客户端。客户端随后使用新的 <code class="language-bash">Access Token</code> 重新尝试访问资源，流程继续。 [18]</li>
+    <h3>工作流程</h3>
+
+    <ol>
+      <li><strong>首次认证：</strong>用户使用用户名和密码等凭据进行登录。</li>
+      <li><strong>获取令牌对：</strong>认证成功后，授权服务器会同时签发一个短期的 Access Token 和一个长期的 Refresh Token 给客户端。</li>
+      <li><strong>访问资源：</strong>客户端存储这两个令牌，并使用 Access Token 访问受保护的资源（API）。资源服务器会验证此令牌的有效性。</li>
+      <li><strong>访问令牌过期：</strong>当 Access Token 过期后，资源服务器会拒绝访问并返回错误（例如 HTTP 401 Unauthorized）。</li>
+      <li><strong>刷新令牌：</strong>客户端检测到此错误后，会将之前保存的 Refresh Token 发送给授权服务器的一个特定端点（Token Endpoint）。</li>
+      <li><strong>获取新令牌对：</strong>授权服务器验证 Refresh Token 的有效性。如果验证通过，它会签发一个新的 Access Token（有时也会签发一个新的 Refresh Token）并返回给客户端。客户端随后使用新的 Access Token 重新尝试访问资源，流程继续。</li>
 </ol>
 
-<hr class="section-divider">
+    <p>这个流程可以用简化的序列描述：</p>
 
-<h2><span class="material-icons-outlined">security</span>安全性与存储</h2>
+    <pre><code>1. 用户登录 → 授权服务器
+2. 授权服务器 → 返回 Access Token + Refresh Token
+3. 客户端携带 Access Token → 访问资源服务器
+4. 资源服务器 → 返回数据
+5. (时间流逝，Access Token 过期)
+6. 客户端携带过期 Access Token → 访问资源服务器
+7. 资源服务器 → 返回 401 错误
+8. 客户端携带 Refresh Token → 授权服务器
+9. 授权服务器 → 返回新的 Access Token
+10. 客户端携带新 Access Token → 访问资源服务器</code></pre>
+
+    <hr>
+
+    <h2>安全性与存储</h2>
+
 <p>正确的令牌存储策略对于应用的安全至关重要。</p>
-<div class="content-box">
-    <h4><span class="material-icons-outlined">storage</span>令牌存储策略</h4>
-    <div class="two-col-grid-container">
-        <div class="col">
-            <p class="sub-topic-heading text-highlight-blue"><span class="material-icons-outlined">memory</span>Access Token</p>
-            <p>由于其生命周期短且需要频繁使用，通常存储在客户端的<strong class="strong-emphasis">内存</strong>中（例如，存储在 JavaScript 变量里）。这样可以防止跨站脚本攻击（XSS）直接窃取，因为内存中的数据相对不易被访问。 [12]</p>
-        </div>
-        <div class="col">
-            <p class="sub-topic-heading text-highlight-green"><span class="material-icons-outlined">http</span>Refresh Token</p>
-            <p>由于其长期有效且权限高，必须得到最严格的保护。在 Web 应用中，最佳实践是将其存储在 <strong class="strong-emphasis">HttpOnly</strong>、<strong class="strong-emphasis">Secure</strong>、<strong class="strong-emphasis">SameSite</strong> 的 Cookie 中。这可以有效防止 XSS 攻击，因为浏览器禁止 JavaScript 访问 HttpOnly Cookie。 [12]</p>
-        </div>
-    </div>
-</div>
 
-<h4><span class="material-icons-outlined">gpp_good</span>为什么这种机制更安全？</h4>
-<p>这种双令牌机制的核心安全优势在于<strong class="strong-emphasis">显著缩短了高风险令牌（Access Token）的暴露窗口</strong>。 [19] 即使 Access Token 被攻击者截获，它也会在很短的时间内失效。而真正有价值的 Refresh Token 则不直接参与与资源服务器的通信，仅在安全的后端通道中与授权服务器进行低频交互，从而大大降低了被盗风险。 [3] 同时，授权服务器可以随时撤销某个 Refresh Token，从而立即使其关联的所有会话失效。 [14]</p>
-</div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const graphOutput = document.getElementById('graph-output');
-    const zoomButton = document.getElementById('zoom-button');
-    const downloadButton = document.getElementById('download-button');
-    const zoomModal = document.getElementById('zoom-modal');
-    const zoomContent = document.getElementById('zoom-content');
-    const closeZoom = document.getElementById('close-zoom');
+    <h3>令牌存储策略</h3>
 
-    let panzoomInstance = null;
-    let vizInstance = null;
+    <h4>Access Token</h4>
 
-    const dotString = `
-    digraph TokenWorkflow {
-        graph [rankdir="TB", labelloc=t, label="Access & Refresh Token 工作流程", fontsize=20, fontname="Inter, sans-serif", bgcolor="transparent", pad="0.5", splines=ortho];
-        node [fontname="Inter, sans-serif", style="filled,rounded", shape=box, margin="0.25,0.15"];
-        edge [fontname="Inter, sans-serif", fontsize=10, color="#555"];
+    <p>由于其生命周期短且需要频繁使用，通常存储在客户端的<strong>内存</strong>中（例如，存储在 JavaScript 变量里）。这样可以防止跨站脚本攻击（XSS）直接窃取，因为内存中的数据相对不易被访问。</p>
 
-        subgraph cluster_servers {
-            label="服务器端";
-            style="filled";
-            color="#f0f3f7";
-            node [style="filled,rounded"];
-            auth_server [label="授权服务器", shape=cylinder, fillcolor="#B3E5FC"];
-            resource_server [label="资源服务器 (API)", shape=cylinder, fillcolor="#C8E6C9"];
-        }
+    <h4>Refresh Token</h4>
 
-        client [label="客户端应用", shape=component, fillcolor="#FFF9C4"];
-        
-        // Initial Authentication
-        client -> auth_server [label="1. 用户登录认证"];
-        auth_server -> client [label="2. 返回 Access Token (短期)\\n和 Refresh Token (长期)", fontcolor="#007bff", style=dashed];
+    <p>由于其长期有效且权限高，必须得到最严格的保护。在 Web 应用中，最佳实践是将其存储在 <strong>HttpOnly</strong>、<strong>Secure</strong>、<strong>SameSite</strong> 的 Cookie 中。这可以有效防止 XSS 攻击，因为浏览器禁止 JavaScript 访问 HttpOnly Cookie。</p>
 
-        // API Access
-        client -> resource_server [label="3. 携带 Access Token 访问资源", fontcolor="#28a745"];
-        resource_server -> client [label="4. 验证成功，返回数据", style=dashed, fontcolor="#28a745"];
+    <h3>为什么这种机制更安全？</h3>
 
-        // Token Expiration and Refresh
-        client -> resource_server [label="5. (一段时间后) Access Token 过期，再次访问", color="#dc3545", style=dotted];
-        resource_server -> client [label="6. 访问被拒绝 (401 Unauthorized)", color="#dc3545", style=dashed];
-        client -> auth_server [label="7. 携带 Refresh Token 请求新令牌", fontcolor="#ff8f00"];
-        auth_server -> client [label="8. 验证通过，返回新的令牌对", fontcolor="#007bff", style=dashed];
+    <p>这种双令牌机制的核心安全优势在于<strong>显著缩短了高风险令牌（Access Token）的暴露窗口</strong>。即使 Access Token 被攻击者截获，它也会在很短的时间内失效。而真正有价值的 Refresh Token 则不直接参与与资源服务器的通信，仅在安全的后端通道中与授权服务器进行低频交互，从而大大降低了被盗风险。</p>
 
-        // Edges between servers for clarity
-        edge[style=invis];
-        auth_server -> resource_server;
-    }
-    `;
+    <p>同时，授权服务器可以随时撤销某个 Refresh Token，从而立即使其关联的所有会话失效。</p>
 
-    const checkViz = setInterval(() => {
-        if (typeof Viz !== 'undefined' && Viz.prototype.renderSVGElement) {
-            clearInterval(checkViz);
-            vizInstance = new Viz({ worker: undefined });
-            if (vizInstance) {
-                renderGraph();
-            }
-        }
-    }, 100);
+    <hr>
 
-    async function renderGraph() {
-        if (!vizInstance || !graphOutput || !zoomContent) return;
-        
-        const allButtons = [zoomButton, downloadButton];
-        allButtons.forEach(btn => { if(btn) btn.disabled = true; });
+    <h2>最佳实践建议</h2>
 
-        try {
-            const svgElement = await vizInstance.renderSVGElement(dotString);
-            graphOutput.innerHTML = '';
-            graphOutput.appendChild(svgElement);
-
-            zoomContent.innerHTML = '';
-            zoomContent.appendChild(svgElement.cloneNode(true));
-            const zoomSvg = zoomContent.querySelector('svg');
-
-            if (zoomSvg && typeof Panzoom !== 'undefined') {
-                if (panzoomInstance && panzoomInstance.destroy) {
-                    zoomContent.removeEventListener('wheel', handleWheel);
-                    panzoomInstance.destroy();
-                }
-                panzoomInstance = Panzoom(zoomSvg, {
-                    maxZoom: 15,
-                    minZoom: 0.1,
-                    contain: "outside",
-                    canvas: true
-                });
-                zoomContent.addEventListener('wheel', handleWheel, { passive: false });
-            }
-        } catch (error) {
-            console.error("Graphviz rendering failed:", error);
-            graphOutput.innerHTML = `<p class="text-danger">无法渲染图表。</p>`;
-        } finally {
-            allButtons.forEach(btn => { if(btn) btn.disabled = false; });
-        }
-    }
-    
-    function handleWheel(event) {
-        if (panzoomInstance && panzoomInstance.zoomWithWheel) {
-            event.preventDefault();
-            panzoomInstance.zoomWithWheel(event);
-        }
-    }
-
-    function openZoom() {
-        if (panzoomInstance) {
-            zoomModal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-            panzoomInstance.reset({ animate: true });
-            closeZoom.focus();
-        }
-    }
-
-    function closeZoomFunc() {
-        zoomModal.style.display = 'none';
-        document.body.style.overflow = '';
-    }
-
-    function downloadPNG() {
-        const svg = graphOutput.querySelector('svg');
-        if (!svg) {
-            alert('没有可下载的图表。');
-            return;
-        }
-
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const svgData = new XMLSerializer().serializeToString(svg);
-        const img = new Image();
-        
-        const svgWithBg = svgData.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
-        const blob = new Blob([svgWithBg], {type: 'image/svg+xml;charset=utf-8'});
-        const url = URL.createObjectURL(blob);
-        
-        img.onload = () => {
-            const padding = 40;
-            canvas.width = img.width + padding * 2;
-            canvas.height = img.height + padding * 2;
-            
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.drawImage(img, padding, padding);
-            URL.revokeObjectURL(url);
-
-            const pngUrl = canvas.toDataURL('image/png');
-            const a = document.createElement('a');
-            a.href = pngUrl;
-            a.download = 'token-workflow.png';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        };
-        img.onerror = (e) => {
-            console.error("Image loading failed:", e);
-            URL.revokeObjectURL(url);
-        };
-        img.src = url;
-    }
-
-    if (zoomButton) zoomButton.addEventListener('click', openZoom);
-    if (closeZoom) closeZoom.addEventListener('click', closeZoomFunc);
-    if (downloadButton) downloadButton.addEventListener('click', downloadPNG);
-    document.addEventListener('keydown', (e) => {
-        if (e.key === "Escape") closeZoomFunc();
-    });
-});
-</script>
+    <ul>
+      <li><strong>Access Token 有效期：</strong>建议设置为 15 分钟到 1 小时</li>
+      <li><strong>Refresh Token 有效期：</strong>建议设置为 7 天到 30 天</li>
+      <li><strong>令牌轮换：</strong>每次使用 Refresh Token 时，同时颁发新的 Refresh Token</li>
+      <li><strong>检测异常：</strong>监控 Refresh Token 的使用模式，检测并阻止可疑活动</li>
+      <li><strong>安全传输：</strong>所有令牌传输必须使用 HTTPS</li>
+      <li><strong>最小权限原则：</strong>Access Token 只包含完成当前操作所需的最小权限</li>
+    </ul>
+  </article>
 </body>
 </html>

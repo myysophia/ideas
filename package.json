@@ -1,0 +1,18 @@
+{
+  "name": "digital-garden",
+  "version": "1.0.0",
+  "description": "极简数字花园博客系统",
+  "scripts": {
+    "build": "node build.js",
+    "preview": "npx serve dist"
+  },
+  "dependencies": {
+    "marked": "^12.0.0",
+    "gray-matter": "^4.0.3"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18"
+  }
+}
+

@@ -1,333 +1,162 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PostgreSQL 高并发查询优化核心思路</title>
-<script>MathJax={chtml:{fontURL:'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2'}}</script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/full.render.js" defer></script>
-<script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js" defer></script>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
-<style>html,body{height:100%;margin:0;scroll-behavior:smooth}body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.7;background-color:#f8faff;color:#374151;padding:10px;box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}.container{max-width:1100px;margin:10px auto;padding:20px;background-color:#fff;border-radius:.45rem;box-shadow:0 .4rem 1.2rem rgba(0,0,0,.06)}.material-icons-outlined{vertical-align:middle;font-size:1.15em;margin-right:.3em;line-height:1}h1>.material-icons-outlined,h2>.material-icons-outlined{font-size:1.1em;margin-right:.4em;color:#007bff}h3>.material-icons-outlined,h4>.material-icons-outlined,h5>.material-icons-outlined{font-size:1.1em;margin-right:.4em;color:#4a5568}h1,h2,h3,h4,h5{color:#1f2937;margin:1.8em 0 1em;font-weight:600;display:flex;align-items:center;line-height:1.3}h1{font-size:2.6rem;letter-spacing:-.7px;border-bottom:1px solid #dde2e9;padding-bottom:.5em;margin:0 0 .8em}h2{font-size:2.1rem;border-bottom:1px solid #eef2f5;padding-bottom:.55em}h3{font-size:1.7rem}h4{font-size:1.35rem;color:#525860}.prompt-container h5{font-size:1.1rem;margin:1.8em 0 1em;padding-bottom:.3em;border-bottom:1px solid #e0e6ed}.sub-topic-heading{font-weight:600;margin-top:1.5em;margin-bottom:.7em;font-size:1.1rem;display:flex;align-items:center;line-height:1.4}.sub-topic-heading .material-icons-outlined{font-size:1.2em;margin-right:.4em}.text-primary{color:#007bff}.text-secondary{color:#525860}.text-accent1{color:#17a2b8}.text-accent2{color:#28a745}.text-accent3{color:#ffc107}.text-danger{color:#dc3545;font-weight:700}.text-warning{color:#ff8f00;font-weight:700}.text-highlight-green{color:#20c997;font-weight:600}.text-highlight-blue{color:#339AF0;font-weight:600}.text-highlight-purple{color:#AE3EC9;font-weight:600}p{margin-bottom:1.4em;color:#4b5563;font-size:1.05rem}strong,.strong-emphasis{font-weight:600;color:#007bff}.prompt-container strong{color:#2d3748}.prompt-container .strong-emphasis{color:#0056b3}.math-formula{font-size:1.3em;padding:10px;background-color:#f0f3f7;border-radius:.45rem;text-align:center;margin:15px 0;overflow-x:auto;border:1px solid #dfe5ec}.prompt-container .math-formula{margin:1.5em 0 1.8em}.two-col-grid-container .col .math-formula{margin-top:.5em;margin-bottom:0;font-size:1.1em}pre[class*=language-]{padding:1.7em;margin:1.2em 0;overflow:auto;border-radius:.45rem;box-shadow:0 4px 12px rgba(0,0,0,.08);border:1px solid #dde2e9;background:#2d2d2d}code[class*=language-],pre[class*=language-]{font-family:"Fira Code","SFMono-Regular",Consolas,"Liberation Mono",Menlo,Courier,monospace;font-size:.93rem;line-height:1.5}:not(pre)>code{font-family:"Fira Code","SFMono-Regular",Consolas,"Liberation Mono",Menlo,Courier,monospace;background-color:#f8f0f2;padding:.2em .4em;border-radius:.25rem;font-size:.9em;color:#bf0045;border:1px solid #f0e4e7}.code-wrapper{position:relative;margin:1.2em 0}.prompt-container .code-wrapper{margin:1.5em 0 2em}.code-wrapper pre[class*=language-]{margin:0!important;padding-right:65px}.copy-button{position:absolute;top:.8em;right:.8em;z-index:5;padding:6px 12px;background-color:rgba(80,80,80,.8);color:#f0f4f8;border:1px solid rgba(255,255,255,.1);border-radius:.35rem;cursor:pointer;font-size:.78rem;opacity:.6;transition:opacity .25s ease,background-color .25s ease,transform .15s ease,box-shadow .25s ease;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:500;line-height:1.2;box-shadow:0 2px 4px rgba(0,0,0,.2);outline:0;user-select:none}.code-wrapper:hover .copy-button,.copy-button:focus,.copy-button:hover{opacity:1;background-color:rgba(50,50,50,.95);transform:translateY(-1px);box-shadow:0 4px 8px rgba(0,0,0,.25)}.copy-button:active{transform:translateY(0);box-shadow:0 1px 3px rgba(0,0,0,.15)}@media (max-width:768px){.copy-button{font-size:.75rem;padding:5px 9px;top:.6em;right:.6em}.code-wrapper pre[class*=language-]{padding-right:55px}}.prompt-container{background-color:#edf2f7;border:1px solid #cbd5e0;border-radius:.45rem;padding:25px;margin-bottom:25px;box-shadow:0 3px 8px rgba(0,0,0,.04)}.prompt-container>h2:first-of-type{margin-top:1em}.prompt-container h2,.prompt-container h3,.prompt-container h4,.prompt-container h5{color:#2d3748;border-bottom-color:#cbd5e0}.prompt-container h3>.material-icons-outlined{color:#2d3748}.prompt-container h3{margin-top:1.8em}.prompt-container h3+ul{margin-bottom:1em}.prompt-container .content-box h4{margin-bottom:.8em}.prompt-container h2>.material-icons-outlined,.prompt-container h5>.material-icons-outlined{color:#4a5868}.prompt-container h2{font-size:1.9rem}.prompt-container h3{font-size:1.55rem;margin-top:2.2em}.prompt-container h4{font-size:1.25rem;margin-top:1.8em}.prompt-container li,.prompt-container p{color:#34495e;font-size:1.05rem}.prompt-container .mandatory-requirement{font-weight:700;color:#721c24;padding:12px 18px;border:2px solid #dc3545;background-color:#fddfe2;border-radius:.45rem;display:flex;align-items:center;margin:1.2em 0}.prompt-container .mandatory-requirement .material-icons-outlined{color:#dc3545;font-size:1.6em;margin-right:.6em;flex-shrink:0}.prompt-container .mandatory-requirement .instruction-chinese{font-weight:700;color:#c0392b;display:block;margin-top:8px}.prompt-container .mandatory-requirement code{background-color:#fbecee;border-color:#f8d7da;color:#a92330}.prompt-container ul{list-style-type:none;padding-left:0;margin-bottom:0}.prompt-container ul li{margin-bottom:.8em;padding-left:1.5em;position:relative}.prompt-container ul li:last-child{margin-bottom:0}.prompt-container ul li .material-icons-outlined{position:absolute;left:0;top:4px;font-size:1.25em;color:#0277bd;margin-right:.5em}.prompt-container ul li:has(.material-icons-outlined){padding-left:2em}.prompt-container .manual-list-item{margin-bottom:.8em;padding-left:2em;position:relative;color:#34495e;font-size:1.05rem;line-height:1.6}.prompt-container .manual-list-item:last-child{margin-bottom:0}.prompt-container .manual-list-item .material-icons-outlined{position:absolute;left:0;top:4px;font-size:1.25em;margin-right:.5em;color:#0277bd}.prompt-container .config-color-note .material-icons-outlined{top:6px;color:#ff8f00;font-size:1.25em;vertical-align:text-bottom}.content-box .config-color-note ol,.two-col-grid-container ol{margin-top:.6em;margin-bottom:0;color:#34495e;font-size:1rem}.content-box .config-color-note ol li,.two-col-grid-container ol li{font-size:inherit;padding-left:0;margin-bottom:.5em;line-height:1.7}.content-box .config-color-note ol li:last-child,.two-col-grid-container ol li:last-child{margin-bottom:0}#graph-container{width:100%;max-width:900px;margin:25px auto;padding-top:70px;box-sizing:border-box;background-color:#fff;border:1px solid #dde2e9;border-radius:.45rem;box-shadow:0 .4rem 1.2rem rgba(0,0,0,.06);position:relative;overflow:hidden}.prompt-container #graph-container{margin:20px auto 30px;background-color:#fff}#graph-output{display:flex;justify-content:center;align-items:center;min-height:350px;padding:30px;background-color:#fff}#graph-output svg{display:block;width:100%;max-width:100%;height:auto}#graph-controls-container{position:absolute;top:20px;right:20px;display:flex;gap:14px;z-index:10}.graph-button{padding:9px 15px;background-color:rgba(50,50,50,.8);color:#f0f4f8;border:none;border-radius:.35rem;cursor:pointer;font-size:.88rem;opacity:.9;transition:opacity .2s ease,background-color .2s ease,transform .15s ease,box-shadow .15s ease;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:500;line-height:1.2;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 5px rgba(0,0,0,.12)}.graph-button:hover{opacity:1;background-color:rgba(30,30,30,.9);transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,.18)}.graph-button:active{transform:translateY(0);box-shadow:0 1px 3px rgba(0,0,0,.1)}.graph-button:disabled{opacity:.65;cursor:not-allowed;background-color:rgba(50,50,50,.8);transform:translateY(0);box-shadow:0 1px 3px rgba(0,0,0,.08)}.graph-button .svg-icon{width:1.25em;height:1.25em;fill:currentColor}.graph-button .material-icons-outlined{font-size:1.4em;margin-right:0}#layout-toggle-button{min-width:48px;font-weight:500;font-size:1rem}#layout-toggle-button.loading .material-icons-outlined{font-size:1.4em}@keyframes spin{to{transform:rotate(1turn)}}.icon-spin{animation:spin 1.5s linear infinite;display:inline-block}#zoom-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(25,28,32,.95);z-index:1000;justify-content:center;align-items:center;overflow:hidden;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}#zoom-content{position:relative;width:97%;height:97%;background-color:#fff;overflow:hidden;display:flex;justify-content:center;align-items:center;border-radius:calc(.45rem* 2);box-shadow:0 25px 60px rgba(0,0,0,.35)}#zoom-content svg{max-width:none;max-height:none;width:100%;height:100%;cursor:grab;display:block}#zoom-content svg:active{cursor:grabbing}#close-zoom{position:absolute;top:12px;right:12px;background:rgba(50,50,50,.85);color:#fff;border:none;border-radius:50%;width:48px;height:48px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1001;transition:background-color .25s ease;box-shadow:0 3px 12px rgba(0,0,0,.3)}#close-zoom:focus-visible,#close-zoom:hover{background:rgba(20,20,20,.95);outline:0}#close-zoom .material-icons-outlined{font-size:30px;margin-right:0}.two-col-grid-container .col p:last-of-type{margin-bottom:0}.section-divider{border:0;height:1px;background-color:#e2e8f0;margin:2.5em 0}.two-col-grid-container{display:grid;grid-template-columns:1fr;gap:25px;margin-bottom:1.5em;align-items:stretch}.two-col-grid-container .col>:first-child{margin-top:0}.two-col-grid-container .col>:last-child{margin-bottom:0}.two-col-grid-container h4{margin-top:.8em}.two-col-grid-container .col p{margin-bottom:.8em}.content-box{margin-top:1.5em;margin-bottom:1.5em}.content-box>:first-child{margin-top:0}.content-box>:last-child{margin-bottom:0}@media (min-width:769px){.two-col-grid-container{grid-template-columns:repeat(2,1fr);gap:30px}.content-box{background-color:#fff;border:1px solid #e2e8f0;border-radius:.45rem;padding:20px 22px;box-shadow:0 2px 5px rgba(0,0,0,.04);box-sizing:border-box}.two-col-grid-container .col{background-color:#fff;border:1px solid #e2e8f0;border-radius:.45rem;padding:20px 22px;box-shadow:0 2px 5px rgba(0,0,0,.04);box-sizing:border-box}}@media (max-width:768px){.content-box{margin-top:0}.content-box>h4:first-child{margin-top:1.8em}.content-box>.manual-list-item:last-child{margin-bottom:.8em}}@media (max-width:768px){body{padding:10px;font-size:.96rem}.container{padding:15px;margin:10px auto}h1{font-size:2rem;margin-bottom:.7em}h2{font-size:1.6rem}h3{font-size:1.35rem}h4{font-size:1.15rem}h5{font-size:1rem}.prompt-container>h2:first-of-type{margin-top:.8em}.prompt-container h2{font-size:1.5rem}.prompt-container h3{font-size:1.25rem;margin-top:2em}.prompt-container h4{font-size:1.1rem;margin-top:1.6em}.prompt-container h5{font-size:1rem;margin-top:1.5em}pre[class*=language-],.code-wrapper{font-size:.88rem;padding:1.2em}.math-formula{font-size:1.15em;padding:8px}#graph-container{padding-top:60px}.prompt-container #graph-container{margin:20px auto}#graph-output{min-height:280px}#graph-controls-container{top:12px;right:12px;gap:8px}.graph-button{font-size:.8rem;padding:7px 10px}.graph-button .material-icons-outlined,.graph-button .svg-icon{font-size:1.25em}#layout-toggle-button{min-width:40px;font-size:.9rem}#layout-toggle-button.loading .material-icons-outlined{font-size:1.25em}#close-zoom{width:40px;height:40px}#close-zoom .material-icons-outlined{font-size:24px}.section-divider{margin:2em 0}.two-col-grid-container{margin-bottom:1em}.content-box{margin-bottom:1em}.two-col-grid-container .col>:last-child{margin-bottom:1.4em}.two-col-grid-container .col:last-child>:last-child{margin-bottom:0}.two-col-grid-container .col .math-formula{margin-bottom:1.4em}.two-col-grid-container .col p:last-of-type{margin-bottom:1.4em}.two-col-grid-container .col:last-child p:last-of-type{margin-bottom:0}}@media (max-width:480px){body{padding:5px}.container{padding:10px;margin:5px auto}h1{font-size:1.7rem;margin-bottom:.6em}h2{font-size:1.4rem}h3{font-size:1.2rem}h4{font-size:1.05rem}h5{font-size:.95rem}.prompt-container{padding:15px}.prompt-container>h2:first-of-type{margin-top:.6em}.prompt-container h2{font-size:1.3rem}.prompt-container h3{font-size:1.1rem;margin-top:1.8em}.prompt-container h4{font-size:1rem;margin-top:1.5em}.prompt-container h5{font-size:.9rem}.prompt-container .manual-list-item,.prompt-container li,.prompt-container p,.two-col-grid-container ol,.content-box .config-color-note ol{font-size:.9rem}.prompt-container .mandatory-requirement{padding:8px 12px;font-size:.85rem}.prompt-container .mandatory-requirement .material-icons-outlined{font-size:1.2em}.prompt-container .manual-list-item,.prompt-container ul li{padding-left:1.2em}.prompt-container .manual-list-item,.prompt-container ul li:has(.material-icons-outlined){padding-left:1.8em}#graph-controls-container{flex-direction:column;align-items:flex-end;gap:8px}#graph-container{padding-top:140px}.graph-button{width:auto;min-width:130px;justify-content:flex-start}.section-divider{margin:1.8em 0}.two-col-grid-container{gap:20px}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL 高并发查询优化：核心思路与实践</title>
+  <meta name="description" content="系统化的 PostgreSQL 高并发优化方法论，从查询优化到架构扩展的完整指南">
 </head>
 <body>
-<div class="container">
-<h1><span class="material-icons-outlined">speed</span> <span class="text-primary">PostgreSQL 高并发查询优化</span> <span class="text-secondary">核心思路与实践</span></h1>
-<p>PostgreSQL 以其稳定性、功能丰富和强大的可扩展性而闻名。然而，在高并发场景下，如果没有正确的优化策略，即便是最强大的数据库也会面临性能瓶颈。优化的核心在于<strong class="strong-emphasis">减少不必要的工作、最小化资源竞争</strong>，并建立一套<strong class="text-accent2">可度量、可迭代</strong>的优化流程。</p>
+  <nav>
+    <a href="/">首页</a>
+    <a href="/about.html">关于</a>
+  </nav>
+  <article>
+    <header>
+      <h1>PostgreSQL 高并发查询优化：核心思路与实践</h1>
+      <time datetime="2024-01-08">2024-01-08</time>
+    </header>
 
-<h2><span class="material-icons-outlined">psychology</span>核心优化思想：从战略到战术</h2>
-<p>在深入具体技术之前，必须建立正确的优化思维模式。这比任何单一的技术点都重要。</p>
-<div class="two-col-grid-container">
-    <div class="col">
-        <h4><span class="material-icons-outlined">rule</span>1. 度量，而非猜测</h4>
-        <p>性能优化领域的第一原则是“不要猜测”。任何优化都必须基于数据。在高并发场景下，<strong class="strong-emphasis">压测环境</strong>和<strong class="strong-emphasis">生产监控</strong>是你的眼睛。核心工具是 <code>EXPLAIN ANALYZE</code>，它能告诉你查询计划的真相。</p>
-    </div>
-    <div class="col">
-         <h4><span class="material-icons-outlined">layers</span>2. 分层优化思维</h4>
-        <p>将性能问题视为一个层次化的金字塔。绝大多数问题都出在塔基，即<strong class="text-danger">SQL查询和索引</strong>层面。只有在塔基坚实之后，才需要向上层（连接、锁、架构）进行优化。直接跳到顶层优化是本末倒置。</p>
-    </div>
-</div>
+    <p>PostgreSQL 以其稳定性、功能丰富和强大的可扩展性而闻名。然而，在高并发场景下，如果没有正确的优化策略，即便是最强大的数据库也会面临性能瓶颈。优化的核心在于<strong>减少不必要的工作、最小化资源竞争</strong>，并建立一套<strong>可度量、可迭代</strong>的优化流程。</p>
 
-<hr class="section-divider">
+    <h2>核心优化思想：从战略到战术</h2>
 
-<h2><span class="material-icons-outlined">schema</span>PostgreSQL 优化金字塔</h2>
-<p>下图展示了高并发优化的五个层次。你应该<strong class="strong-emphasis">从下至上</strong>逐层分析和解决问题，因为底层优化通常具有最高的投入产出比（ROI）。</p>
+    <p>在深入具体技术之前，必须建立正确的优化思维模式。这比任何单一的技术点都重要。</p>
 
-<div id="graph-container">
-    <div id="graph-controls-container">
-         <button id="zoom-button" class="graph-button" title="全屏查看与交互"><svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg> <span>全屏</span></button>
-        <button id="download-button" class="graph-button" title="下载 PNG 图片"><svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zm14-9h-4V3H9v8H5l7 7 7-7z"/></svg> <span>下载</span></button>
-    </div>
-    <div id="graph-output"></div>
-</div>
-<div id="zoom-modal" role="dialog" aria-modal="true" aria-labelledby="zoom-modal-title">
-    <div id="zoom-content"></div>
-    <button id="close-zoom" title="关闭全屏" aria-label="关闭全屏"><span class="material-icons-outlined">close</span></button>
-    <h2 id="zoom-modal-title" style="display:none">图表全屏交互视图</h2>
-</div>
+    <h3>1. 度量，而非猜测</h3>
 
-<div class="content-box" style="margin-top:2.5em;">
-    <h3 id="layer1"><span class="material-icons-outlined" style="color:#28a745;">filter_1</span> <span class="text-accent2">第一层：SQL 查询与索引 (ROI 最高)</span></h3>
+    <p>性能优化领域的第一原则是"不要猜测"。任何优化都必须基于数据。在高并发场景下，<strong>压测环境</strong>和<strong>生产监控</strong>是你的眼睛。核心工具是 <code>EXPLAIN ANALYZE</code>，它能告诉你查询计划的真相。</p>
+
+    <h3>2. 分层优化思维</h3>
+
+    <p>将性能问题视为一个层次化的金字塔。绝大多数问题都出在塔基，即 SQL 查询和索引层面。只有在塔基坚实之后，才需要向上层（连接、锁、架构）进行优化。直接跳到顶层优化是本末倒置。</p>
+
+    <hr>
+
+    <h2>PostgreSQL 优化金字塔</h2>
+
+    <p>高并发优化可以分为五个层次，你应该<strong>从下至上</strong>逐层分析和解决问题，因为底层优化通常具有最高的投入产出比（ROI）。</p>
+
+    <h3>第一层：SQL 查询与索引（ROI 最高）</h3>
+
     <p>这是优化的基石，大约 80% 的性能问题都源于此。</p>
-    <div class="two-col-grid-container">
-        <div class="col">
-            <h4 class="sub-topic-heading"><span class="material-icons-outlined">query_stats</span>善用 <code>EXPLAIN ANALYZE</code></h4>
-            <p>这是诊断慢查询的<strong class="strong-emphasis">终极武器</strong>。它不仅显示查询计划，还会<strong class="text-danger">实际执行</strong>查询并返回真实耗时和行数。</p>
-            <p><strong>关注点：</strong></p>
-            <ul>
-                <li>是否走了预期索引？（Index Scan vs. Seq Scan）</li>
-                <li>预估行数 (rows) 与实际行数 (actual rows) 是否偏差巨大？</li>
-                <li>是否存在高成本的排序 (Sort) 或哈希 (Hash) 操作？</li>
-            </ul>
-        </div>
-        <div class="col">
-            <h4 class="sub-topic-heading"><span class="material-icons-outlined">key</span>精通索引策略</h4>
-            <p>索引是加速查询的最直接手段，但不是银弹。滥用索引会拖慢写性能。</p>
-            <ul>
-                <li><strong>B-Tree 索引：</strong>最常用，适用于等值查询和范围查询 (<code>=, &gt;, &lt;, BETWEEN, IN</code>)。</li>
-                <li><strong>GIN 索引：</strong>适用于多值类型，如全文搜索 (<code>tsvector</code>)、数组 (<code>any</code>)、JSONB (<code>@&gt;, ?</code>)。</li>
-                <li><strong>部分索引 (Partial Index)：</strong>只对表的子集创建索引。对于有大量“已归档”状态的记录的表，只索引“活跃”记录是奇招。<code>CREATE INDEX ... WHERE status = 'active';</code></li>
-                <li><strong>覆盖索引 (Covering Index)：</strong>通过 <code>INCLUDE</code> 子句，让索引包含查询所需的所有列，实现“仅索引扫描 (Index Only Scan)”，避免回表，极大提升性能。</li>
-            </ul>
-        </div>
-    </div>
-</div>
 
-<div class="content-box">
-    <h3 id="layer2"><span class="material-icons-outlined" style="color:#17a2b8;">filter_2</span> <span class="text-accent1">第二层：连接与资源管理</span></h3>
+    <h4>善用 EXPLAIN ANALYZE</h4>
+
+    <p>这是诊断慢查询的终极武器。它不仅显示查询计划，还会实际执行查询并返回真实耗时和行数。</p>
+
+    <p><strong>关注点：</strong></p>
+    <ul>
+      <li>是否走了预期索引？（Index Scan vs. Seq Scan）</li>
+      <li>预估行数 (rows) 与实际行数 (actual rows) 是否偏差巨大？</li>
+      <li>是否存在高成本的排序 (Sort) 或哈希 (Hash) 操作？</li>
+    </ul>
+
+    <h4>精通索引策略</h4>
+
+    <p>索引是加速查询的最直接手段，但不是银弹。滥用索引会拖慢写性能。</p>
+
+    <ul>
+      <li><strong>B-Tree 索引：</strong>最常用，适用于等值查询和范围查询 (<code>=</code>, <code>&gt;</code>, <code>&lt;</code>, <code>BETWEEN</code>, <code>IN</code>)。</li>
+      <li><strong>GIN 索引：</strong>适用于多值类型，如全文搜索 (<code>tsvector</code>)、数组 (<code>any</code>)、JSONB (<code>@&gt;</code>, <code>?</code>)。</li>
+      <li><strong>部分索引 (Partial Index)：</strong>只对表的子集创建索引。对于有大量"已归档"状态的记录的表，只索引"活跃"记录是奇招。</li>
+      <li><strong>覆盖索引 (Covering Index)：</strong>通过 <code>INCLUDE</code> 子句，让索引包含查询所需的所有列，实现"仅索引扫描 (Index Only Scan)"，避免回表，极大提升性能。</li>
+    </ul>
+
+    <p>示例：</p>
+    <pre><code>-- 部分索引：只索引活跃用户
+CREATE INDEX idx_active_users ON users(id) WHERE status = 'active';
+
+-- 覆盖索引：包含常用查询的所有列
+CREATE INDEX idx_user_profile ON users(id) INCLUDE (name, email, created_at);</code></pre>
+
+    <h3>第二层：连接与资源管理</h3>
+
     <p>当单个查询已经很快，但并发量一上来就变慢时，瓶颈往往在这里。</p>
-    <div class="two-col-grid-container">
-        <div class="col">
-             <h4 class="sub-topic-heading"><span class="material-icons-outlined">hub</span>必须使用连接池</h4>
-             <p>PostgreSQL 的进程模型决定了每个连接都是一个独立的后端进程，建立连接的开销很大。高并发下，如果没有连接池，系统资源会迅速耗尽。</p>
-             <p><strong>解决方案：</strong>在应用和数据库之间部署连接池中间件，如 <strong class="strong-emphasis">PgBouncer</strong> 或 <strong class="strong-emphasis">Pgpool-II</strong>。应用向连接池请求连接，速度极快。</p>
-        </div>
-        <div class="col">
-            <h4 class="sub-topic-heading"><span class="material-icons-outlined">memory</span>合理配置内存</h4>
-            <p>内存配置直接影响数据库性能。</p>
-            <ul>
-                <li><code>shared_buffers</code>: PG 的核心缓存，建议设置为主机内存的 1/4。</li>
-                <li><code>work_mem</code>: 每个排序或哈希操作可使用的内存。太小会导致磁盘排序，极大拖慢查询。可以通过 <code>EXPLAIN ANALYZE</code> 查看 "Sort Method: external merge Disk:" 来判断是否需要调大。</li>
-                <li><code>maintenance_work_mem</code>: 用于 <code>VACUUM</code>, <code>CREATE INDEX</code> 等维护操作。适当调大可以显著加快维护速度。</li>
-            </ul>
-        </div>
-    </div>
-</div>
 
-<div class="content-box">
-    <h3 id="layer3"><span class="material-icons-outlined" style="color:#ffc107;">filter_3</span> <span class="text-accent3">第三层：锁与并发控制</span></h3>
-    <p>高并发必然带来资源争抢，核心就是锁。优化的目标是<strong class="strong-emphasis">减少锁的持有时间</strong>和<strong class="strong-emphasis">降低锁的粒度</strong>。</p>
+    <h4>必须使用连接池</h4>
+
+    <p>PostgreSQL 的进程模型决定了每个连接都是一个独立的后端进程，建立连接的开销很大。高并发下，如果没有连接池，系统资源会迅速耗尽。</p>
+
+    <p><strong>解决方案：</strong>在应用和数据库之间部署连接池中间件，如 <strong>PgBouncer</strong> 或 <strong>Pgpool-II</strong>。应用向连接池请求连接，速度极快。</p>
+
+    <h4>合理配置内存</h4>
+
+    <p>内存配置直接影响数据库性能。</p>
+
     <ul>
-        <li><strong class="text-highlight-purple">保持事务简短：</strong> “小事务，快提交”。避免在事务中执行耗时的业务逻辑或等待外部 I/O。</li>
-        <li><strong class="text-highlight-blue">理解锁的级别：</strong> 知道何时会产生行锁 (Row Lock)、页锁 (Page Lock)、表锁 (Table Lock)。避免不必要的全表更新。</li>
-        <li><strong class="text-highlight-green">警惕锁争用 (Lock Contention)：</strong> 使用 <code>pg_locks</code> 和 <code>pg_stat_activity</code> 视图监控长时间持有或等待锁的查询。</li>
-        <li><strong class="text-danger">小心使用 <code>SELECT ... FOR UPDATE</code>：</strong> 这是一个强力的行级排他锁，确保一次只有一个事务能修改某行。但如果滥用，很容易造成死锁或长时间等待。</li>
+      <li><code>shared_buffers</code>: PG 的核心缓存，建议设置为主机内存的 1/4。</li>
+      <li><code>work_mem</code>: 每个排序或哈希操作可使用的内存。太小会导致磁盘排序，极大拖慢查询。可以通过 <code>EXPLAIN ANALYZE</code> 查看 "Sort Method: external merge Disk:" 来判断是否需要调大。</li>
+      <li><code>maintenance_work_mem</code>: 用于 <code>VACUUM</code>, <code>CREATE INDEX</code> 等维护操作。适当调大可以显著加快维护速度。</li>
     </ul>
-</div>
 
-<div class="content-box">
-    <h3 id="layer4"><span class="material-icons-outlined" style="color:#ff8f00;">filter_4</span> <span class="text-warning">第四层：数据库与表结构设计</span></h3>
+    <h3>第三层：锁与并发控制</h3>
+
+    <p>高并发必然带来资源争抢，核心就是锁。优化的目标是<strong>减少锁的持有时间</strong>和<strong>降低锁的粒度</strong>。</p>
+
+    <ul>
+      <li><strong>保持事务简短：</strong>"小事务，快提交"。避免在事务中执行耗时的业务逻辑或等待外部 I/O。</li>
+      <li><strong>理解锁的级别：</strong>知道何时会产生行锁 (Row Lock)、页锁 (Page Lock)、表锁 (Table Lock)。避免不必要的全表更新。</li>
+      <li><strong>警惕锁争用 (Lock Contention)：</strong>使用 <code>pg_locks</code> 和 <code>pg_stat_activity</code> 视图监控长时间持有或等待锁的查询。</li>
+      <li><strong>小心使用 SELECT ... FOR UPDATE：</strong>这是一个强力的行级排他锁，确保一次只有一个事务能修改某行。但如果滥用，很容易造成死锁或长时间等待。</li>
+    </ul>
+
+    <h3>第四层：数据库与表结构设计</h3>
+
     <p>当以上优化都已做到极致，性能仍不满足时，可能需要从根本上调整数据模型。</p>
-    <div class="two-col-grid-container">
-        <div class="col">
-            <h4 class="sub-topic-heading"><span class="material-icons-outlined">splitscreen</span>表分区 (Partitioning)</h4>
-            <p>对于时序数据或日志等超大表，按时间范围（如月、日）或地区进行分区。查询时可以利用“分区裁剪 (Partition Pruning)”技术，只扫描相关的子表，极大提升查询效率。</p>
-        </div>
-        <div class="col">
-             <h4 class="sub-topic-heading"><span class="material-icons-outlined">merge_type</span>反范式设计与物化视图</h4>
-            <p>对于需要复杂 JOIN 和聚合的报表类查询，可以适度反范式，将常用数据冗余存储以避免 JOIN。或者使用<strong class="strong-emphasis">物化视图 (Materialized View)</strong> 预先计算好结果，查询时直接读取，代价是数据有一定延迟。</p>
-        </div>
-    </div>
-</div>
 
-<div class="content-box">
-    <h3 id="layer5"><span class="material-icons-outlined" style="color:#dc3545;">filter_5</span> <span class="text-danger">第五层：基础设施与拓扑</span></h3>
+    <h4>表分区 (Partitioning)</h4>
+
+    <p>对于时序数据或日志等超大表，按时间范围（如月、日）或地区进行分区。查询时可以利用"分区裁剪 (Partition Pruning)"技术，只扫描相关的子表，极大提升查询效率。</p>
+
+    <pre><code>-- 按月分区的示例
+CREATE TABLE measurements (
+    id SERIAL,
+    ts TIMESTAMP NOT NULL,
+    value NUMERIC
+) PARTITION BY RANGE (ts);
+
+CREATE TABLE measurements_2024_01 PARTITION OF measurements
+    FOR VALUES FROM ('2024-01-01') TO ('2024-02-01');</code></pre>
+
+    <h4>反范式设计与物化视图</h4>
+
+    <p>对于需要复杂 JOIN 和聚合的报表类查询，可以适度反范式，将常用数据冗余存储以避免 JOIN。或者使用<strong>物化视图 (Materialized View)</strong>预先计算好结果，查询时直接读取，代价是数据有一定延迟。</p>
+
+    <pre><code>-- 创建物化视图
+CREATE MATERIALIZED VIEW daily_stats AS
+SELECT date_trunc('day', ts) as day,
+       COUNT(*) as count,
+       AVG(value) as avg_value
+FROM measurements
+GROUP BY day;
+
+-- 定期刷新
+REFRESH MATERIALIZED VIEW daily_stats;</code></pre>
+
+    <h3>第五层：基础设施与拓扑</h3>
+
     <p>这是优化的最后手段，涉及扩展数据库的处理能力。</p>
+
     <ul>
-        <li><strong class="text-highlight-blue">读写分离：</strong> 最常见的扩展方式。设置一个或多个只读副本 (Read Replicas)，将所有报表、分析类查询都路由到副本上，主库只处理写操作和核心的读请求。</li>
-        <li><strong class="text-highlight-green">硬件升级：</strong> 更快的 CPU、更多的内存、更高 IOPS 的磁盘 (如 NVMe SSD) 都是简单粗暴但有效的方法。</li>
-        <li><strong class="text-highlight-purple">分片 (Sharding)：</strong> 终极解决方案，但复杂度极高。通过 Citus 等插件将数据水平拆分到多个独立的 PG 实例上。这是万不得已才考虑的方案。</li>
+      <li><strong>读写分离：</strong>最常见的扩展方式。设置一个或多个只读副本 (Read Replicas)，将所有报表、分析类查询都路由到副本上，主库只处理写操作和核心的读请求。</li>
+      <li><strong>硬件升级：</strong>更快的 CPU、更多的内存、更高 IOPS 的磁盘 (如 NVMe SSD) 都是简单粗暴但有效的方法。</li>
+      <li><strong>分片 (Sharding)：</strong>终极解决方案，但复杂度极高。通过 Citus 等插件将数据水平拆分到多个独立的 PG 实例上。这是万不得已才考虑的方案。</li>
     </ul>
-</div>
-</div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('pre > code[class*="language-"]').forEach(codeBlock => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'code-wrapper';
-        const pre = codeBlock.parentNode;
-        pre.parentNode.insertBefore(wrapper, pre);
-        wrapper.appendChild(pre);
-        const copyButton = document.createElement('button');
-        copyButton.className = 'copy-button';
-        copyButton.textContent = '复制';
-        wrapper.appendChild(copyButton);
-        copyButton.addEventListener('click', () => {
-            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
-                copyButton.textContent = '已复制!';
-                setTimeout(() => {
-                    copyButton.textContent = '复制';
-                }, 2000);
-            });
-        });
-    });
 
-    const graphOutput = document.getElementById('graph-output');
-    const zoomButton = document.getElementById('zoom-button');
-    const downloadButton = document.getElementById('download-button');
-    const zoomModal = document.getElementById('zoom-modal');
-    const zoomContent = document.getElementById('zoom-content');
-    const closeZoom = document.getElementById('close-zoom');
+    <hr>
 
-    let panzoomInstance = null;
-    let vizInstance = null;
+    <h2>总结与建议</h2>
 
-    const dotString = `
-    digraph OptimizationPyramid {
-        graph [rankdir="TB", bgcolor="transparent", fontname="Inter, sans-serif"];
-        node [shape=box, style="filled,rounded", fontname="Inter, sans-serif", margin="0.25,0.15"];
-        edge [fontname="Inter, sans-serif", fontsize=11, color="#555"];
+    <p>最终的决策是一个在准确率、延迟、成本和可维护性之间的多维度权衡。</p>
 
-        subgraph cluster_5 {
-            label="第五层: 基础设施 & 拓扑 (最后手段)";
-            style="filled"; color="#FFF8E1";
-            l5 [label="读写分离 | 硬件升级 | 分片(Sharding)", fillcolor="#FFECB3"];
-        }
-
-        subgraph cluster_4 {
-            label="第四层: 数据库 & 表结构";
-            style="filled"; color="#E1F5FE";
-            l4 [label="表分区 | 反范式/物化视图", fillcolor="#B3E5FC"];
-        }
-
-        subgraph cluster_3 {
-            label="第三层: 锁 & 并发控制";
-            style="filled"; color="#E8F5E9";
-            l3 [label="短事务 | 减少锁竞争 | 小心 FOR UPDATE", fillcolor="#C8E6C9"];
-        }
-        
-        subgraph cluster_2 {
-            label="第二层: 连接 & 资源管理";
-            style="filled"; color="#F3E5F5";
-            l2 [label="连接池(PgBouncer) | 内存调优(work_mem)", fillcolor="#E1BEE7"];
-        }
-
-        subgraph cluster_1 {
-            label="第一层: SQL查询 & 索引 (ROI最高)";
-            style="filled"; color="#F1F8E9";
-            l1 [label="EXPLAIN ANALYZE | 精准索引策略 | 覆盖索引", fillcolor="#DCEDC8"];
-        }
-        
-        l5 -> l4 -> l3 -> l2 -> l1 [label="  优化分析方向 (由上至下)", dir=back, penwidth=1.5, color="#dc3545", fontcolor="#dc3545"];
-        
-        {rank=min; l5;}
-        {rank=max; l1;}
-    }
-    `;
-
-    const checkViz = setInterval(() => {
-        if (typeof Viz !== 'undefined' && Viz.prototype.renderSVGElement) {
-            clearInterval(checkViz);
-            vizInstance = new Viz({ worker: undefined });
-            if (vizInstance) {
-                renderGraph();
-            }
-        }
-    }, 100);
-
-    async function renderGraph() {
-        if (!vizInstance || !graphOutput || !zoomContent) return;
-        
-        const allButtons = [zoomButton, downloadButton];
-        allButtons.forEach(btn => { if(btn) btn.disabled = true; });
-
-        try {
-            const svgElement = await vizInstance.renderSVGElement(dotString);
-            graphOutput.innerHTML = '';
-            graphOutput.appendChild(svgElement);
-
-            zoomContent.innerHTML = '';
-            zoomContent.appendChild(svgElement.cloneNode(true));
-            const zoomSvg = zoomContent.querySelector('svg');
-
-            if (zoomSvg && typeof Panzoom !== 'undefined') {
-                if (panzoomInstance && panzoomInstance.destroy) {
-                    zoomContent.removeEventListener('wheel', handleWheel);
-                    panzoomInstance.destroy();
-                }
-                panzoomInstance = Panzoom(zoomSvg, {
-                    maxZoom: 15,
-                    minZoom: 0.1,
-                    contain: "outside",
-                    canvas: true
-                });
-                zoomContent.addEventListener('wheel', handleWheel, { passive: false });
-            }
-        } catch (error) {
-            console.error("Graphviz rendering failed:", error);
-            graphOutput.innerHTML = `<p class="text-danger">无法渲染图表。</p>`;
-        } finally {
-            allButtons.forEach(btn => { if(btn) btn.disabled = false; });
-        }
-    }
-    
-    function handleWheel(event) {
-        if (panzoomInstance && panzoomInstance.zoomWithWheel) {
-            event.preventDefault();
-            panzoomInstance.zoomWithWheel(event);
-        }
-    }
-
-    function openZoom() {
-        if (panzoomInstance) {
-            zoomModal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-            panzoomInstance.reset({ animate: true });
-            closeZoom.focus();
-        }
-    }
-
-    function closeZoomFunc() {
-        zoomModal.style.display = 'none';
-        document.body.style.overflow = '';
-    }
-
-    function downloadPNG() {
-        const svg = graphOutput.querySelector('svg');
-        if (!svg) {
-            alert('没有可下载的图表。');
-            return;
-        }
-
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const svgData = new XMLSerializer().serializeToString(svg);
-        const img = new Image();
-        
-        const svgWithBg = svgData.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
-        const blob = new Blob([svgWithBg], {type: 'image/svg+xml;charset=utf-8'});
-        const url = URL.createObjectURL(blob);
-        
-        img.onload = () => {
-            const padding = 40;
-            canvas.width = img.width + padding * 2;
-            canvas.height = img.height + padding * 2;
-            
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.drawImage(img, padding, padding);
-            URL.revokeObjectURL(url);
-
-            const pngUrl = canvas.toDataURL('image/png');
-            const a = document.createElement('a');
-            a.href = pngUrl;
-            a.download = 'postgres-optimization-pyramid.png';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        };
-        img.onerror = (e) => {
-            console.error("Image loading failed:", e);
-            URL.revokeObjectURL(url);
-        };
-        img.src = url;
-    }
-
-    if (zoomButton) zoomButton.addEventListener('click', openZoom);
-    if (closeZoom) closeZoom.addEventListener('click', closeZoomFunc);
-    if (downloadButton) downloadButton.addEventListener('click', downloadPNG);
-    document.addEventListener('keydown', (e) => {
-        if (e.key === "Escape") closeZoomFunc();
-    });
-});
-</script>
+    <ol>
+      <li><strong>明确业务需求：</strong>首先确定应用场景对延迟、吞吐量的核心要求。</li>
+      <li><strong>从底层开始优化：</strong>先优化 SQL 和索引，再考虑连接池和内存，最后才考虑架构层面的扩展。</li>
+      <li><strong>持续监控：</strong>使用 pg_stat_statements、慢查询日志等工具持续监控数据库性能。</li>
+      <li><strong>定期维护：</strong>定期执行 VACUUM、ANALYZE 等维护操作，保持数据库健康。</li>
+      <li><strong>压测验证：</strong>所有优化措施都要在压测环境中验证效果后再上生产。</li>
+    </ol>
+  </article>
 </body>
 </html>

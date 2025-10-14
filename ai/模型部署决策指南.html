@@ -2,309 +2,136 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>模型部署决策指南：参数、精度与策略选择</title>
-<script>MathJax={chtml:{fontURL:'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2'}}</script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/full.render.js" defer></script>
-<script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js" defer></script>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
-<style>html,body{height:100%;margin:0;scroll-behavior:smooth}body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.7;background-color:#f8faff;color:#374151;padding:10px;box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}.container{max-width:1100px;margin:10px auto;padding:20px;background-color:#fff;border-radius:.45rem;box-shadow:0 .4rem 1.2rem rgba(0,0,0,.06)}.material-icons-outlined{vertical-align:middle;font-size:1.15em;margin-right:.3em;line-height:1}h1>.material-icons-outlined,h2>.material-icons-outlined{font-size:1.1em;margin-right:.4em;color:#007bff}h3>.material-icons-outlined,h4>.material-icons-outlined,h5>.material-icons-outlined{font-size:1.1em;margin-right:.4em;color:#4a5568}h1,h2,h3,h4,h5{color:#1f2937;margin:1.8em 0 1em;font-weight:600;display:flex;align-items:center;line-height:1.3}h1{font-size:2.6rem;letter-spacing:-.7px;border-bottom:1px solid #dde2e9;padding-bottom:.5em;margin:0 0 .8em}h2{font-size:2.1rem;border-bottom:1px solid #eef2f5;padding-bottom:.55em}h3{font-size:1.7rem}h4{font-size:1.35rem;color:#525860}.prompt-container h5{font-size:1.1rem;margin:1.8em 0 1em;padding-bottom:.3em;border-bottom:1px solid #e0e6ed}.sub-topic-heading{font-weight:600;margin-top:1.5em;margin-bottom:.7em;font-size:1.1rem;display:flex;align-items:center;line-height:1.4}.sub-topic-heading .material-icons-outlined{font-size:1.2em;margin-right:.4em}.text-primary{color:#007bff}.text-secondary{color:#525860}.text-accent1{color:#17a2b8}.text-accent2{color:#28a745}.text-accent3{color:#ffc107}.text-danger{color:#dc3545;font-weight:700}.text-warning{color:#ff8f00;font-weight:700}.text-highlight-green{color:#20c997;font-weight:600}.text-highlight-blue{color:#339AF0;font-weight:600}.text-highlight-purple{color:#AE3EC9;font-weight:600}p{margin-bottom:1.4em;color:#4b5563;font-size:1.05rem}strong,.strong-emphasis{font-weight:600;color:#007bff}.prompt-container strong{color:#2d3748}.prompt-container .strong-emphasis{color:#0056b3}.math-formula{font-size:1.3em;padding:10px;background-color:#f0f3f7;border-radius:.45rem;text-align:center;margin:15px 0;overflow-x:auto;border:1px solid #dfe5ec}.prompt-container .math-formula{margin:1.5em 0 1.8em}.two-col-grid-container .col .math-formula{margin-top:.5em;margin-bottom:0;font-size:1.1em}pre[class*=language-]{padding:1.7em;margin:1.2em 0;overflow:auto;border-radius:.45rem;box-shadow:0 4px 12px rgba(0,0,0,.08);border:1px solid #dde2e9;background:#2d2d2d}code[class*=language-],pre[class*=language-]{font-family:"Fira Code","SFMono-Regular",Consolas,"Liberation Mono",Menlo,Courier,monospace;font-size:.93rem;line-height:1.5}:not(pre)>code{font-family:"Fira Code","SFMono-Regular",Consolas,"Liberation Mono",Menlo,Courier,monospace;background-color:#f8f0f2;padding:.2em .4em;border-radius:.25rem;font-size:.9em;color:#bf0045;border:1px solid #f0e4e7}.code-wrapper{position:relative;margin:1.2em 0}.prompt-container .code-wrapper{margin:1.5em 0 2em}.code-wrapper pre[class*=language-]{margin:0!important;padding-right:65px}.copy-button{position:absolute;top:.8em;right:.8em;z-index:5;padding:6px 12px;background-color:rgba(80,80,80,.8);color:#f0f4f8;border:1px solid rgba(255,255,255,.1);border-radius:.35rem;cursor:pointer;font-size:.78rem;opacity:.6;transition:opacity .25s ease,background-color .25s ease,transform .15s ease,box-shadow .25s ease;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:500;line-height:1.2;box-shadow:0 2px 4px rgba(0,0,0,.2);outline:0;user-select:none}.code-wrapper:hover .copy-button,.copy-button:focus,.copy-button:hover{opacity:1;background-color:rgba(50,50,50,.95);transform:translateY(-1px);box-shadow:0 4px 8px rgba(0,0,0,.25)}.copy-button:active{transform:translateY(0);box-shadow:0 1px 3px rgba(0,0,0,.15)}@media (max-width:768px){.copy-button{font-size:.75rem;padding:5px 9px;top:.6em;right:.6em}.code-wrapper pre[class*=language-]{padding-right:55px}}.prompt-container{background-color:#edf2f7;border:1px solid #cbd5e0;border-radius:.45rem;padding:25px;margin-bottom:25px;box-shadow:0 3px 8px rgba(0,0,0,.04)}.prompt-container>h2:first-of-type{margin-top:1em}.prompt-container h2,.prompt-container h3,.prompt-container h4,.prompt-container h5{color:#2d3748;border-bottom-color:#cbd5e0}.prompt-container h3>.material-icons-outlined{color:#2d3748}.prompt-container h3{margin-top:1.8em}.prompt-container h3+ul{margin-bottom:1em}.prompt-container .content-box h4{margin-bottom:.8em}.prompt-container h2>.material-icons-outlined,.prompt-container h5>.material-icons-outlined{color:#4a5868}.prompt-container h2{font-size:1.9rem}.prompt-container h3{font-size:1.55rem;margin-top:2.2em}.prompt-container h4{font-size:1.25rem;margin-top:1.8em}.prompt-container li,.prompt-container p{color:#34495e;font-size:1.05rem}.prompt-container .mandatory-requirement{font-weight:700;color:#721c24;padding:12px 18px;border:2px solid #dc3545;background-color:#fddfe2;border-radius:.45rem;display:flex;align-items:center;margin:1.2em 0}.prompt-container .mandatory-requirement .material-icons-outlined{color:#dc3545;font-size:1.6em;margin-right:.6em;flex-shrink:0}.prompt-container .mandatory-requirement .instruction-chinese{font-weight:700;color:#c0392b;display:block;margin-top:8px}.prompt-container .mandatory-requirement code{background-color:#fbecee;border-color:#f8d7da;color:#a92330}.prompt-container ul{list-style-type:none;padding-left:0;margin-bottom:0}.prompt-container ul li{margin-bottom:.8em;padding-left:1.5em;position:relative}.prompt-container ul li:last-child{margin-bottom:0}.prompt-container ul li .material-icons-outlined{position:absolute;left:0;top:4px;font-size:1.25em;color:#0277bd;margin-right:.5em}.prompt-container ul li:has(.material-icons-outlined){padding-left:2em}.prompt-container .manual-list-item{margin-bottom:.8em;padding-left:2em;position:relative;color:#34495e;font-size:1.05rem;line-height:1.6}.prompt-container .manual-list-item:last-child{margin-bottom:0}.prompt-container .manual-list-item .material-icons-outlined{position:absolute;left:0;top:4px;font-size:1.25em;margin-right:.5em;color:#0277bd}.prompt-container .config-color-note .material-icons-outlined{top:6px;color:#ff8f00;font-size:1.25em;vertical-align:text-bottom}.content-box .config-color-note ol,.two-col-grid-container ol{margin-top:.6em;margin-bottom:0;color:#34495e;font-size:1rem}.content-box .config-color-note ol li,.two-col-grid-container ol li{font-size:inherit;padding-left:0;margin-bottom:.5em;line-height:1.7}.content-box .config-color-note ol li:last-child,.two-col-grid-container ol li:last-child{margin-bottom:0}#graph-container{width:100%;max-width:900px;margin:25px auto;padding-top:70px;box-sizing:border-box;background-color:#fff;border:1px solid #dde2e9;border-radius:.45rem;box-shadow:0 .4rem 1.2rem rgba(0,0,0,.06);position:relative;overflow:hidden}.prompt-container #graph-container{margin:20px auto 30px;background-color:#fff}#graph-output{display:flex;justify-content:center;align-items:center;min-height:350px;padding:30px;background-color:#fff}#graph-output svg{display:block;width:100%;max-width:100%;height:auto}#graph-controls-container{position:absolute;top:20px;right:20px;display:flex;gap:14px;z-index:10}.graph-button{padding:9px 15px;background-color:rgba(50,50,50,.8);color:#f0f4f8;border:none;border-radius:.35rem;cursor:pointer;font-size:.88rem;opacity:.9;transition:opacity .2s ease,background-color .2s ease,transform .15s ease,box-shadow .15s ease;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:500;line-height:1.2;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 5px rgba(0,0,0,.12)}.graph-button:hover{opacity:1;background-color:rgba(30,30,30,.9);transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,.18)}.graph-button:active{transform:translateY(0);box-shadow:0 1px 3px rgba(0,0,0,.1)}.graph-button:disabled{opacity:.65;cursor:not-allowed;background-color:rgba(50,50,50,.8);transform:translateY(0);box-shadow:0 1px 3px rgba(0,0,0,.08)}.graph-button .svg-icon{width:1.25em;height:1.25em;fill:currentColor}.graph-button .material-icons-outlined{font-size:1.4em;margin-right:0}#layout-toggle-button{min-width:48px;font-weight:500;font-size:1rem}#layout-toggle-button.loading .material-icons-outlined{font-size:1.4em}@keyframes spin{to{transform:rotate(1turn)}}.icon-spin{animation:spin 1.5s linear infinite;display:inline-block}#zoom-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(25,28,32,.95);z-index:1000;justify-content:center;align-items:center;overflow:hidden;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}#zoom-content{position:relative;width:97%;height:97%;background-color:#fff;overflow:hidden;display:flex;justify-content:center;align-items:center;border-radius:calc(.45rem* 2);box-shadow:0 25px 60px rgba(0,0,0,.35)}#zoom-content svg{max-width:none;max-height:none;width:100%;height:100%;cursor:grab;display:block}#zoom-content svg:active{cursor:grabbing}#close-zoom{position:absolute;top:12px;right:12px;background:rgba(50,50,50,.85);color:#fff;border:none;border-radius:50%;width:48px;height:48px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1001;transition:background-color .25s ease;box-shadow:0 3px 12px rgba(0,0,0,.3)}#close-zoom:focus-visible,#close-zoom:hover{background:rgba(20,20,20,.95);outline:0}#close-zoom .material-icons-outlined{font-size:30px;margin-right:0}.two-col-grid-container .col p:last-of-type{margin-bottom:0}.section-divider{border:0;height:1px;background-color:#e2e8f0;margin:2.5em 0}.two-col-grid-container{display:grid;grid-template-columns:1fr;gap:25px;margin-bottom:1.5em;align-items:stretch}.two-col-grid-container .col>:first-child{margin-top:0}.two-col-grid-container .col>:last-child{margin-bottom:0}.two-col-grid-container h4{margin-top:.8em}.two-col-grid-container .col p{margin-bottom:.8em}.content-box{margin-top:1.5em;margin-bottom:1.5em}.content-box>:first-child{margin-top:0}.content-box>:last-child{margin-bottom:0}@media (min-width:769px){.two-col-grid-container{grid-template-columns:repeat(2,1fr);gap:30px}.content-box{background-color:#fff;border:1px solid #e2e8f0;border-radius:.45rem;padding:20px 22px;box-shadow:0 2px 5px rgba(0,0,0,.04);box-sizing:border-box}.two-col-grid-container .col{background-color:#fff;border:1px solid #e2e8f0;border-radius:.45rem;padding:20px 22px;box-shadow:0 2px 5px rgba(0,0,0,.04);box-sizing:border-box}}@media (max-width:768px){.content-box{margin-top:0}.content-box>h4:first-child{margin-top:1.8em}.content-box>.manual-list-item:last-child{margin-bottom:.8em}}@media (max-width:768px){body{padding:10px;font-size:.96rem}.container{padding:15px;margin:10px auto}h1{font-size:2rem;margin-bottom:.7em}h2{font-size:1.6rem}h3{font-size:1.35rem}h4{font-size:1.15rem}h5{font-size:1rem}.prompt-container>h2:first-of-type{margin-top:.8em}.prompt-container h2{font-size:1.5rem}.prompt-container h3{font-size:1.25rem;margin-top:2em}.prompt-container h4{font-size:1.1rem;margin-top:1.6em}.prompt-container h5{font-size:1rem;margin-top:1.5em}pre[class*=language-],.code-wrapper{font-size:.88rem;padding:1.2em}.math-formula{font-size:1.15em;padding:8px}#graph-container{padding-top:60px}.prompt-container #graph-container{margin:20px auto}#graph-output{min-height:280px}#graph-controls-container{top:12px;right:12px;gap:8px}.graph-button{font-size:.8rem;padding:7px 10px}.graph-button .material-icons-outlined,.graph-button .svg-icon{font-size:1.25em}#layout-toggle-button{min-width:40px;font-size:.9rem}#layout-toggle-button.loading .material-icons-outlined{font-size:1.25em}#close-zoom{width:40px;height:40px}#close-zoom .material-icons-outlined{font-size:24px}.section-divider{margin:2em 0}.two-col-grid-container{margin-bottom:1em}.content-box{margin-bottom:1em}.two-col-grid-container .col>:last-child{margin-bottom:1.4em}.two-col-grid-container .col:last-child>:last-child{margin-bottom:0}.two-col-grid-container .col .math-formula{margin-bottom:1.4em}.two-col-grid-container .col p:last-of-type{margin-bottom:1.4em}.two-col-grid-container .col:last-child p:last-of-type{margin-bottom:0}}@media (max-width:480px){body{padding:5px}.container{padding:10px;margin:5px auto}h1{font-size:1.7rem;margin-bottom:.6em}h2{font-size:1.4rem}h3{font-size:1.2rem}h4{font-size:1.05rem}h5{font-size:.95rem}.prompt-container{padding:15px}.prompt-container>h2:first-of-type{margin-top:.6em}.prompt-container h2{font-size:1.3rem}.prompt-container h3{font-size:1.1rem;margin-top:1.8em}.prompt-container h4{font-size:1rem;margin-top:1.5em}.prompt-container h5{font-size:.9rem}.prompt-container .manual-list-item,.prompt-container li,.prompt-container p,.two-col-grid-container ol,.content-box .config-color-note ol{font-size:.9rem}.prompt-container .mandatory-requirement{padding:8px 12px;font-size:.85rem}.prompt-container .mandatory-requirement .material-icons-outlined{font-size:1.2em}.prompt-container .manual-list-item,.prompt-container ul li{padding-left:1.2em}.prompt-container .manual-list-item,.prompt-container ul li:has(.material-icons-outlined){padding-left:1.8em}#graph-controls-container{flex-direction:column;align-items:flex-end;gap:8px}#graph-container{padding-top:140px}.graph-button{width:auto;min-width:130px;justify-content:flex-start}.section-divider{margin:1.8em 0}.two-col-grid-container{gap:20px}}
-</style>
+  <meta name="description" content="深入解析机器学习模型部署中的参数量、数值精度和部署策略权衡">
 </head>
 <body>
-<div class="container">
-<h1><span class="material-icons-outlined">device_hub</span> <span class="text-primary">模型部署决策指南</span> <span class="text-secondary">参数、精度与策略</span></h1>
-<p>在机器学习项目中，成功训练一个模型只是第一步。如何将其高效、可靠地部署到生产环境，使其在满足业务需求的同时，兼顾成本与性能，是一个复杂但至关重要的决策过程。这个过程涉及三个核心要素的权衡：<strong class="strong-emphasis">模型参数</strong>、<strong class="strong-emphasis">数值精度</strong>和<strong class="strong-emphasis">部署策略</strong>。</p>
+  <nav>
+    <a href="/">首页</a>
+    <a href="/about.html">关于</a>
+  </nav>
+  <article>
+    <header>
+      <h1>模型部署决策指南：参数、精度与策略选择</h1>
+      <time datetime="2024-01-15">2024-01-15</time>
+    </header>
 
-<hr class="section-divider">
+    <p>在机器学习项目中，成功训练一个模型只是第一步。如何将其高效、可靠地部署到生产环境，使其在满足业务需求的同时，兼顾成本与性能，是一个复杂但至关重要的决策过程。这个过程涉及三个核心要素的权衡：<strong>模型参数</strong>、<strong>数值精度</strong>和<strong>部署策略</strong>。</p>
 
-<h2><span class="material-icons-outlined">tune</span>1. 理解核心要素：参数与精度的权衡</h2>
+    <hr>
+
+    <h2>1. 理解核心要素：参数与精度的权衡</h2>
+
 <p>模型的大小和计算效率是部署前必须评估的关键指标。这两者主要由模型的参数量和其计算时使用的数值精度决定。</p>
 
-<div class="two-col-grid-container">
-    <div class="col">
-        <h4><span class="material-icons-outlined">data_usage</span>模型参数 (Model Parameters)</h4>
-        <p>模型参数是模型在训练过程中学习到的内部变量。它们本质上定义了模型的能力边界。 [5]</p>
-        <ul>
-            <li><strong class="text-highlight-blue">更多参数：</strong>通常意味着模型有更强的能力去学习复杂的数据模式，可能带来更高的<strong class="text-accent2">准确率</strong>。但这也导致模型体积增大，需要更多的计算资源（如GPU内存）和更长的训练时间。 [3]</li>
-            <li><strong class="text-highlight-purple">更少参数：</strong>模型更小，训练和推理速度更快，计算成本更低。然而，如果参数过少，模型可能无法充分学习数据规律（欠拟合），导致性能不佳。 [4]</li>
-        </ul>
-        <p class="text-warning" style="font-weight: 500;"><strong>关键权衡：</strong> 在模型的<strong class="text-danger">复杂性（参数量）</strong>和<strong class="text-danger">泛化能力</strong>之间找到平衡点至关重要。参数过多的模型有<strong class="text-danger">过拟合</strong>的风险，即模型“记住”了训练数据，但在新数据上表现不佳。 [5, 9]</p>
-    </div>
-    <div class="col">
-        <h4><span class="material-icons-outlined">precision_manufacturing</span>数值精度 (Numerical Precision)</h4>
-        <p>精度指用于表示模型权重和计算的数字格式的位数。降低精度是优化模型性能的关键技术。 [1]</p>
-        <ul>
-            <li><strong class="text-highlight-blue">FP32 (单精度浮点)：</strong>传统的32位格式，提供高精度和稳定性，是模型训练的基准，但内存和计算开销最大。 [1, 19]</li>
-            <li><strong class="text-highlight-purple">FP16 (半精度浮点)：</strong>使用16位，模型大小和内存占用减半，在兼容硬件（如NVIDIA Tensor Cores）上能显著提升计算速度。 [1]</li>
-            <li><strong class="text-highlight-green">INT8 (8位整数)：</strong>提供最大的性能提升和内存节省（约是FP32的1/4），非常适合资源受限的边缘设备。但从浮点到整数的转换（量化）可能导致精度下降，通常需要校准以维持准确率。 [7, 10]</li>
-        </ul>
-        <p class="text-accent1" style="font-weight: 500;"><strong>核心优势：</strong>使用低精度格式（如INT8量化）可以显著<strong class="text-accent1">减小模型体积</strong>、<strong class="text-accent1">加快推理速度</strong>并<strong class="text-accent1">降低功耗</strong>，这对边缘设备部署尤其重要。 [7]</p>
-    </div>
-</div>
+    <h3>模型参数 (Model Parameters)</h3>
 
-<hr class="section-divider">
+    <p>模型参数是模型在训练过程中学习到的内部变量。它们本质上定义了模型的能力边界。</p>
 
-<h2><span class="material-icons-outlined">cloud_sync</span>2. 选择部署策略：云端 vs. 边缘</h2>
+    <ul>
+      <li><strong>更多参数：</strong>通常意味着模型有更强的能力去学习复杂的数据模式，可能带来更高的准确率。但这也导致模型体积增大，需要更多的计算资源（如GPU内存）和更长的训练时间。</li>
+      <li><strong>更少参数：</strong>模型更小，训练和推理速度更快，计算成本更低。然而，如果参数过少，模型可能无法充分学习数据规律（欠拟合），导致性能不佳。</li>
+        </ul>
+
+    <p><strong>关键权衡：</strong>在模型的复杂性（参数量）和泛化能力之间找到平衡点至关重要。参数过多的模型有过拟合的风险，即模型"记住"了训练数据，但在新数据上表现不佳。</p>
+
+    <h3>数值精度 (Numerical Precision)</h3>
+
+    <p>精度指用于表示模型权重和计算的数字格式的位数。降低精度是优化模型性能的关键技术。</p>
+
+    <ul>
+      <li><strong>FP32 (单精度浮点)：</strong>传统的32位格式，提供高精度和稳定性，是模型训练的基准，但内存和计算开销最大。</li>
+      <li><strong>FP16 (半精度浮点)：</strong>使用16位，模型大小和内存占用减半，在兼容硬件（如NVIDIA Tensor Cores）上能显著提升计算速度。</li>
+      <li><strong>INT8 (8位整数)：</strong>提供最大的性能提升和内存节省（约是FP32的1/4），非常适合资源受限的边缘设备。但从浮点到整数的转换（量化）可能导致精度下降，通常需要校准以维持准确率。</li>
+        </ul>
+
+    <p><strong>核心优势：</strong>使用低精度格式（如INT8量化）可以显著减小模型体积、加快推理速度并降低功耗，这对边缘设备部署尤其重要。</p>
+
+    <hr>
+
+    <h2>2. 选择部署策略：云端 vs. 边缘</h2>
+
 <p>选择正确的部署环境是实现模型价值的关键。主要的选择是在云端服务器和边缘设备之间，有时也会采用两者的混合模式。</p>
 
-<div class="two-col-grid-container">
-    <div class="col">
-        <h4><span class="material-icons-outlined" style="color:#0277bd;">cloud_done</span>云端部署 (Cloud Deployment)</h4>
-        <p>将模型部署在云服务商（如AWS, Google Cloud, Azure）提供的远程服务器上。应用通过API请求与模型交互。 [12]</p>
-        <p class="sub-topic-heading text-highlight-green"><span class="material-icons-outlined">add_circle_outline</span>优点</p>
-        <ul>
-            <li><strong>强大的计算能力：</strong> 可以利用高性能的GPU/TPU，运行参数量巨大的复杂模型。 [12]</li>
-            <li><strong>高可扩展性：</strong> 可以根据流量需求动态调整计算资源。 [12, 21]</li>
-            <li><strong>集中化管理：</strong> 模型的更新和维护都在一个地方完成，易于管理。 [12]</li>
-        </ul>
-        <p class="sub-topic-heading text-danger"><span class="material-icons-outlined">remove_circle_outline</span>缺点</p>
-        <ul>
-            <li><strong>网络延迟：</strong> 数据需要传输到云端再返回结果，不适合实时性要求高的应用。 [12]</li>
-            <li><strong>数据隐私风险：</strong> 敏感数据需要上传到云端处理，可能引发安全和合规问题。 [12, 13]</li>
-            <li><strong>网络依赖性：</strong> 必须有稳定可靠的网络连接。 [12]</li>
-            <li><strong>持续成本：</strong> 按使用量付费，长期运行成本可能较高。 [21]</li>
-        </ul>
-    </div>
-    <div class="col">
-        <h4><span class="material-icons-outlined" style="color:#28a745;">memory</span>边缘部署 (Edge Deployment)</h4>
-        <p>将模型直接运行在本地设备上，如智能手机、物联网设备、工业计算机等。数据在设备本地进行处理。 [12]</p>
-        <p class="sub-topic-heading text-highlight-green"><span class="material-icons-outlined">add_circle_outline</span>优点</p>
-        <ul>
-            <li><strong>低延迟：</strong> 数据在本地处理，响应速度极快，适合实时应用（如自动驾驶、实时缺陷检测）。 [12, 15]</li>
-            <li><strong>高隐私性：</strong> 数据无需离开本地设备，保护用户隐私和数据安全。 [15]</li>
-            <li><strong>离线运行：</strong> 不依赖网络连接，可在网络不稳定或无网络的环境下工作。</li>
-            <li><strong>带宽成本低：</strong> 避免了大量数据传输到云端的成本。 [13]</li>
-        </ul>
-        <p class="sub-topic-heading text-danger"><span class="material-icons-outlined">remove_circle_outline</span>缺点</p>
-        <ul>
-            <li><strong>资源受限：</strong> 边缘设备计算能力、内存和功耗有限，难以运行大型复杂模型。 [12]</li>
-            <li><strong>模型优化要求高：</strong> 通常需要通过剪枝、量化等技术压缩模型。 [6, 21]</li>
-            <li><strong>维护更新复杂：</strong> 在大量分布式设备上更新和管理模型具有挑战性。 [12]</li>
-        </ul>
-    </div>
-</div>
-<div class="content-box">
-    <h4><span class="material-icons-outlined" style="color:#ff8f00">dynamic_form</span>混合部署策略 (Hybrid Strategy)</h4>
-    <p>混合策略结合了云端和边缘的优势。例如，可以在边缘设备上执行快速的初步数据处理或简单推理，然后将需要更强计算能力处理的复杂任务或需要聚合分析的数据发送到云端。这种方式在性能、成本和功能之间取得了很好的平衡。 [13, 15]</p>
-</div>
+    <h3>云端部署 (Cloud Deployment)</h3>
 
-<hr class="section-divider">
+    <p>将模型部署在云服务商（如AWS, Google Cloud, Azure）提供的远程服务器上。应用通过API请求与模型交互。</p>
 
-<h2><span class="material-icons-outlined">schema</span>3. 决策流程与最终选择</h2>
-<p>选择最佳部署方案需要系统性地评估业务需求和技术限制。以下决策流程图可作为一个参考指南。</p>
+    <p><strong>优点：</strong></p>
+    <ul>
+      <li><strong>强大的计算能力：</strong>可以利用高性能的GPU/TPU，运行参数量巨大的复杂模型。</li>
+      <li><strong>高可扩展性：</strong>可以根据流量需求动态调整计算资源。</li>
+      <li><strong>集中化管理：</strong>模型的更新和维护都在一个地方完成，易于管理。</li>
+    </ul>
 
-<div id="graph-container">
-    <div id="graph-controls-container">
-        <button id="zoom-button" class="graph-button" title="全屏查看与交互"><svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg> <span>全屏</span></button>
-        <button id="download-button" class="graph-button" title="下载 PNG 图片"><svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zm14-9h-4V3H9v8H5l7 7 7-7z"/></svg> <span>下载</span></button>
-    </div>
-    <div id="graph-output"></div>
-</div>
-<div id="zoom-modal" role="dialog" aria-modal="true" aria-labelledby="zoom-modal-title">
-    <div id="zoom-content"></div>
-    <button id="close-zoom" title="关闭全屏" aria-label="关闭全屏"><span class="material-icons-outlined">close</span></button>
-    <h2 id="zoom-modal-title" style="display:none">图表全屏交互视图</h2>
-</div>
+    <p><strong>缺点：</strong></p>
+    <ul>
+      <li><strong>网络延迟：</strong>数据需要传输到云端再返回结果，不适合实时性要求高的应用。</li>
+      <li><strong>数据隐私风险：</strong>敏感数据需要上传到云端处理，可能引发安全和合规问题。</li>
+      <li><strong>网络依赖性：</strong>必须有稳定可靠的网络连接。</li>
+      <li><strong>持续成本：</strong>按使用量付费，长期运行成本可能较高。</li>
+    </ul>
 
-<h4><span class="material-icons-outlined">checklist</span>总结与建议</h4>
-<p>最终的决策是一个在 <strong class="text-primary">准确率</strong>、<strong class="text-accent2">延迟</strong>、<strong class="text-accent3">成本</strong> 和 <strong class="text-danger">可维护性</strong> 之间的多维度权衡。 [20]</p>
-<ol style="padding-left: 20px; font-size: 1.05rem;">
-    <li style="margin-bottom: 0.5em;"><strong class="text-highlight-blue">明确业务需求：</strong> 首先确定应用场景对延迟、隐私和网络连接性的核心要求。这是选择云端、边缘或混合模式的基础。</li>
-    <li style="margin-bottom: 0.5em;"><strong class="text-highlight-purple">评估模型复杂度：</strong> 选择能够满足准确率要求的最小、最简单的模型。更大的模型不一定总是更好，它们会增加部署的难度和成本。 [4]</li>
-    <li style="margin-bottom: 0.5em;"><strong class="text-highlight-green">善用模型优化技术：</strong> 积极采用量化（如INT8）、剪枝和知识蒸馏等技术来减小模型体积和加速推理，特别是对于边缘部署。 [6]</li>
-    <li style="margin-bottom: 0em;"><strong class="text-highlight-blue">迭代与监控：</strong> 部署不是终点。建立持续监控和迭代的机制（CI/CD），以应对数据漂移，并根据实际运行性能不断优化模型和部署策略。 [29]</li>
+    <h3>边缘部署 (Edge Deployment)</h3>
+
+    <p>将模型直接运行在本地设备上，如智能手机、物联网设备、工业计算机等。数据在设备本地进行处理。</p>
+
+    <p><strong>优点：</strong></p>
+    <ul>
+      <li><strong>低延迟：</strong>数据在本地处理，响应速度极快，适合实时应用（如自动驾驶、实时缺陷检测）。</li>
+      <li><strong>高隐私性：</strong>数据无需离开本地设备，保护用户隐私和数据安全。</li>
+      <li><strong>离线运行：</strong>不依赖网络连接，可在网络不稳定或无网络的环境下工作。</li>
+      <li><strong>带宽成本低：</strong>避免了大量数据传输到云端的成本。</li>
+        </ul>
+
+    <p><strong>缺点：</strong></p>
+    <ul>
+      <li><strong>资源受限：</strong>边缘设备计算能力、内存和功耗有限，难以运行大型复杂模型。</li>
+      <li><strong>模型优化要求高：</strong>通常需要通过剪枝、量化等技术压缩模型。</li>
+      <li><strong>维护更新复杂：</strong>在大量分布式设备上更新和管理模型具有挑战性。</li>
+        </ul>
+
+    <h3>混合部署策略 (Hybrid Strategy)</h3>
+
+    <p>混合策略结合了云端和边缘的优势。例如，可以在边缘设备上执行快速的初步数据处理或简单推理，然后将需要更强计算能力处理的复杂任务或需要聚合分析的数据发送到云端。这种方式在性能、成本和功能之间取得了很好的平衡。</p>
+
+    <hr>
+
+    <h2>3. 决策流程与最终选择</h2>
+
+    <p>选择最佳部署方案需要系统性地评估业务需求和技术限制。以下是一个参考决策流程：</p>
+
+    <ol>
+      <li><strong>业务需求分析</strong>
+        <ul>
+          <li>对实时性/延迟要求高？→ 考虑边缘部署</li>
+          <li>数据隐私/安全要求高？→ 考虑边缘部署</li>
+          <li>需要离线运行？→ 考虑边缘部署</li>
+          <li>否则 → 优先考虑云端部署</li>
+        </ul>
+      </li>
+      <li><strong>模型评估与优化</strong>
+        <ul>
+          <li>模型是否过大/复杂？</li>
+          <li>能否优化（量化/剪枝）？</li>
+          <li>如果能优化且满足要求 → 部署到边缘（INT8/FP16）</li>
+          <li>如果优化后仍不满足 → 采用混合策略（边缘+云）</li>
+          <li>如果无法在边缘运行 → 部署到云端（API/Serverless）</li>
+        </ul>
+      </li>
 </ol>
-</div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    // Graphviz rendering logic
-    const graphOutput = document.getElementById('graph-output');
-    const zoomButton = document.getElementById('zoom-button');
-    const downloadButton = document.getElementById('download-button');
-    const zoomModal = document.getElementById('zoom-modal');
-    const zoomContent = document.getElementById('zoom-content');
-    const closeZoom = document.getElementById('close-zoom');
+    <h3>总结与建议</h3>
 
-    let panzoomInstance = null;
-    let vizInstance = null;
+    <p>最终的决策是一个在准确率、延迟、成本和可维护性之间的多维度权衡。</p>
 
-    const dotString = `
-    digraph DeploymentDecisionFlow {
-        graph [rankdir="TB", labelloc=t, label="模型部署决策流程", fontsize=20, fontname="Inter, sans-serif", bgcolor="transparent", pad="0.5", splines=ortho];
-        node [fontname="Inter, sans-serif", style="filled,rounded", shape=box, margin="0.25,0.15"];
-        edge [fontname="Inter, sans-serif", fontsize=10, color="#555"];
-
-        // Nodes
-        start [label="1. 业务需求分析", shape=ellipse, style="filled", fillcolor="#E3F2FD", fontsize=14];
-        latency [label="对实时性/延迟要求高?", shape=diamond, style=filled, fillcolor="#FFF9C4"];
-        privacy [label="数据隐私/安全要求高?", shape=diamond, style=filled, fillcolor="#FFF9C4"];
-        network [label="需要离线运行?", shape=diamond, style=filled, fillcolor="#FFF9C4"];
-        
-        edge_path [label="优先考虑边缘部署", shape=box, style="filled", fillcolor="#E8F5E9", fontsize=12];
-        cloud_path [label="优先考虑云端部署", shape=box, style="filled", fillcolor="#F3E5F5", fontsize=12];
-
-        model_size [label="2. 模型评估与优化", shape=ellipse, style="filled", fillcolor="#E3F2FD", fontsize=14];
-        is_large [label="模型是否过大/复杂?", shape=diamond, style=filled, fillcolor="#FFEBEE"];
-        can_optimize [label="能否优化 (量化/剪枝)?", shape=diamond, style=filled, fillcolor="#FFEBEE"];
-
-        deploy_edge [label="部署到边缘设备\\n(INT8/FP16)", shape=Mdiamond, style=filled, fillcolor="#A5D6A7", fontsize=14, fontcolor="#1B5E20"];
-        deploy_cloud [label="部署到云端\\n(API/Serverless)", shape=Mdiamond, style=filled, fillcolor="#CE93D8", fontsize=14, fontcolor="#4A148C"];
-        deploy_hybrid [label="采用混合策略\\n(边缘+云)", shape=Mdiamond, style=filled, fillcolor="#FFE0B2", fontsize=14, fontcolor="#E65100"];
-
-        // Edges
-        start -> latency [label="评估关键需求"];
-        latency -> privacy [label="是"];
-        latency -> cloud_path [label="否"];
-        privacy -> network [label="是"];
-        privacy -> cloud_path [label="否"];
-        network -> edge_path [label="是"];
-        network -> cloud_path [label="否"];
-        
-        edge_path -> model_size;
-        cloud_path -> model_size;
-        
-        model_size -> is_large;
-        is_large -> can_optimize [label="是"];
-        is_large -> deploy_cloud [label="否 (无法在边缘运行)"];
-        
-        can_optimize -> deploy_edge [label="是 (优化后满足要求)"];
-        can_optimize -> deploy_hybrid [label="否 (优化后仍不满足)\\n或功能需云端协同"];
-
-        cloud_path -> deploy_cloud [style=dashed, arrowhead=normal, color="#888", label="直接路径"];
-
-    }
-    `;
-
-    const checkViz = setInterval(() => {
-        if (typeof Viz !== 'undefined' && Viz.prototype.renderSVGElement) {
-            clearInterval(checkViz);
-            vizInstance = new Viz({ worker: undefined });
-            if (vizInstance) {
-                renderGraph();
-            }
-        }
-    }, 100);
-
-    async function renderGraph() {
-        if (!vizInstance || !graphOutput || !zoomContent) return;
-
-        const allButtons = [zoomButton, downloadButton];
-        allButtons.forEach(btn => { if(btn) btn.disabled = true; });
-
-        try {
-            const svgElement = await vizInstance.renderSVGElement(dotString);
-            graphOutput.innerHTML = '';
-            graphOutput.appendChild(svgElement);
-
-            zoomContent.innerHTML = '';
-            zoomContent.appendChild(svgElement.cloneNode(true));
-            const zoomSvg = zoomContent.querySelector('svg');
-
-            if (zoomSvg && typeof Panzoom !== 'undefined') {
-                if (panzoomInstance && panzoomInstance.destroy) {
-                    zoomContent.removeEventListener('wheel', handleWheel);
-                    panzoomInstance.destroy();
-                }
-                panzoomInstance = Panzoom(zoomSvg, {
-                    maxZoom: 15,
-                    minZoom: 0.1,
-                    contain: "outside",
-                    canvas: true
-                });
-                zoomContent.addEventListener('wheel', handleWheel, { passive: false });
-            }
-        } catch (error) {
-            console.error("Graphviz rendering failed:", error);
-            graphOutput.innerHTML = `<p class="text-danger">无法渲染图表。</p>`;
-        } finally {
-            allButtons.forEach(btn => { if(btn) btn.disabled = false; });
-        }
-    }
-
-    function handleWheel(event) {
-        if (panzoomInstance && panzoomInstance.zoomWithWheel) {
-            event.preventDefault();
-            panzoomInstance.zoomWithWheel(event);
-        }
-    }
-
-    function openZoom() {
-        if (panzoomInstance) {
-            zoomModal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-            panzoomInstance.reset({ animate: true });
-            closeZoom.focus();
-        }
-    }
-
-    function closeZoomFunc() {
-        zoomModal.style.display = 'none';
-        document.body.style.overflow = '';
-    }
-    
-    function downloadPNG() {
-        const svg = graphOutput.querySelector('svg');
-        if (!svg) {
-            alert('没有可下载的图表。');
-            return;
-        }
-
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const svgData = new XMLSerializer().serializeToString(svg);
-        const img = new Image();
-
-        // Add a white background
-        const svgWithBg = svgData.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
-        const blob = new Blob([svgWithBg], {type: 'image/svg+xml;charset=utf-8'});
-        const url = URL.createObjectURL(blob);
-
-        img.onload = () => {
-            // Add padding
-            const padding = 40;
-            canvas.width = img.width + padding * 2;
-            canvas.height = img.height + padding * 2;
-            
-            // Fill background
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw image
-            ctx.drawImage(img, padding, padding);
-
-            URL.revokeObjectURL(url);
-
-            const pngUrl = canvas.toDataURL('image/png');
-            const a = document.createElement('a');
-            a.href = pngUrl;
-            a.download = 'deployment-decision-flow.png';
-            document.body.appendChild(a);
-a.click();
-            document.body.removeChild(a);
-        };
-        img.onerror = (e) => {
-            console.error("Image loading failed:", e);
-            URL.revokeObjectURL(url);
-        };
-        img.src = url;
-    }
-
-
-    if (zoomButton) zoomButton.addEventListener('click', openZoom);
-    if (closeZoom) closeZoom.addEventListener('click', closeZoomFunc);
-    if (downloadButton) downloadButton.addEventListener('click', downloadPNG);
-    document.addEventListener('keydown', (e) => {
-        if (e.key === "Escape") closeZoomFunc();
-    });
-});
-</script>
+    <ol>
+      <li><strong>明确业务需求：</strong>首先确定应用场景对延迟、隐私和网络连接性的核心要求。这是选择云端、边缘或混合模式的基础。</li>
+      <li><strong>评估模型复杂度：</strong>选择能够满足准确率要求的最小、最简单的模型。更大的模型不一定总是更好，它们会增加部署的难度和成本。</li>
+      <li><strong>善用模型优化技术：</strong>积极采用量化（如INT8）、剪枝和知识蒸馏等技术来减小模型体积和加速推理，特别是对于边缘部署。</li>
+      <li><strong>迭代与监控：</strong>部署不是终点。建立持续监控和迭代的机制（CI/CD），以应对数据漂移，并根据实际运行性能不断优化模型和部署策略。</li>
+    </ol>
+  </article>
 </body>
 </html>
