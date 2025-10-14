@@ -59,6 +59,11 @@ function processFile(filePath) {
   let date = '';
   let content = '';
   let description = '';
+  let tag = '';
+  
+  // 从目录名提取 tag（对所有文件类型通用）
+  const pathParts = relativePath.split(path.sep);
+  tag = pathParts.length > 1 ? pathParts[0] : '';
   
   if (ext === '.md') {
     // 处理 Markdown 文件
@@ -86,7 +91,13 @@ function processFile(filePath) {
     
     // 提取日期（用于首页列表）
     const timeMatch = fileContent.match(/<time[^>]*>(.*?)<\/time>/i);
-    date = timeMatch ? timeMatch[1] : extractDateFromFilename(filePath);
+    if (timeMatch) {
+      date = timeMatch[1];
+    } else {
+      // 如果 HTML 中没有时间，从文件修改时间获取
+      const stats = fs.statSync(filePath);
+      date = stats.mtime.toISOString().split('T')[0];
+    }
     
     // 提取描述（用于首页列表）
     const descMatch = fileContent.match(/<meta name="description" content="(.*?)"/i);
@@ -107,7 +118,8 @@ function processFile(filePath) {
       title,
       date: date || '',
       url: '/' + relativePath,
-      description: description || extractFirstParagraph(fileContent)
+      description: description || extractFirstParagraph(fileContent),
+      tag: tag
     });
     
     return; // 直接返回，不需要后续的模板处理
@@ -140,7 +152,8 @@ function processFile(filePath) {
       title,
       date: date || '',
       url: '/' + relativePath.replace(/\.md$/, '.html'),
-      description: description || extractFirstParagraph(content)
+      description: description || extractFirstParagraph(content),
+      tag: tag
     });
   }
 }
@@ -176,10 +189,14 @@ function generateIndex() {
   
   let articlesHtml = '';
   for (const article of articles) {
+    const tagHtml = article.tag ? `<span class="tag">${article.tag}</span>` : '';
     articlesHtml += `
     <article>
       <h2><a href="${article.url}">${article.title}</a></h2>
-      ${article.date ? `<time datetime="${article.date}">${article.date}</time>` : ''}
+      <div class="meta">
+        ${article.date ? `<time datetime="${article.date}">${article.date}</time>` : ''}
+        ${tagHtml}
+      </div>
       ${article.description ? `<p>${article.description}</p>` : ''}
     </article>
     `;
@@ -267,12 +284,26 @@ function generateIndex() {
       text-decoration: underline;
     }
 
+    .meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
     time {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
       font-size: 0.9rem;
       color: #666;
-      display: block;
-      margin-bottom: 0.5rem;
+    }
+
+    .tag {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-size: 0.8rem;
+      padding: 0.15rem 0.5rem;
+      background: #f0f0f0;
+      border-radius: 3px;
+      color: #666;
     }
 
     article p {
