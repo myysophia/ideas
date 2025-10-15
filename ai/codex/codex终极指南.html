@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Codex 自定义 Prompts 完全指南</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/full.render.js" defer></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<style>
+  :root {
+    --bg-color: #111827;
+    --sidebar-bg: #1F2937;
+    --content-bg: #111827;
+    --text-color: #D1D5DB;
+    --heading-color: #F9FAFB;
+    --muted-color: #9CA3AF;
+    --border-color: #374151;
+    --brand-color: #818CF8;
+    --brand-hover: #A78BFA;
+    --code-bg: #1f2937;
+    --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+    --danger-color: #F87171;
+    --success-color: #34D399;
+    --warning-color: #FBBF24;
+  }
+  html,body{margin:0; scroll-behavior:smooth;}
+  body{
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background-color: var(--bg-color); color: var(--text-color); line-height:1.7;
+    display: flex;
+  }
+  .sidebar {
+    width: 280px; height: 100vh; position: sticky; top: 0;
+    background-color: var(--sidebar-bg); border-right: 1px solid var(--border-color);
+    overflow-y: auto; flex-shrink: 0;
+  }
+  .sidebar-header {
+    padding: 24px; border-bottom: 1px solid var(--border-color);
+  }
+  .sidebar-header h1 {
+    font-size: 20px; color: var(--heading-color); margin: 0;
+  }
+  .sidebar-nav { padding: 16px; }
+  .sidebar-nav ul { list-style: none; padding: 0; margin: 0; }
+  .sidebar-nav li a {
+    display: block; padding: 6px 16px; border-radius: 6px;
+    color: var(--muted-color); text-decoration: none; font-size: 14px;
+    transition: background-color 0.2s, color 0.2s;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .sidebar-nav li a:hover {
+    background-color: rgba(255,255,255,0.05); color: var(--heading-color);
+  }
+  .sidebar-nav li a.active {
+    background-color: var(--brand-color); color: #111827; font-weight: 600;
+  }
+  .sidebar-nav .sub-menu { padding-left: 16px; }
+  .sidebar-nav .sub-menu .sub-menu { padding-left: 12px; }
+  .sidebar-nav .sub-menu a { font-size: 13px; }
+
+  .main-content {
+    flex-grow: 1; padding: 32px 48px; max-width: 900px; margin: 0 auto;
+  }
+  .page-header h1 {
+    font-size: 42px; color: var(--heading-color); margin: 0 0 16px; line-height: 1.2;
+  }
+  .page-header p { font-size: 18px; color: var(--muted-color); margin: 0 0 32px; }
+  section { margin-bottom: 48px; }
+  h2 {
+    font-size: 28px; color: var(--heading-color); border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px; margin: 40px 0 24px;
+  }
+  h2 .material-icons-outlined { color: var(--brand-color); vertical-align: bottom; font-size: 1.2em; }
+  h3 { font-size: 22px; color: var(--heading-color); margin: 32px 0 16px; }
+  h4 { font-size: 18px; color: var(--heading-color); margin: 24px 0 12px; border-left: 3px solid var(--brand-color); padding-left: 12px;}
+  p, ul li, ol li { color: var(--text-color); font-size: 16px; }
+  ul, ol { padding-left: 24px; }
+  strong { color: var(--brand-color); font-weight: 500;}
+  code:not(pre > code) {
+    background-color: var(--code-bg); color: #A78BFA;
+    padding: 2px 6px; border-radius: 4px; font-family: "Fira Code", monospace; font-size: 0.9em;
+  }
+  .code-wrapper { position: relative; margin: 20px 0; }
+  pre {
+    background-color: var(--code-bg); border: 1px solid var(--border-color);
+    padding: 1.5em; border-radius: 8px; overflow-x: auto;
+    box-shadow: var(--shadow);
+  }
+  .copy-button {
+    position: absolute; top: 12px; right: 12px;
+    background-color: #4B5563; color: white; border: none;
+    padding: 6px 10px; border-radius: 6px; cursor: pointer;
+    font-size: 12px; opacity: 0.7; transition: opacity 0.2s, background-color 0.2s;
+  }
+  .code-wrapper:hover .copy-button { opacity: 1; }
+  .copy-button:hover { background-color: #6B7280; }
+  table {
+    width: 100%; border-collapse: collapse; margin: 20px 0;
+    border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;
+  }
+  th, td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); text-align: left; }
+  thead { background-color: #374151; }
+  th { color: var(--heading-color); }
+  tbody tr:nth-of-type(even) { background-color: rgba(255,255,255,0.02); }
+
+  details {
+    background-color: rgba(255,255,255,0.03); border: 1px solid var(--border-color);
+    border-radius: 8px; margin-bottom: 16px;
+  }
+  details summary {
+    cursor: pointer; padding: 16px; font-weight: 600; color: var(--heading-color);
+    display: flex; align-items: center; gap: 8px;
+  }
+  details summary .material-icons-outlined { color: var(--muted-color); }
+  details div.content { padding: 0 16px 16px; }
+
+  #graph-output { display:flex; justify-content:center; align-items:center; min-height:200px; padding:20px; background-color:rgba(255,255,255,0.03); border-radius: 8px; }
+  #graph-output svg { display:block; width:100%; max-width:100%; height:auto; }
+
+  .action-buttons {
+      position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 100;
+  }
+  .action-button {
+      background-color: var(--sidebar-bg); color: var(--text-color); border: 1px solid var(--border-color);
+      width: 48px; height: 48px; border-radius: 50%; display: flex; justify-content: center; align-items: center;
+      cursor: pointer; transition: all 0.2s ease; box-shadow: var(--shadow); text-decoration: none;
+  }
+  .action-button:hover { background-color: var(--brand-color); color: var(--bg-color); }
+  
+  @media (max-width: 1024px) {
+    body { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border-color); }
+    .sidebar-nav { display: none; } /* On mobile, nav could be a dropdown menu */
+    .main-content { padding: 24px; }
+    .page-header h1 { font-size: 32px; }
+    h2 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>Codex 完全指南</h1>
+    <p style="font-size:14px; color: var(--muted-color); margin: 4px 0 0;">自定义 Prompts 终极手册</p>
+  </div>
+  <nav class="sidebar-nav">
+    <ul id="toc">
+      <li><a href="#intro"><strong>引言</strong></a></li>
+      <li><a href="#slash-commands"><strong>I. 自定义斜杠命令</strong></a>
+        <ul class="sub-menu">
+            <li><a href="#slash-what">简介与原理</a></li>
+            <li><a href="#slash-cases">实用案例库</a></li>
+            <li><a href="#slash-advanced">高级技巧</a></li>
+        </ul>
+      </li>
+      <li><a href="#agents-md"><strong>II. AGENTS.md 配置</strong></a>
+        <ul class="sub-menu">
+            <li><a href="#agents-what">简介与区别</a></li>
+            <li><a href="#agents-templates">配置模板</a>
+                <ul class="sub-menu">
+                    <li><a href="#agents-python">Python/Django</a></li>
+                    <li><a href="#agents-react">React/TS</a></li>
+                    <li><a href="#agents-rust">Rust</a></li>
+                    <li><a href="#agents-devops">DevOps/IaC</a></li>
+                    <li><a href="#agents-ml">数据科学/ML</a></li>
+                    <li><a href="#agents-review">代码审查</a></li>
+                    <li><a href="#agents-bugfix">Bug修复</a></li>
+                    <li><a href="#agents-perf">性能优化</a></li>
+                </ul>
+            </li>
+        </ul>
+      </li>
+      <li><a href="#scenarios"><strong>III. 实战场景扩展</strong></a></li>
+      <li><a href="#best-practices"><strong>IV. 最佳实践</strong></a></li>
+      <li><a href="#cheatsheet"><strong>V. 快捷命令速查表</strong></a></li>
+    </ul>
+  </nav>
+</aside>
+
+<main class="main-content">
+  <section id="intro">
+    <div class="page-header">
+      <h1>自定义 Prompts 完全指南</h1>
+      <p>本指南深入探讨 Codex 提供的两种核心自定义方式：<strong>自定义斜杠命令</strong> 和 <strong>AGENTS.md 配置文件</strong>，旨在通过可复用的模板和持久化的项目上下文，将您的工作效率提升至全新水平。</p>
+    </div>
+  </section>
+
+  <section id="slash-commands">
+    <h2><span class="material-icons-outlined">flash_on</span>I. 自定义斜杠命令 (Custom Slash Commands)</h2>
+    <div id="slash-what">
+        <h3>简介与原理</h3>
+        <p>自定义斜杠命令是将常用提示词保存为 Markdown 文件模板的强大功能。它允许你通过简单的 <code>/命令名</code> 快速调用复杂、结构化的 Prompts，极大地简化了重复性任务。</p>
+        <ul>
+        <li><strong>存储位置：</strong> <code>~/.codex/prompts/</code></li>
+        <li><strong>文件格式：</strong> <code>.md</code> 结尾的 Markdown 文件。</li>
+        <li><strong>命令名称：</strong> 文件名（去除 <code>.md</code>）。例如 <code>review-pr.md</code> → <code>/review-pr</code>。</li>
+        <li><strong>参数支持：</strong> <code>$1</code>-<code>$9</code> (位置参数), <code>$ARGUMENTS</code> (所有参数)。</li>
+        </ul>
+    </div>
+    
+    <div id="slash-cases">
+        <h3>实用案例库</h3>
+        <p>以下是一些高效的命令模板，你可以直接创建对应文件并使用。</p>
+        <details>
+            <summary><span class="material-icons-outlined">rate_review</span>代码审查 (review-code.md)</summary>
+            <div class="content"><div class="code-wrapper"><pre><code class="language-markdown">请对以下文件进行详细的代码审查：$1
+
+审查维度：
+1. **代码质量**：命名、结构、可读性
+2. **潜在bug**：边界条件、错误处理、并发问题
+3. **性能**：算法复杂度、不必要的计算、内存泄漏
+4. **安全性**：输入验证、SQL注入、XSS等
+5. **可维护性**：注释、文档、测试覆盖率
+
+输出格式：
+- 🟢 优点（2-3条）
+- 🟡 改进建议（3-5条，标注严重程度 Critical/Major/Minor）
+- 🔴 必须修复的问题（如有）
+
+请给出具体的代码片段建议。</code></pre></div></div>
+        </details>
+        <details>
+            <summary><span class="material-icons-outlined">science</span>生成单元测试 (gen-tests.md)</summary>
+            <div class="content"><div class="code-wrapper"><pre><code class="language-markdown">为以下文件/函数生成完整的单元测试：$1
+
+测试要求：
+- 测试框架：自动检测项目使用的框架（Jest/Vitest/pytest等）
+- 覆盖场景：✅ 正常情况, ❌ 边界条件, 💥 异常情况
+- Mock 外部依赖（API 调用、数据库、文件系统）
+- 测试数据：使用真实但匿名化的样本数据
+- 测试名称：描述性强（用 "should..." 或 "when... then..." 格式）</code></pre></div></div>
+        </details>
+        <details>
+            <summary><span class="material-icons-outlined">help_outline</span>解释复杂代码 (explain.md)</summary>
+            <div class="content"><div class="code-wrapper"><pre><code class="language-markdown">请详细解释以下代码的工作原理：$ARGUMENTS
+
+解释要求：
+1. **高层概述**（1-2句话）：这段代码做什么？
+2. **逐行分析**：关键变量、每个步骤的作用、控制流程
+3. **使用的技术/模式**：设计模式、算法、数据结构
+4. **潜在陷阱**：边界情况、性能考虑
+5. **改进建议**（如果有明显问题）
+
+请用通俗易懂的语言解释，适合给新手看。</code></pre></div></div>
+        </details>
+        <details>
+            <summary><span class="material-icons-outlined">architecture</span>重构建议 (refactor.md)</summary>
+            <div class="content"><div class="code-wrapper"><pre><code class="language-markdown">分析以下代码并提供重构建议：$1
+
+分析维度：
+1. **代码异味（Code Smells）**：过长函数/类、重复代码、复杂条件等
+2. **设计模式应用**：SRP, OCP等
+3. **现代语法**：是否可以使用新版本语言特性
+
+输出格式：
+### 当前问题
+- [列出 3-5 个主要问题]
+### 重构方案
+#### 方案 1: [名称]
+- 优点/缺点
+- 代码示例...</code></pre></div></div>
+        </details>
+        <details>
+            <summary><span class="material-icons-outlined">article</span>生成 API 文档 (api-docs.md)</summary>
+            <div class="content"><div class="code-wrapper"><pre><code class="language-markdown">为以下 API 端点/函数生成 OpenAPI 3.0 风格的完整文档：$1
+
+包含内容：
+1. **端点信息**：HTTP 方法、路径、功能描述
+2. **请求参数/请求体**：Schema、示例
+3. **响应**：成功/错误响应示例
+4. **使用示例**：cURL, JavaScript/Python 客户端代码</code></pre></div></div>
+        </details>
+        <details>
+            <summary><span class="material-icons-outlined">bug_report</span>Bug 诊断助手 (debug.md)</summary>
+            <div class="content"><div class="code-wrapper"><pre><code class="language-markdown">帮我诊断以下问题：$ARGUMENTS
+
+诊断流程：
+1. **问题复现**：复现步骤是什么？
+2. **日志分析**：检查相关日志和错误堆栈
+3. **可能原因**（列出 3-5 个假设，按概率排序）
+4. **调试建议**：添加哪些日志/断点？
+5. **临时解决方案**（workaround）</code></pre></div></div>
+        </details>
+        <details>
+            <summary><span class="material-icons-outlined">speed</span>性能优化分析 (optimize.md)</summary>
+            <div class="content"><div class="code-wrapper"><pre><code class="language-markdown">分析以下代码的性能并提供优化建议：$1
+
+分析维度：
+1. **算法复杂度**：时间/空间复杂度分析
+2. **常见性能问题**：不必要的循环、重复计算、N+1查询等
+3. **语言/框架特定优化**
+4. **Benchmark**：生成性能测试代码对比优化前后</code></pre></div></div>
+        </details>
+        <details>
+            <summary><span class="material-icons-outlined">storage</span>数据库 Schema 设计 (db-schema.md)</summary>
+            <div class="content"><div class="code-wrapper"><pre><code class="language-markdown">为以下需求设计数据库 Schema：$ARGUMENTS
+
+设计要求：
+1. **表结构**：字段、类型、约束、主外键、索引
+2. **关系**：使用 Mermaid 绘制 ER 图
+3. **最佳实践**：范式、软删除、时间戳字段
+4. **生成迁移脚本** 和 **示例数据**</code></pre></div></div>
+        </details>
+        <details>
+            <summary><span class="material-icons-outlined">commit</span>Git Commit 消息生成 (commit-msg.md)</summary>
+            <div class="content"><div class="code-wrapper"><pre><code class="language-markdown">根据当前的 Git 变更（`git diff --staged`）生成符合 Conventional Commits 规范的提交消息。
+
+分析变更类型（`feat`, `fix`, `docs`, `refactor`等），并生成 3 个候选消息，按推荐度排序。</code></pre></div></div>
+        </details>
+        <details>
+            <summary><span class="material-icons-outlined">checklist</span>环境配置检查 (check-env.md)</summary>
+            <div class="content"><div class="code-wrapper"><pre><code class="language-markdown">检查项目的环境配置是否完整且正确：$1
+
+检查内容：
+1. **依赖项**：版本冲突、安全漏洞
+2. **环境变量**：是否缺少必需变量
+3. **配置文件**：`tsconfig.json`等是否合理
+4. **开发工具**：Linter/Formatter/Git hooks配置</code></pre></div></div>
+        </details>
+    </div>
+    <div id="slash-advanced">
+        <h3>高级技巧</h3>
+        <ul>
+            <li><strong>组合参数：</strong> 使用引号传递包含空格的参数，如 <code>/explain "React useEffect vs useLayoutEffect"</code>。</li>
+            <li><strong>嵌套命令：</strong> 在 `AGENTS.md` 中为斜杠命令添加额外的项目特定指令。</li>
+            <li><strong>命令别名：</strong> 在 <code>prompts</code> 目录中创建符号链接，如 <code>ln -s review-code.md rc.md</code>，即可使用 <code>/rc</code>。</li>
+            <li><strong>版本控制：</strong> 将你的 <code>~/.codex/prompts</code> 目录初始化为 Git 仓库，方便团队共享和版本管理。</li>
+        </ul>
+    </div>
+  </section>
+
+  <section id="agents-md">
+    <h2><span class="material-icons-outlined">description</span>II. AGENTS.md 配置文件</h2>
+    <div id="agents-what">
+        <h3>简介与区别</h3>
+        <p><code>AGENTS.md</code> 是一个提供持久化上下文的配置文件。与一次性的斜杠命令不同，它会在每次会话中自动加载，为 Codex 提供项目级别的编码规范、技术栈信息和领域知识，使其响应更贴合项目实际。</p>
+
+        <h4>加载顺序与作用域</h4>
+        <p>Codex 会按顺序合并多个 <code>AGENTS.md</code> 文件，形成最终上下文，越后面的配置优先级越高：</p>
+        <div id="graph-output"></div>
+
+        <h4>斜杠命令 vs AGENTS.md</h4>
+        <table>
+            <thead><tr><th>特性</th><th>斜杠命令</th><th>AGENTS.md</th></tr></thead>
+            <tbody>
+                <tr><td>触发方式</td><td>手动调用 <code>/command</code></td><td>自动加载</td></tr>
+                <tr><td>适用场景</td><td>一次性、重复性任务</td><td>持久化规范、项目上下文</td></tr>
+                <tr><td>作用域</td><td>全局 (<code>~/.codex/prompts/</code>)</td><td>全局 / 项目 / 目录</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="agents-templates">
+      <h3>配置模板精选</h3>
+      <p>将以下模板内容保存到项目根目录的 `AGENTS.md` 文件中，为 Codex 提供强大的项目上下文。</p>
+      <details id="agents-python">
+        <summary><span class="material-icons-outlined">code</span>Python/Django 项目模板</summary>
+        <div class="content"><div class="code-wrapper"><pre><code class="language-markdown"># Python/Django 项目指南
+## 技术栈
+- Python 3.11+, Django 4.2, DRF, PostgreSQL, Celery, pytest
+## 编码规范
+- **格式化**: Black (行长 88), isort
+- **Linting**: Ruff + mypy
+...</code></pre></div></div>
+      </details>
+       <details id="agents-react">
+        <summary><span class="material-icons-outlined">code</span>React/TypeScript 项目模板</summary>
+        <div class="content"><div class="code-wrapper"><pre><code class="language-markdown"># React/TypeScript 前端项目规范
+## 技术栈
+- React 18+ (Hooks only), TypeScript 5+ (strict mode), Vite, TailwindCSS, React Query
+## TypeScript 规范
+- **严格模式**: `strict: true`
+- **类型定义**: Props用 `interface`，其他用 `type`。避免 `any`。
+...</code></pre></div></div>
+      </details>
+       <details id="agents-rust">
+        <summary><span class="material-icons-outlined">code</span>Rust 系统编程项目模板</summary>
+        <div class="content"><div class="code-wrapper"><pre><code class="language-markdown"># Rust 系统编程项目规范
+## 项目信息
+- Edition: 2021, MSRV: 1.70, Linter: Clippy (pedantic)
+## 错误处理
+- 库代码返回 `Result<T, E>`，应用代码用 `anyhow::Result`。
+- 生产代码中禁止 `unwrap()`/`expect()`。
+...</code></pre></div></div>
+      </details>
+      <details id="agents-devops">
+        <summary><span class="material-icons-outlined">build_circle</span>DevOps/Infrastructure 项目模板</summary>
+        <div class="content"><div class="code-wrapper"><pre><code class="language-markdown"># DevOps & Infrastructure 项目规范
+## 技术栈
+- Terraform, Kubernetes + Helm, Ansible, GitHub Actions, Prometheus
+## Terraform 规范
+- **模块化**: 每个资源类型一个模块。
+- **State 管理**: 远程 backend (S3 + DynamoDB lock)，环境隔离。
+...</code></pre></div></div>
+      </details>
+      <details id="agents-ml">
+        <summary><span class="material-icons-outlined">psychology</span>数据科学/机器学习项目模板</summary>
+        <div class="content"><div class="code-wrapper"><pre><code class="language-markdown"># 数据科学与机器学习项目规范
+## 技术栈
+- Python 3.10+, PyTorch, Pandas/Polars, Scikit-learn, MLflow, DVC
+## 项目结构
+- `data/`, `notebooks/`, `src/`, `models/`
+## 数据处理规范
+- **版本控制**: 用 DVC 跟踪大文件。
+- **可复现性**: 数据管道必须可复现。
+...</code></pre></div></div>
+      </details>
+      <details id="agents-review">
+        <summary><span class="material-icons-outlined">checklist</span>代码审查 Checklist 模板</summary>
+        <div class="content"><div class="code-wrapper"><pre><code class="language-markdown"># 代码审查 Checklist
+当你帮我审查代码时，请检查以下方面：
+1. **功能正确性** ✅: 实现了需求、处理了边界条件和错误。
+2. **代码质量** 📐: 命名清晰、职责单一、无重复代码。
+...</code></pre></div></div>
+      </details>
+      <details id="agents-bugfix">
+        <summary><span class="material-icons-outlined">bug_report</span>Bug 修复指南模板</summary>
+        <div class="content"><div class="code-wrapper"><pre><code class="language-markdown"># Bug 修复指南
+当修复 bug 时，请遵循以下流程：
+1. **理解问题** 🔍: 阅读日志、确认复现步骤。
+2. **定位根因** 🎯: 用二分法、添加日志、`git blame`。
+3. **修复方案** 🔧: 优先最小改动，添加测试防止回归。
+...</code></pre></div></div>
+      </details>
+      <details id="agents-perf">
+        <summary><span class="material-icons-outlined">speed</span>性能优化指南模板</summary>
+        <div class="content"><div class="code-wrapper"><pre><code class="language-markdown"># 性能优化指南
+优化前必须先 **测量**，不要凭感觉优化！
+## 1. 性能分析工具 📊
+- Web: Chrome DevTools, Node.js: `clinic.js`, DB: `EXPLAIN ANALYZE`
+## 2. 常见性能问题
+- N+1 查询、阻塞 I/O、未用索引、大 Bundle、重复渲染。
+...</code></pre></div></div>
+      </details>
+    </div>
+  </section>
+
+  <section id="scenarios">
+      <h2><span class="material-icons-outlined">smart_toy</span>III. 实战场景扩展</h2>
+      <p>以下是更多结合了 Codex 功能的真实世界应用案例。</p>
+      <details>
+        <summary><span class="material-icons-outlined">construction</span>重构老代码</summary>
+        <div class="content"><p><code>codex -m gpt-5-codex "把 src/legacy/ 目录下的 ES5 代码重构成 TypeScript"</code></p></div>
+      </details>
+      <details>
+        <summary><span class="material-icons-outlined">security</span>安全审计</summary>
+        <div class="content"><p><code>codex --profile safe "扫描整个项目，生成安全漏洞报告（Markdown 格式）"</code></p></div>
+      </details>
+      <details>
+        <summary><span class="material-icons-outlined">cloud_sync</span>CI/CD 集成</summary>
+        <div class="content"><p>在 GitHub Actions 中，使用 Codex 对 Pull Request 的代码变更进行自动审查，并将结果评论到 PR 中。</p></div>
+      </details>
+      <details>
+        <summary><span class="material-icons-outlined">dns</span>数据库迁移生成</summary>
+        <div class="content"><p><code>codex "根据 models.py 的变更，生成 Django 数据库迁移并检查是否有数据丢失风险"</code></p></div>
+      </details>
+      <details>
+        <summary><span class="material-icons-outlined">language</span>跨语言代码迁移</summary>
+        <div class="content"><p><code>codex -m o3 --profile complex "把 legacy/calculator.py (Python 2) 迁移到 Rust，保持完全相同的API"</code></p></div>
+      </details>
+      <details>
+        <summary><span class="material-icons-outlined">build</span>Dockerfile 优化</summary>
+        <div class="content"><p><code>codex "优化这个 Dockerfile，减小镜像体积，提升构建速度，增强安全性"</code></p></div>
+      </details>
+      <details>
+        <summary><span class="material-icons-outlined">sync_problem</span>Git 冲突解决</summary>
+        <div class="content"><p><code>codex "帮我解决 feature/new-ui 分支与 main 的合并冲突，保留两边的功能"</code></p></div>
+      </details>
+  </section>
+  
+  <section id="best-practices">
+    <h2><span class="material-icons-outlined">verified</span>IV. 最佳实践</h2>
+    <h4>分层配置策略</h4>
+    <p>个人通用配置放 `~/.codex/`，团队共享规范放项目根目录的 `AGENTS.md`。</p>
+    <h4>Profile 命名规范</h4>
+    <p>使用 `dev`, `prod`, `test`, `ci`, `review` 等有意义的名称来组织你的 Profile。</p>
+    <h4>Sandbox 安全等级</h4>
+    <table>
+      <thead><tr><th>任务类型</th><th>推荐配置</th></tr></thead>
+      <tbody>
+        <tr><td>阅读代码</td><td><code>read-only + untrusted</code></td></tr>
+        <tr><td>编写功能</td><td><code>workspace-write + on-failure</code></td></tr>
+        <tr><td>CI/CD</td><td><code>read-only</code> 或 <code>workspace-write + never</code></td></tr>
+      </tbody>
+    </table>
+    <h4>团队协作</h4>
+    <p>将项目根目录下的 <code>AGENTS.md</code> 和 <code>.codex/config.toml</code> 提交到版本库，统一团队的开发规范和工具配置。</p>
+  </section>
+
+  <section id="cheatsheet">
+    <h2><span class="material-icons-outlined">list_alt</span>V. 快捷命令速查表</h2>
+    <div class="code-wrapper"><pre><code class="language-bash"># 基本使用
+codex "任务描述"              # 带初始提示启动
+codex exec "任务"             # 非交互模式
+codex resume --last           # 恢复最后一个会话
+
+# 配置与模型
+codex -m o3 "任务"             # 指定模型 (o3)
+codex --profile review "任务"   # 使用 'review' 配置
+
+# Sandbox 与审批
+codex --sandbox read-only "任务"  # 只读模式
+codex -a never "任务"             # 全自动（危险！）
+
+# MCP 管理
+codex mcp list                # 列出所有服务器
+codex mcp login NAME          # OAuth 登录
+
+# 图片输入
+codex -i screenshot.png "解释这个错误"
+
+# 调试与日志
+RUST_LOG=debug codex          # 详细日志
+tail -f ~/.codex/log/codex-tui.log
+</code></pre></div>
+  </section>
+  
+  <div class="action-buttons">
+    <a href="javascript:window.print()" class="action-button" title="打印/导出 PDF">
+        <span class="material-icons-outlined">print</span>
+    </a>
+    <a href="#" class="action-button" title="回到顶部">
+        <span class="material-icons-outlined">arrow_upward</span>
+    </a>
+  </div>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // --- Code block copy button ---
+    document.querySelectorAll('pre').forEach(pre => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'code-wrapper';
+        pre.parentNode.insertBefore(wrapper, pre);
+        wrapper.appendChild(pre);
+
+        const button = document.createElement('button');
+        button.className = 'copy-button';
+        button.textContent = '复制';
+        wrapper.appendChild(button);
+
+        button.addEventListener('click', () => {
+            const code = pre.querySelector('code').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                button.textContent = '已复制!';
+                setTimeout(() => {
+                    button.textContent = '复制';
+                }, 2000);
+            });
+        });
+    });
+
+    // --- TOC active link highlighting ---
+    const tocLinks = document.querySelectorAll('#toc a');
+    const sections = Array.from(document.querySelectorAll('section, h3, h4')).filter(el => el.id);
+    
+    function highlightToc() {
+        let current = '';
+        const scrollY = window.pageYOffset;
+
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (scrollY >= sectionTop - 100) {
+                current = section.getAttribute('id');
+            }
+        });
+
+        tocLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href').substring(1) === current) {
+                link.classList.add('active');
+            }
+        });
+    }
+    window.addEventListener('scroll', highlightToc);
+    highlightToc();
+    
+    // --- Graphviz Rendering ---
+    const graphOutput = document.getElementById('graph-output');
+    if (graphOutput) {
+      const dotString = `
+      digraph AgentsMDLoadOrder {
+          graph [rankdir="TB", bgcolor="transparent", fontname="Inter, sans-serif"];
+          node [shape=box, style="filled,rounded", fontname="Inter, sans-serif", margin="0.25,0.15", color="#D1D5DB", fontcolor="#F9FAFB"];
+          edge [color="#9CA3AF"];
+
+          global [label="~/.codex/AGENTS.md\\n(全局个人配置)", fillcolor="#4B5563"];
+          project [label="<项目根目录>/AGENTS.md\\n(项目共享配置)", fillcolor="#5B21B6"];
+          subdir [label="<当前目录>/AGENTS.md\\n(子目录特定配置)", fillcolor="#818CF8"];
+          
+          global -> project -> subdir [label="  优先级递增"];
+      }
+      `;
+      const checkViz = setInterval(() => {
+          if (typeof Viz !== 'undefined') {
+              clearInterval(checkViz);
+              try {
+                const viz = new Viz({ worker: undefined });
+                viz.renderSVGElement(dotString).then(element => {
+                    graphOutput.innerHTML = '';
+                    graphOutput.appendChild(element);
+                }).catch(error => { throw error });
+              } catch (error) {
+                  graphOutput.innerHTML = `<p style="color:var(--danger-color);">Error rendering graph: ${error}. Viz.js might be blocked.</p>`;
+                  console.error(error);
+              }
+          }
+      }, 100);
+    }
+});
+</script>
+</body>
+</html>
