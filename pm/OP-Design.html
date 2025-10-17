@@ -170,6 +170,36 @@
   }
   .action-button:hover { background-color: var(--brand-color); color: var(--bg-color); }
   
+  .zoomable-image { cursor: zoom-in; }
+  .image-zoom-modal {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(17, 24, 39, 0.9);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 1000;
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    backdrop-filter: blur(5px);
+  }
+  .image-zoom-modal.visible { opacity: 1; visibility: visible; }
+  .image-zoom-modal img {
+    max-width: 90%; max-height: 90%;
+    object-fit: contain;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    border-radius: 8px;
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+  }
+  .image-zoom-modal.visible img { transform: scale(1); }
+  .image-zoom-modal .close-button {
+    position: absolute; top: 20px; right: 20px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white; border: none; width: 40px; height: 40px;
+    border-radius: 50%; font-size: 24px; cursor: pointer;
+    display: flex; justify-content: center; align-items: center;
+    transition: background-color 0.2s;
+  }
+  .image-zoom-modal .close-button:hover { background-color: rgba(255, 255, 255, 0.2); }
+
   @media (max-width: 1024px) {
     body { flex-direction: column; }
     .sidebar { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border-color); }
@@ -230,7 +260,7 @@
   <section id="architecture">
     <h2><span class="material-icons-outlined">account_tree</span>0. 架构图</h2>
     <div style="background:rgba(255,255,255,0.05); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color);">
-        <img src="https://pub-10375556b89a45e0a56aff68854a2214.r2.dev/OP%E6%9E%B6%E6%9E%84%E5%9B%BE.svg" alt="OP后台系统架构图" style="width:100%; height:auto;">
+        <img src="https://pub-10375556b89a45e0a56aff68854a2214.r2.dev/OP%E6%9E%B6%E6%9E%84%E5%9B%BE.svg" alt="OP后台系统架构图" style="width:100%; height:auto;" class="zoomable-image">
     </div>
   </section>
 
@@ -462,7 +492,7 @@ volumes:
         <li><strong>审计追踪:</strong> 使用FastAPI的装饰器或中间件模式，以非侵入式的方式为敏感操作添加审计日志记录。</li>
     </ul>
   </section>
-
+  
   <div class="action-buttons">
     <a href="javascript:window.print()" class="action-button" title="打印/导出 PDF">
         <span class="material-icons-outlined">print</span>
@@ -472,6 +502,11 @@ volumes:
     </a>
   </div>
 </main>
+
+<div class="image-zoom-modal" id="imageZoomModal">
+  <span class="close-button" id="closeZoomModal">&times;</span>
+  <img src="" alt="Zoomed Image" id="zoomedImage">
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
@@ -526,6 +561,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     window.addEventListener('scroll', highlightToc);
     highlightToc();
+
+    // --- Image Zoom Functionality ---
+    const modal = document.getElementById('imageZoomModal');
+    const modalImg = document.getElementById('zoomedImage');
+    const closeBtn = document.getElementById('closeZoomModal');
+
+    document.querySelectorAll('.zoomable-image').forEach(img => {
+        img.addEventListener('click', function() {
+            modal.classList.add('visible');
+            modalImg.src = this.src;
+        });
+    });
+
+    function closeModal() {
+        modal.classList.remove('visible');
+    }
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+    
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('visible')) {
+            closeModal();
+        }
+    });
 });
 </script>
 </body>
