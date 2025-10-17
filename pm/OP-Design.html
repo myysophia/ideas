@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>OP后台运营管理系统技术方案</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<style>
+  :root {
+    --bg-color: #111827;
+    --sidebar-bg: #1F2937;
+    --text-color: #D1D5DB;
+    --heading-color: #F9FAFB;
+    --muted-color: #9CA3AF;
+    --border-color: #374151;
+    --brand-color: #818CF8;
+    --code-bg: #1e293b;
+    --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+  }
+  html,body{margin:0; scroll-behavior:smooth;}
+  body{
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background-color: var(--bg-color); color: var(--text-color); line-height:1.7;
+    display: flex;
+  }
+  .sidebar {
+    width: 280px; height: 100vh; position: sticky; top: 0;
+    background-color: var(--sidebar-bg); border-right: 1px solid var(--border-color);
+    overflow-y: auto; flex-shrink: 0;
+  }
+  .sidebar-header {
+    padding: 24px; border-bottom: 1px solid var(--border-color);
+  }
+  .sidebar-header h1 {
+    font-size: 20px; color: var(--heading-color); margin: 0;
+  }
+  .sidebar-nav { padding: 16px; }
+  .sidebar-nav ul { list-style: none; padding: 0; margin: 0; }
+  .sidebar-nav li a {
+    display: block; padding: 6px 16px; border-radius: 6px;
+    color: var(--muted-color); text-decoration: none; font-size: 14px;
+    transition: background-color 0.2s, color 0.2s;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .sidebar-nav li a:hover {
+    background-color: rgba(255,255,255,0.05); color: var(--heading-color);
+  }
+  .sidebar-nav li a.active {
+    background-color: var(--brand-color); color: #111827; font-weight: 600;
+  }
+  .sidebar-nav .sub-menu { padding-left: 16px; }
+  .sidebar-nav .sub-menu a { font-size: 13px; }
+
+  .main-content {
+    flex-grow: 1; padding: 32px 48px; max-width: 900px; margin: 0 auto;
+  }
+  .page-header h1 {
+    font-size: 42px; color: var(--heading-color); margin: 0 0 16px; line-height: 1.2;
+  }
+  section { margin-bottom: 48px; }
+  h2 {
+    font-size: 28px; color: var(--heading-color); border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px; margin: 40px 0 24px; display: flex; align-items: center; gap: 8px;
+  }
+  h2 .material-icons-outlined { color: var(--brand-color); }
+  h3 { font-size: 22px; color: var(--heading-color); margin: 32px 0 16px; }
+  h4 { font-size: 18px; color: var(--heading-color); margin: 24px 0 12px; border-left: 3px solid var(--brand-color); padding-left: 12px;}
+  p, ul li, ol li { color: var(--text-color); font-size: 16px; }
+  ul, ol { padding-left: 24px; }
+  strong { color: var(--brand-color); font-weight: 500;}
+  code:not(pre > code) {
+    background-color: var(--code-bg); color: #A78BFA;
+    padding: 2px 6px; border-radius: 4px; font-family: "Fira Code", monospace; font-size: 0.9em;
+  }
+  .code-wrapper { position: relative; margin: 20px 0; }
+  pre {
+    background-color: var(--code-bg); border: 1px solid var(--border-color);
+    padding: 1.5em; border-radius: 8px; overflow-x: auto;
+    box-shadow: var(--shadow);
+  }
+  pre code { font-family: "Fira Code", monospace; }
+  .copy-button {
+    position: absolute; top: 12px; right: 12px;
+    background-color: #4B5563; color: white; border: none;
+    padding: 6px 10px; border-radius: 6px; cursor: pointer;
+    font-size: 12px; opacity: 0.7; transition: opacity 0.2s, background-color 0.2s;
+  }
+  .code-wrapper:hover .copy-button { opacity: 1; }
+  .copy-button:hover { background-color: #6B7280; }
+  
+  .placeholder {
+      border: 2px dashed var(--border-color); border-radius: 8px;
+      padding: 24px; text-align: center; color: var(--muted-color);
+      margin: 20px 0;
+  }
+
+  .timeline {
+    list-style: none; padding: 0; position: relative;
+  }
+  .timeline::before {
+    content: ''; position: absolute; top: 0; left: 12px;
+    height: 100%; width: 2px; background-color: var(--border-color);
+  }
+  .timeline li {
+    padding-left: 40px; margin-bottom: 24px; position: relative;
+  }
+  .timeline li::before {
+    content: attr(data-stage); position: absolute; left: 0; top: 0;
+    width: 24px; height: 24px; border-radius: 50%;
+    background-color: var(--brand-color); color: #111827;
+    display: flex; justify-content: center; align-items: center;
+    font-weight: bold; font-size: 14px;
+  }
+  
+  .file-tree {
+    font-family: "Fira Code", monospace;
+    font-size: 14px;
+    background-color: var(--code-bg);
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    border-radius: 8px;
+  }
+  .file-tree ul {
+    list-style: none;
+    padding-left: 20px;
+    margin: 0;
+  }
+  .file-tree li {
+    position: relative;
+    padding-left: 20px;
+    line-height: 1.8;
+  }
+  .file-tree li::before {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: 0;
+    border-left: 1px solid var(--muted-color);
+    width: 10px;
+    height: 100%;
+  }
+  .file-tree li:last-child::before {
+    height: 0;
+  }
+  .file-tree li::after {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: 0;
+    border-top: 1px solid var(--muted-color);
+    width: 15px;
+  }
+  .file-tree .icon {
+    margin-right: 8px;
+    color: var(--muted-color);
+  }
+  .file-tree .folder { color: var(--brand-color); }
+  .file-tree .file { color: var(--text-color); }
+  .file-tree .comment { color: var(--muted-color); margin-left: 12px; }
+
+  .action-buttons {
+      position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 100;
+  }
+  .action-button {
+      background-color: var(--sidebar-bg); color: var(--text-color); border: 1px solid var(--border-color);
+      width: 48px; height: 48px; border-radius: 50%; display: flex; justify-content: center; align-items: center;
+      cursor: pointer; transition: all 0.2s ease; box-shadow: var(--shadow); text-decoration: none;
+  }
+  .action-button:hover { background-color: var(--brand-color); color: var(--bg-color); }
+  
+  @media (max-width: 1024px) {
+    body { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border-color); }
+    .sidebar-nav { display: none; }
+    .main-content { padding: 24px; }
+    .page-header h1 { font-size: 32px; }
+    h2 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>OP后台运营管理系统</h1>
+    <p style="font-size:14px; color: var(--muted-color); margin: 4px 0 0;">技术方案</p>
+  </div>
+  <nav class="sidebar-nav">
+    <ul id="toc">
+      <li><a href="#architecture"><strong>0. 架构图</strong></a></li>
+      <li><a href="#structure"><strong>1. 项目结构设计</strong></a></li>
+      <li><a href="#database"><strong>2. 数据库表设计</strong></a>
+        <ul class="sub-menu">
+            <li><a href="#db-ban">2.1 用户封禁</a></li>
+            <li><a href="#db-meme">2.2 Meme审核</a></li>
+            <li><a href="#db-post">2.3 Post权重</a></li>
+            <li><a href="#db-support">2.4 客服支持</a></li>
+        </ul>
+      </li>
+      <li><a href="#backend"><strong>3. FastAPI后端核心</strong></a>
+        <ul class="sub-menu">
+            <li><a href="#backend-deps">3.1 主要依赖</a></li>
+            <li><a href="#backend-services">3.2 核心服务</a></li>
+            <li><a href="#backend-ws">3.3 WebSocket</a></li>
+        </ul>
+      </li>
+      <li><a href="#frontend"><strong>4. React前端核心</strong></a>
+        <ul class="sub-menu">
+            <li><a href="#frontend-stack">4.1 技术栈</a></li>
+            <li><a href="#frontend-components">4.2 核心页面</a></li>
+            <li><a href="#frontend-features">4.3 关键功能</a></li>
+        </ul>
+      </li>
+      <li><a href="#openim"><strong>5. OpenIM集成</strong></a></li>
+      <li><a href="#security"><strong>6. 安全与权限</strong></a></li>
+      <li><a href="#deployment"><strong>7. 部署建议</strong></a></li>
+      <li><a href="#priority"><strong>8. 开发优先级</strong></a></li>
+      <li><a href="#key-tech"><strong>9. 关键技术点</strong></a></li>
+    </ul>
+  </nav>
+</aside>
+
+<main class="main-content">
+  <div class="page-header">
+    <h1>OP后台运营管理系统技术方案</h1>
+  </div>
+
+  <section id="architecture">
+    <h2><span class="material-icons-outlined">account_tree</span>0. 架构图</h2>
+    <div style="background:rgba(255,255,255,0.05); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color);">
+        <img src="https://pub-10375556b89a45e0a56aff68854a2214.r2.dev/OP%E6%9E%B6%E6%9E%84%E5%9B%BE.svg" alt="OP后台系统架构图" style="width:100%; height:auto;">
+    </div>
+  </section>
+
+  <section id="structure">
+    <h2><span class="material-icons-outlined">folder_special</span>1. 项目结构设计</h2>
+    <div class="file-tree">
+        <ul>
+            <li><span class="icon">📁</span><span class="folder">op-admin-system/</span>
+                <ul>
+                    <li><span class="icon">📁</span><span class="folder">backend/</span><span class="comment"># FastAPI 后端</span>
+                        <ul>
+                            <li><span class="icon">📁</span><span class="folder">app/</span>
+                                <ul>
+                                    <li><span class="icon">📁</span><span class="folder">api/</span><span class="comment"># API路由</span></li>
+                                    <li><span class="icon">📁</span><span class="folder">core/</span><span class="comment"># 核心配置</span></li>
+                                    <li><span class="icon">📁</span><span class="folder">models/</span><span class="comment"># SQLAlchemy模型</span></li>
+                                    <li><span class="icon">📁</span><span class="folder">schemas/</span><span class="comment"># Pydantic schemas</span></li>
+                                    <li><span class="icon">📁</span><span class="folder">services/</span><span class="comment"># 业务逻辑</span></li>
+                                </ul>
+                            </li>
+                            <li><span class="icon">📁</span><span class="folder">alembic/</span><span class="comment"># 数据库迁移</span></li>
+                            <li><span class="icon">📄</span><span class="file">main.py</span></li>
+                        </ul>
+                    </li>
+                    <li><span class="icon">📁</span><span class="folder">frontend/</span><span class="comment"># React 前端</span>
+                        <ul>
+                           <li><span class="icon">📁</span><span class="folder">src/</span>
+                                <ul>
+                                    <li><span class="icon">📁</span><span class="folder">api/</span><span class="comment"># API调用层</span></li>
+                                    <li><span class="icon">📁</span><span class="folder">components/</span><span class="comment"># 公共组件</span></li>
+                                    <li><span class="icon">📁</span><span class="folder">pages/</span><span class="comment"># 页面</span></li>
+                                    <li><span class="icon">📁</span><span class="folder">hooks/</span><span class="comment"># 自定义hooks</span></li>
+                                    <li><span class="icon">📁</span><span class="folder">store/</span><span class="comment"># 状态管理</span></li>
+                                </ul>
+                           </li>
+                           <li><span class="icon">📄</span><span class="file">package.json</span></li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+  </section>
+
+  <section id="database">
+    <h2><span class="material-icons-outlined">storage</span>2. 数据库表设计 (扩展现有表)</h2>
+    <div id="db-ban"><h4>2.1 用户封禁相关表</h4><div class="placeholder">SQL DDL for Ban Records...</div></div>
+    <div id="db-meme"><h4>2.2 Meme审核相关表</h4><div class="placeholder">SQL DDL for Meme Review...</div></div>
+    <div id="db-post"><h4>2.3 Post权重管理</h4><div class="placeholder">SQL DDL for Post Weighting...</div></div>
+    <div id="db-support"><h4>2.4 客服支持相关表</h4><div class="placeholder">SQL DDL for Support Sessions...</div></div>
+  </section>
+
+  <section id="backend">
+    <h2><span class="material-icons-outlined">dns</span>3. FastAPI后端核心实现</h2>
+    <div id="backend-deps">
+      <h3>3.1 主要依赖 (requirements.txt)</h3>
+      <div class="code-wrapper"><pre><code class="language-text">fastapi==0.109.0
+uvicorn[standard]==0.27.0
+sqlalchemy==2.0.25
+psycopg2-binary==2.9.9
+pydantic==2.5.3
+pydantic-settings==2.1.0
+alembic==1.13.1
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+httpx==0.26.0
+redis==5.0.1
+python-socketio==5.11.0</code></pre></div>
+    </div>
+    <div id="backend-services">
+      <h3>3.2 核心服务设计</h3>
+      <div class="code-wrapper"><pre><code class="language-python"># services/openim_service.py
+class OpenIMService:
+    async def send_notification(self, user_id: int, message: str)
+    async def send_ban_notification(self, user_id: int, reason: str, duration: str)
+    async def get_chat_history(self, session_id: str)
+    async def send_support_message(self, user_id: int, operator_id: int, message: str)
+
+# services/user_service.py
+class UserService:
+    async def list_users(self, filters: dict, pagination: dict)
+    async def get_user_detail(self, user_id: int)
+    async def ban_user(self, user_id: int, ban_data: BanRequest, operator: User)
+    async def unban_user(self, user_id: int, operator: User)
+    async def search_users(self, query: str, fields: list)
+
+# services/meme_service.py
+class MemeService:
+    async def list_pending_memes(self, pagination: dict)
+    async def approve_meme(self, meme_id: int, operator: User)
+    async def reject_meme(self, meme_id: int, reason: str, operator: User)
+
+# services/support_service.py
+class SupportService:
+    async def get_pending_sessions(self)
+    async def assign_session(self, session_id: int, operator_id: int)
+    async def close_session(self, session_id: int)
+    async def get_quick_replies(self, operator_id: int)
+    async def send_message(self, session_id: int, message: str)</code></pre></div>
+    </div>
+    <div id="backend-ws">
+      <h3>3.3 WebSocket实时通信</h3>
+      <p>使用 <code>python-socketio</code> 实现客服实时聊天，关键点包括：</p>
+      <ul>
+          <li>客服端监听新消息事件。</li>
+          <li>多个运营人员协作的会话锁定机制。</li>
+          <li>消息已读/未读状态的实时同步。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="frontend">
+    <h2><span class="material-icons-outlined">web</span>4. React前端核心实现</h2>
+    <div id="frontend-stack">
+      <h3>4.1 主要技术栈</h3>
+      <div class="code-wrapper"><pre><code class="language-json">{
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-router-dom": "^6.21.0",
+    "antd": "^5.12.0",
+    "@tanstack/react-query": "^5.17.0",
+    "zustand": "^4.4.7",
+    "axios": "^1.6.5",
+    "socket.io-client": "^4.6.1",
+    "dayjs": "^1.11.10"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/react": "^18.2.48",
+    "vite": "^5.0.11"
+  }
+}</code></pre></div>
+    </div>
+    <div id="frontend-components">
+        <h3>4.2 核心页面组件</h3>
+        <ul>
+            <li><strong>用户管理页面:</strong> 多字段搜索、表格展示、详情抽屉、Ban/Unban操作弹窗。</li>
+            <li><strong>用户详情页:</strong> 用户基本信息、封禁历史、Ban操作表单。</li>
+            <li><strong>Meme审核页:</strong> Meme列表展示、Approve/Reject按钮、审核记录查询。</li>
+            <li><strong>Post权重管理:</strong> Post列表展示、权重调整、创建Post（URL验证）。</li>
+            <li><strong>客服支持页:</strong> 待处理/已处理会话列表、实时聊天窗口、会话锁定、快捷回复。</li>
+        </ul>
+    </div>
+    <div id="frontend-features">
+        <h3>4.3 关键功能实现</h3>
+        <h4>会话锁定机制</h4>
+        <p>使用Redis实现分布式锁。当运营人员打开一个会话时，向Redis写入一个带超时时间的锁。其他运营人员尝试打开同一会话时，先检查锁是否存在，如存在则提示“会话正在由[XXX]处理中”。关闭会话或浏览器窗口时主动释放锁，超时则自动释放。</p>
+        <h4>实时消息推送</h4>
+        <p>前端通过Socket.IO客户端连接后端WebSocket服务。监听新消息事件，当有新客服会话或新消息时，实时更新待处理列表和消息计数器，并播放提示音。</p>
+    </div>
+  </section>
+
+   <section id="openim">
+    <h2><span class="material-icons-outlined">sync_alt</span>5. OpenIM集成方案</h2>
+    <h3>5.1 OpenIM API集成点</h3>
+    <div class="code-wrapper"><pre><code class="language-json">{
+  "// 发送通知消息": "POST /msg/send_msg",
+  "send_msg_payload": {
+    "sendID": "admin_system",
+    "recvID": "user_id",
+    "content": { "text": "您已被封禁，原因：..." }
+  },
+  "// 获取聊天历史": "GET /msg/get_conversation",
+  "// 发送客服消息": "POST /msg/send_msg"
+}</code></pre></div>
+    <h3>5.2 认证集成</h3>
+    <p>在OpenIM管理后台为OP系统创建一个专用的系统账号，生成对应的AccessToken。后端服务在启动时加载此Token，并实现一个定时任务或在API调用失败时触发的逻辑，用于刷新过期的Token。</p>
+  </section>
+
+  <section id="security">
+    <h2><span class="material-icons-outlined">security</span>6. 安全与权限控制</h2>
+    <h4>6.1 管理员认证</h4>
+    <ul>
+        <li><strong>JWT Token认证:</strong> 用户登录后颁发JWT，后续请求在Header中携带。</li>
+        <li><strong>基于角色的权限控制 (RBAC):</strong> 定义Admin/Operator等角色，不同角色拥有不同API的访问权限。</li>
+        <li><strong>API级别权限校验:</strong> 使用FastAPI的依赖注入，在每个需要权限的路由上添加权限校验依赖。</li>
+    </ul>
+    <h4>6.2 操作审计</h4>
+    <p>创建一个通用的装饰器或中间件，对所有敏感的写操作（如封禁用户、审核Meme）进行拦截，将操作人、时间、IP地址、请求参数等信息记录到 <code>audit_logs</code> 表中。提供一个审计日志查询和导出功能。</p>
+  </section>
+
+  <section id="deployment">
+    <h2><span class="material-icons-outlined">cloud_upload</span>7. 部署建议</h2>
+    <div class="code-wrapper"><pre><code class="language-yaml"># docker-compose.yml
+services:
+  backend:
+    build: ./backend
+    ports: ["8000:8000"]
+    environment:
+      - DATABASE_URL=postgresql://user:pass@postgres:5432/db
+      - OPENIM_API_URL=http://openim:10002
+      - REDIS_URL=redis://redis:6379
+      
+  frontend:
+    build: ./frontend
+    ports: ["3000:80"] # 实际部署时用Nginx代理
+      
+  postgres:
+    image: postgres:15
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      
+  redis:
+    image: redis:7-alpine
+volumes:
+  pgdata:
+</code></pre></div>
+  </section>
+
+  <section id="priority">
+    <h2><span class="material-icons-outlined">low_priority</span>8. 开发优先级</h2>
+    <ol class="timeline">
+        <li data-stage="1"><strong>第一阶段：基础架构搭建</strong><p class="muted">项目初始化（FastAPI + React）、数据库表创建和迁移、管理员认证系统。</p></li>
+        <li data-stage="2"><strong>第二阶段：用户管理模块</strong><p class="muted">用户列表和搜索、用户详情、Ban/Unban功能、OpenIM通知集成。</p></li>
+        <li data-stage="3"><strong>第三阶段：内容审核模块</strong><p class="muted">Meme审核列表、审核操作和记录、Post权重管理。</p></li>
+        <li data-stage="4"><strong>第四阶段：客服支持模块</strong><p class="muted">会话管理、实时聊天（WebSocket）、快捷回复、会话锁定机制。</p></li>
+    </ol>
+  </section>
+
+  <section id="key-tech">
+    <h2><span class="material-icons-outlined">key</span>9. 关键技术点</h2>
+    <ul>
+        <li><strong>多表关联查询优化:</strong> 使用SQLAlchemy的 <code>joinedload</code> 或 <code>selectinload</code> 预加载关联数据，避免N+1问题。</li>
+        <li><strong>分页性能:</strong> 对于可能无限增长的列表（如日志），使用基于游标的分页（cursor-based pagination）代替传统的offset分页。</li>
+        <li><strong>实时通信:</strong> Socket.IO 配合 Redis Pub/Sub，实现后端服务的多实例扩展。</li>
+        <li><strong>并发控制:</strong> 使用Redis的SETNX或Redlock算法实现分布式锁，确保客服会话在并发操作下的原子性。</li>
+        <li><strong>URL验证:</strong> 在后端使用Pydantic的validator或正则表达式对提交的Post URL格式进行严格验证。</li>
+        <li><strong>审计追踪:</strong> 使用FastAPI的装饰器或中间件模式，以非侵入式的方式为敏感操作添加审计日志记录。</li>
+    </ul>
+  </section>
+
+  <div class="action-buttons">
+    <a href="javascript:window.print()" class="action-button" title="打印/导出 PDF">
+        <span class="material-icons-outlined">print</span>
+    </a>
+    <a href="#" class="action-button" title="回到顶部">
+        <span class="material-icons-outlined">arrow_upward</span>
+    </a>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // --- Code block copy button ---
+    document.querySelectorAll('pre').forEach(pre => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'code-wrapper';
+        if (pre.parentNode.tagName !== 'DIV' || !pre.parentNode.classList.contains('code-wrapper')) {
+            pre.parentNode.insertBefore(wrapper, pre);
+            wrapper.appendChild(pre);
+        }
+
+        const button = document.createElement('button');
+        button.className = 'copy-button';
+        button.textContent = '复制';
+        wrapper.appendChild(button);
+
+        button.addEventListener('click', () => {
+            const code = pre.querySelector('code').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                button.textContent = '已复制!';
+                setTimeout(() => {
+                    button.textContent = '复制';
+                }, 2000);
+            });
+        });
+    });
+
+    // --- TOC active link highlighting ---
+    const tocLinks = document.querySelectorAll('#toc a');
+    const sections = Array.from(document.querySelectorAll('section, h3, h4')).filter(el => el.id && el.id !== '');
+    
+    function highlightToc() {
+        let current = '';
+        const scrollY = window.pageYOffset;
+
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (scrollY >= sectionTop - 100) {
+                current = section.getAttribute('id');
+            }
+        });
+
+        tocLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.hash === '#' + current) {
+                link.classList.add('active');
+            }
+        });
+    }
+    window.addEventListener('scroll', highlightToc);
+    highlightToc();
+});
+</script>
+</body>
+</html>
