@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { marked } = require('marked');
 const matter = require('gray-matter');
+const CryptoJS = require('crypto-js');
 
 // 配置
 const EXCLUDED_DIRS = ['node_modules', '.git', 'dist', '_templates', '_content'];
@@ -60,6 +61,8 @@ function processFile(filePath) {
   let content = '';
   let description = '';
   let tag = '';
+  let password = '';
+  let needsPassword = false;
   
   // 从目录名提取 tag（对所有文件类型通用）
   const pathParts = relativePath.split(path.sep);
@@ -79,11 +82,21 @@ function processFile(filePath) {
       date = extractDateFromFilename(filePath);
     }
     description = parsed.data.description || '';
-    content = marked(parsed.content);
+    password = parsed.data.password || '';
+    
+    // 检查是否需要密码保护
+    if (password) {
+      // 加密内容
+      const encryptedContent = CryptoJS.AES.encrypt(parsed.content, password).toString();
+      content = encryptedContent;
+      needsPassword = true;
+    } else {
+      content = marked(parsed.content);
+    }
     
   } else if (ext === '.html') {
-    // 处理 HTML 文件 - 直接复制原文件
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    // 处理 HTML 文件
+    let fileContent = fs.readFileSync(filePath, 'utf-8');
     
     // 提取标题（用于首页列表）
     const titleMatch = fileContent.match(/<title>(.*?)<\/title>/i);
@@ -103,7 +116,70 @@ function processFile(filePath) {
     const descMatch = fileContent.match(/<meta name="description" content="(.*?)"/i);
     description = descMatch ? descMatch[1] : '';
     
-    // 直接复制 HTML 文件到输出目录
+    // 检查是否有密码保护
+    const passwordMatch = fileContent.match(/<meta name="password" content="(.*?)"/i);
+    if (passwordMatch) {
+      password = passwordMatch[1];
+      needsPassword = true;
+      
+      // 提取 body 内容并加密
+      const bodyMatch = fileContent.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+      if (bodyMatch) {
+        const bodyContent = bodyMatch[1];
+        const encryptedBody = CryptoJS.AES.encrypt(bodyContent, password).toString();
+        
+        // 替换 body 内容为加密版本
+        const passwordProtectedBody = `<body>
+  <div id="encrypted-content" style="display: none;">${encryptedBody}</div>
+  <div id="article-content" style="display: none;"></div>
+  
+  <div id="password-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.98); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+    <div class="password-modal" style="text-align: center; max-width: 400px; padding: 2rem;">
+      <h2 style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; margin-bottom: 1rem;">此文章需要密码</h2>
+      <input type="password" id="password-input" placeholder="请输入密码" style="width: 100%; padding: 0.75rem; font-size: 1rem; border: 1px solid #ddd; border-radius: 3px; margin-bottom: 1rem;" onkeypress="if(event.key === 'Enter') decryptArticle()">
+      <button onclick="decryptArticle()" style="width: 100%; padding: 0.75rem; font-size: 1rem; background: #000; color: #fff; border: none; border-radius: 3px; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;">解锁</button>
+      <p id="password-error" style="display: none; color: red; margin-top: 1rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;">密码错误，请重试</p>
+    </div>
+  </div>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+  <script>
+    const encryptedContent = document.getElementById('encrypted-content').textContent.trim();
+    
+    function decryptArticle() {
+      const password = document.getElementById('password-input').value;
+      const errorMsg = document.getElementById('password-error');
+      
+      try {
+        const decrypted = CryptoJS.AES.decrypt(encryptedContent, password);
+        const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
+        
+        if (plaintext && plaintext.length > 0) {
+          document.getElementById('article-content').innerHTML = plaintext;
+          document.getElementById('article-content').style.display = 'block';
+          document.getElementById('password-overlay').style.display = 'none';
+          errorMsg.style.display = 'none';
+        } else {
+          errorMsg.style.display = 'block';
+        }
+      } catch (e) {
+        errorMsg.style.display = 'block';
+      }
+    }
+    
+    // 自动聚焦密码输入框
+    document.getElementById('password-input').focus();
+  </script>
+</body>`;
+        
+        fileContent = fileContent.replace(/<body[^>]*>[\s\S]*<\/body>/i, passwordProtectedBody);
+        
+        // 移除密码 meta 标签（避免泄露）
+        fileContent = fileContent.replace(/<meta name="password"[^>]*>/i, '');
+      }
+    }
+    
+    // 写入输出文件
     const outputPath = path.join(OUTPUT_DIR, relativePath);
     const outputDir = path.dirname(outputPath);
     
@@ -138,11 +214,60 @@ function processFile(filePath) {
     
     // 应用模板
     const dateHtml = date ? `<time datetime="${date}">${date}</time>` : '';
-    const html = template
+    let html = template
       .replace(/\{\{TITLE\}\}/g, title)
       .replace(/\{\{DATE_HTML\}\}/g, dateHtml)
-      .replace(/\{\{DESCRIPTION\}\}/g, description || title)
-      .replace(/\{\{CONTENT\}\}/g, content);
+      .replace(/\{\{DESCRIPTION\}\}/g, description || title);
+    
+    // 如果需要密码保护，替换为加密版本
+    if (needsPassword) {
+      const passwordProtectedContent = `
+    <div id="encrypted-content" style="display: none;">${content}</div>
+    <section id="article-content" style="display: none;"></section>
+  </article>
+  
+  <div id="password-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.98); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+    <div class="password-modal" style="text-align: center; max-width: 400px; padding: 2rem;">
+      <h2 style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; margin-bottom: 1rem;">此文章需要密码</h2>
+      <input type="password" id="password-input" placeholder="请输入密码" style="width: 100%; padding: 0.75rem; font-size: 1rem; border: 1px solid #ddd; border-radius: 3px; margin-bottom: 1rem;" onkeypress="if(event.key === 'Enter') decryptArticle()">
+      <button onclick="decryptArticle()" style="width: 100%; padding: 0.75rem; font-size: 1rem; background: #000; color: #fff; border: none; border-radius: 3px; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;">解锁</button>
+      <p id="password-error" style="display: none; color: red; margin-top: 1rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;">密码错误，请重试</p>
+    </div>
+  </div>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    const encryptedContent = document.getElementById('encrypted-content').textContent.trim();
+    
+    function decryptArticle() {
+      const password = document.getElementById('password-input').value;
+      const errorMsg = document.getElementById('password-error');
+      
+      try {
+        const decrypted = CryptoJS.AES.decrypt(encryptedContent, password);
+        const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
+        
+        if (plaintext && plaintext.length > 0) {
+          document.getElementById('article-content').innerHTML = marked.parse(plaintext);
+          document.getElementById('article-content').style.display = 'block';
+          document.getElementById('password-overlay').style.display = 'none';
+          errorMsg.style.display = 'none';
+        } else {
+          errorMsg.style.display = 'block';
+        }
+      } catch (e) {
+        errorMsg.style.display = 'block';
+      }
+    }
+    
+    // 自动聚焦密码输入框
+    document.getElementById('password-input').focus();
+  </script>`;
+      html = html.replace(/\{\{CONTENT\}\}/g, passwordProtectedContent);
+    } else {
+      html = html.replace(/\{\{CONTENT\}\}/g, `<section>${content}</section>`);
+    }
     
     // 写入文件
     fs.writeFileSync(outputPath, html, 'utf-8');

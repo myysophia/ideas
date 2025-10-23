@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>上海江熠中石化自动化软件项目年度维护与技术支持服务报价单</title>
+<meta name="password" content="666666">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<style>
+  :root {
+    --brand-color: #4F46E5;
+    --text-color: #374151;
+    --heading-color: #111827;
+    --muted-color: #6B7280;
+    --border-color: #E5E7EB;
+    --bg-light: #F9FAFB;
+  }
+  body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-color);
+    margin: 0;
+    padding: 20px;
+  }
+  .container {
+    max-width: 900px;
+    margin: 20px auto;
+    background-color: #FFFFFF;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    padding: 40px;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid var(--brand-color);
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+  }
+  .logo-area { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 40px; height: 40px; background-color: var(--brand-color); border-radius: 8px; }
+  .logo-area h1 { margin: 0; font-size: 24px; color: var(--heading-color); }
+  .quote-info { text-align: right; }
+  .quote-info h2 { margin: 0 0 8px; font-size: 18px; color: var(--muted-color); }
+  .quote-info p { margin: 4px 0; }
+  
+  .section { margin-bottom: 30px; }
+  .section-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--heading-color);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title .material-icons-outlined { color: var(--brand-color); }
+  
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .info-box {
+    background-color: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .info-box h4 { margin: 0 0 10px; font-size: 16px; color: var(--heading-color); }
+  .info-box p { margin: 4px 0; font-size: 14px; }
+
+  .packages {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+  }
+  .package-card {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+  .package-card:hover {
+    border-color: var(--brand-color);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+    transform: translateY(-5px);
+  }
+  .package-card.recommended {
+      border: 2px solid var(--brand-color);
+  }
+  .package-card h3 { margin: 0 0 8px; font-size: 18px; color: var(--brand-color); }
+  .package-card .price { font-size: 24px; font-weight: 700; color: var(--heading-color); margin: 8px 0; }
+  .package-card .price span { font-size: 14px; font-weight: 400; color: var(--muted-color); }
+  .package-card ul { list-style: none; padding: 0; margin: 16px 0; text-align: left; font-size: 14px; }
+  .package-card ul li { margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .package-card ul li .material-icons-outlined { color: #10B981; font-size: 18px; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+  th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-color); }
+  thead { background-color: var(--bg-light); }
+  th { font-weight: 600; color: var(--heading-color); }
+  tbody tr:last-child td { border-bottom: none; }
+  .category-row td { background-color: #F3F4F6; font-weight: 600; color: var(--heading-color); }
+  .total-row { background-color: var(--bg-light); font-weight: bold; }
+  .total-row td:first-child { text-align: right; }
+
+  .terms { font-size: 12px; color: var(--muted-color); }
+  .terms ol { padding-left: 20px; }
+  
+  .signature-area {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-top: 50px;
+    padding-top: 30px;
+    border-top: 1px solid var(--border-color);
+  }
+  .signature-box h4 { margin: 0 0 60px; }
+  .signature-box .line { border-top: 1px solid var(--text-color); padding-top: 8px; }
+
+  .print-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--brand-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .print-button:hover { transform: scale(1.1); }
+  
+  @media print {
+    body { padding: 0; background-color: #fff; }
+    .container { margin: 0; padding: 20px; border: none; box-shadow: none; }
+    .print-button { display: none; }
+    .package-card { page-break-inside: avoid; }
+    table { page-break-inside: auto; }
+    tr { page-break-inside: avoid; page-break-after: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header class="header">
+    <div class="logo-area">
+      <div class="logo"></div>
+      <h1>软件项目年度维保服务报价单</h1>
+    </div>
+    <div class="quote-info">
+      <h2>报价单</h2>
+      <p><strong>报价单号：</strong> QT-2025-001</p>
+      <p><strong>报价日期：</strong> 2025年10月22日</p>  
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="section-title"><span class="material-icons-outlined">business</span>客户信息</div>
+    <div class="grid-2">
+      <div class="info-box">
+        <h4>服务商信息</h4>
+        <p><strong>联系人：</strong> 王九日</p>
+        <p><strong>联系电话：</strong> 13109632612 </p>
+        <p><strong>电子邮箱：</strong> john.mr.wx@gmail.com </p>
+      </div>
+      <div class="info-box">
+        <h4>客户信息</h4>
+        <p><strong>公司名称：</strong> 上海江熠</p>
+        <p><strong>项目名称：</strong> 中石化自动化项目 v2.0</p>
+        <p><strong>联系人：</strong> 路总</p>
+        <p><strong>联系电话：</strong> 15800705346 </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title"><span class="material-icons-outlined">dashboard</span>服务套餐概览</div>
+    <div class="packages">
+      <div class="package-card">
+        <h3>基础版</h3>
+        <p class="price">¥8,000<span>/年</span></p>
+        <ul>
+          <li><span class="material-icons-outlined">check_circle</span>5x8 小时技术支持</li>
+          <li><span class="material-icons-outlined">check_circle</span>常规系统监控</li>
+          <li><span class="material-icons-outlined">check_circle</span>次月BUG修复</li>
+          <li><span class="material-icons-outlined">check_circle</span>季度安全扫描</li>
+        </ul>
+      </div>
+      <div class="package-card recommended">
+        <h3>专业版 <span style="font-size:12px; background:var(--brand-color); color:white; padding:2px 6px; border-radius: 99px;">推荐</span></h3>
+        <p class="price">¥12,000<span>/年</span></p>
+        <ul>
+          <li><span class="material-icons-outlined">check_circle</span>7x8 小时技术支持</li>
+          <li><span class="material-icons-outlined">check_circle</span>增强系统监控与告警</li>
+          <li><span class="material-icons-outlined">check_circle</span>关键BUG紧急修复</li>
+          <li><span class="material-icons-outlined">check_circle</span>月度安全扫描与加固</li>
+          <li><span class="material-icons-outlined">check_circle</span>数据备份与恢复演练</li>
+          <li><span class="material-icons-outlined">check_circle</span>包含3人天/年功能迭代</li>
+        </ul>
+      </div>
+      <div class="package-card">
+        <h3>旗舰版</h3>
+        <p class="price">¥20,000<span>/年</span></p>
+        <ul>
+          <li><span class="material-icons-outlined">check_circle</span>7x24 小时技术支持</li>
+          <li><span class="material-icons-outlined">check_circle</span>主动式性能监控与调优</li>
+          <li><span class="material-icons-outlined">check_circle</span>备份告警</li>
+          <li><span class="material-icons-outlined">check_circle</span>主动式安全巡检</li>
+          <li><span class="material-icons-outlined">check_circle</span>包含10人天/年功能迭代</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title"><span class="material-icons-outlined">list_alt</span>服务内容明细</div>
+    <table>
+      <thead>
+        <tr>
+          <th>服务项目</th>
+          <th>服务内容描述</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="category-row"><td colspan="2">技术支持服务</td></tr>
+        <tr>
+          <td>问题响应与支持</td>
+          <td>提供7x8小时（工作日9:00-18:00）技术支持，通过电话、邮件、即时通讯响应。</td>
+        </tr>
+        <tr>
+          <td>紧急故障处理</td>
+          <td>针对P0/P1级严重故障提供紧急响应，承诺2小时内响应，4小时内启动修复。</td>
+        </tr>
+        <tr class="category-row"><td colspan="2">系统监控与维护</td></tr>
+        <tr>
+          <td>增强系统监控与告警</td>
+          <td>7x24小时监控服务器CPU、内存、磁盘及应用关键指标，配置关键阈值告警，提供月度健康报告。</td>
+        </tr>
+        <tr>
+          <td>常规及关键BUG修复</td>
+          <td>对非严重性BUG并入月度发布周期修复；对关键BUG（影响核心业务）提供紧急修复。</td>
+        </tr>
+        <tr>
+          <td>依赖库更新</td>
+          <td>每季度检查并更新项目所依赖的第三方库，规避潜在风险。</td>
+        </tr>
+        <tr class="category-row"><td colspan="2">安全保障服务</td></tr>
+        <tr>
+          <td>月度安全扫描与加固</td>
+          <td>每月进行一次常规漏洞扫描，提供扫描报告和基础加固建议。</td>
+        </tr>
+        <tr class="category-row"><td colspan="2">数据服务</td></tr>
+        <tr>
+          <td>数据备份与恢复演练</td>
+          <td>每日全量备份数据库，提供季度恢复演练，确保数据可恢复性。</td>
+        </tr>
+        <tr class="category-row"><td colspan="2">功能迭代</td></tr>
+        <tr>
+            <td>年度功能迭代</td>
+            <td>包含每年3人天的小功能迭代或优化，超出部分需另行评估。</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </section>
+  
+  <section class="section">
+    <div class="section-title"><span class="material-icons-outlined">gavel</span>服务条款</div>
+    <div class="terms">
+      <ol>
+        <li><strong>服务期限：</strong>本报价有效期为自签订合同之日起一年。</li>
+        <li><strong>付款方式：</strong>合同签订后5个工作日内支付年度总费用的100%。</li>
+        <li><strong>服务范围：</strong>本服务仅限于上述列表中的内容，不包含新增功能开发、UI/UX重构、重大架构调整等。新增需求需另行评估报价。</li>
+        <li><strong>责任限制：</strong>对于因不可抗力（如自然灾害、战争、运营商网络中断）或客户方人员误操作导致的服务中断，我方不承担责任，但会尽力协助恢复。</li>
+        <li><strong>保密协议：</strong>双方应对合作中涉及的商业和技术秘密予以保密。</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="signature-area">
+    <div class="signature-box">
+      <h4>客户确认 (Customer Confirmation)</h4>
+      <p class="line">授权人签字/盖章 (Authorized Signature/Seal)</p>
+      <p style="margin-top: 20px;" class="line">日期 (Date)</p>
+    </div>
+    <div class="signature-box">
+      <h4>服务商确认 (Service Provider Confirmation)</h4>
+      <p class="line">授权人签字/盖章 (Authorized Signature/Seal)</p>
+      <p style="margin-top: 20px;" class="line">日期 (Date)</p>
+    </div>
+  </section>
+
+</div>
+
+<button class="print-button" onclick="window.print()" title="打印/导出 PDF">
+  <span class="material-icons-outlined">print</span>
+</button>
+
+</body>
+</html>

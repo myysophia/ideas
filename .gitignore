@@ -4,4 +4,6 @@ dist/
 *.log
 .env
 .cache
+*.md
+*.sh
 
