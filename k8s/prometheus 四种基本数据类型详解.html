@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Prometheus 指标类型全解析：Counter, Gauge, Histogram & Summary</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/full.render.js" defer></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<style>
+  :root {
+    --bg-color: #111827;
+    --content-bg: #1F2937;
+    --text-color: #D1D5DB;
+    --heading-color: #F9FAFB;
+    --muted-color: #9CA3AF;
+    --border-color: #374151;
+    --brand-color: #818CF8;
+    --code-bg: #1e293b;
+    --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+    --counter-color: #34D399;
+    --gauge-color: #FBBF24;
+    --histogram-color: #60A5FA;
+    --summary-color: #F472B6;
+  }
+  html,body{margin:0; scroll-behavior:smooth;}
+  body{
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background-color: var(--bg-color); color: var(--text-color); line-height:1.7;
+  }
+  .container {
+    max-width: 800px; margin: 0 auto; padding: 32px;
+  }
+  .article-header h1 {
+    font-size: 42px; color: var(--heading-color); margin: 0 0 16px; line-height: 1.2;
+  }
+  .article-header p { font-size: 18px; color: var(--muted-color); margin: 0 0 32px; }
+  section { margin-bottom: 48px; }
+  h2 {
+    font-size: 28px; color: var(--heading-color); border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px; margin: 40px 0 24px; display: flex; align-items: center; gap: 12px;
+  }
+  h2 .material-icons-outlined { font-size: 1.2em; }
+  h3 { font-size: 22px; color: var(--heading-color); margin: 32px 0 16px; }
+  h4 { font-size: 18px; color: var(--heading-color); margin: 24px 0 12px; border-left: 3px solid var(--border-color); padding-left: 12px;}
+  p, ul li, ol li { color: var(--text-color); font-size: 16px; }
+  ul, ol { padding-left: 24px; }
+  strong { color: var(--brand-color); font-weight: 500;}
+  code:not(pre > code) {
+    background-color: var(--code-bg); color: #A78BFA;
+    padding: 2px 6px; border-radius: 4px; font-family: "Fira Code", monospace; font-size: 0.9em;
+  }
+  .code-wrapper { position: relative; margin: 20px 0; }
+  pre {
+    background-color: var(--code-bg); border: 1px solid var(--border-color);
+    padding: 1.5em; border-radius: 8px; overflow-x: auto;
+    box-shadow: var(--shadow);
+  }
+  pre code { font-family: "Fira Code", monospace; }
+  .copy-button {
+    position: absolute; top: 12px; right: 12px;
+    background-color: #4B5563; color: white; border: none;
+    padding: 6px 10px; border-radius: 6px; cursor: pointer;
+    font-size: 12px; opacity: 0.7; transition: opacity 0.2s, background-color 0.2s;
+  }
+  .code-wrapper:hover .copy-button { opacity: 1; }
+  .copy-button:hover { background-color: #6B7280; }
+  table {
+    width: 100%; border-collapse: collapse; margin: 20px 0;
+    border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;
+  }
+  th, td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); text-align: left; }
+  thead { background-color: #374151; }
+  th { color: var(--heading-color); }
+  tbody tr:nth-of-type(even) { background-color: rgba(255,255,255,0.02); }
+  .graph-container {
+    background-color: #0c1222; padding: 20px; border-radius: 8px;
+    border: 1px solid var(--border-color); text-align: center;
+  }
+  .graph-container svg { max-width: 100%; height: auto; }
+  
+  .intro-box {
+    background: var(--code-bg); padding: 24px; border-radius: 8px; border-left: 4px solid var(--brand-color);
+    margin: 24px 0;
+  }
+  .nav-quick {
+    display: flex; gap: 10px; flex-wrap: wrap; list-style: none; padding: 0; margin-bottom: 32px;
+  }
+  .nav-quick a {
+    text-decoration: none; color: var(--muted-color); padding: 8px 12px;
+    border: 1px solid var(--border-color); border-radius: 8px;
+    transition: all 0.2s;
+  }
+  .nav-quick a:hover {
+    color: var(--heading-color); border-color: var(--brand-color);
+    background-color: rgba(129, 140, 250, 0.1);
+  }
+  .call-to-action {
+    text-align: center; background: var(--code-bg); padding: 24px;
+    border-radius: 8px; border: 1px dashed var(--border-color);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header class="article-header">
+    <h1>Prometheus 四大指标类型全解析</h1>
+    <p>Prometheus 的 Exporter 输出的数据遵循其独特的指标格式规范。要真正掌握 Prometheus，理解其四种核心指标类型——**Counter, Gauge, Histogram, 和 Summary**——是必不可少的第一步。本文将详细拆解它们的特点和适用场景。</p>
+    <nav>
+      <ul class="nav-quick">
+        <li><a href="#counter">🧮 Counter</a></li>
+        <li><a href="#gauge">📈 Gauge</a></li>
+        <li><a href="#histogram">📊 Histogram</a></li>
+        <li><a href="#summary">📉 Summary</a></li>
+        <li><a href="#comparison">⚖️ 对比与总结</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <section id="counter">
+    <h2><span class="material-icons-outlined" style="color:var(--counter-color)">add_circle_outline</span>1. Counter (计数器)</h2>
+    <p><strong>一句话定义：</strong>一个只增不减的累加器，如同汽车的总里程表。</p>
+    <h4>特点</h4>
+    <ul>
+      <li>数值**单调递增**，除非系统重启或指标被重置。</li>
+      <li>非常适合用来统计累计发生的事件次数。</li>
+      <li>常与 <code>rate()</code> 或 <code>irate()</code> 函数结合使用，计算事件发生的速率。</li>
+    </ul>
+    <h4>常见用途</h4>
+    <ul>
+      <li>HTTP 请求总数 (<code>http_requests_total</code>)</li>
+      <li>记录的错误总数 (<code>errors_total</code>)</li>
+      <li>已完成的后台作业数 (<code>jobs_completed_total</code>)</li>
+    </ul>
+    <h4>示例</h4>
+    <div class="code-wrapper"><pre><code class="language-bash"># HELP http_requests_total Total number of HTTP requests
+# TYPE http_requests_total counter
+http_requests_total{method="post",code="200"} 1027
+http_requests_total{method="post",code="400"} 3</code></pre></div>
+    <p style="color:var(--muted-color); font-size:14px;"><strong>注意：</strong> 不要用 Counter 来记录可增可减的数值，比如当前温度或内存使用量。</p>
+  </section>
+
+  <section id="gauge">
+    <h2><span class="material-icons-outlined" style="color:var(--gauge-color)">speed</span>2. Gauge (仪表盘)</h2>
+    <p><strong>一句话定义：</strong>一个可以任意上下波动的瞬时值，如同汽车的速度表。</p>
+    <h4>特点</h4>
+    <ul>
+      <li>数值可以**上升或下降**，反映的是某个时间点的“快照”状态。</li>
+      <li>表示一个即时的、可变的测量值。</li>
+    </ul>
+    <h4>常见用途</h4>
+    <ul>
+      <li>当前内存使用量 (<code>memory_usage_bytes</code>)</li>
+      <li>活跃的数据库连接数 (<code>active_connections</code>)</li>
+            <li>队列中的任务数量 (<code>jobs_in_queue</code>)</li>
+      <li>CPU 温度、磁盘空间等瞬时状态值。</li>
+    </ul>
+    <h4>示例</h4>
+    <div class="code-wrapper"><pre><code class="language-bash"># HELP temperature_celsius Current temperature in Celsius
+# TYPE temperature_celsius gauge
+temperature_celsius{location="server-room"} 23.7</code></pre></div>
+  </section>
+  
+  <section id="histogram">
+    <h2><span class="material-icons-outlined" style="color:var(--histogram-color)">bar_chart</span>3. Histogram (直方图)</h2>
+    <p><strong>一句话定义：</strong>对一段时间内的观测值（如延迟）进行采样，并将其分布到预设的桶（buckets）中进行统计。</p>
+    <h4>特点</h4>
+    <ul>
+      <li>用于记录一系列**观测值**的分布情况。</li>
+      <li>需要预先定义好计数的区间（buckets）。</li>
+      <li>Exporter 会自动生成三个相关的指标：
+        <ul>
+            <li><code>_bucket{le="<upper_bound>"}</code>：小于等于该上边界的样本数（累加值）。</li>
+            <li><code>_sum</code>：所有样本值的总和。</li>
+            <li><code>_count</code>：样本的总数量。</li>
+        </ul>
+      </li>
+      <li>**可聚合性**：多个 Histogram 可以被聚合，非常适合在分布式系统中统计整体的延迟分布。</li>
+    </ul>
+    <h4>常见用途</h4>
+    <ul>
+      <li>API 请求延迟（latency）分布。</li>
+      <li>HTTP 响应大小分布。</li>
+      <li>函数执行时间分布。</li>
+    </ul>
+    <h4>示例</h4>
+    <div class="code-wrapper"><pre><code class="language-bash"># HELP http_request_duration_seconds HTTP request latency distribution
+# TYPE http_request_duration_seconds histogram
+http_request_duration_seconds_bucket{le="0.1"} 300
+http_request_duration_seconds_bucket{le="0.5"} 450
+http_request_duration_seconds_bucket{le="1"}   490
+http_request_duration_seconds_bucket{le="+Inf"} 500
+http_request_duration_seconds_sum 123.4
+http_request_duration_seconds_count 500</code></pre></div>
+    <p style="color:var(--muted-color); font-size:14px;"><strong>解读：</strong> 上述示例表示，共有500次请求。其中，延迟≤0.1s的有300次，≤0.5s的有450次。总延迟为123.4秒。</p>
+  </section>
+
+  <section id="summary">
+    <h2><span class="material-icons-outlined" style="color:var(--summary-color)">stacked_line_chart</span>4. Summary (摘要)</h2>
+    <p><strong>一句话定义：</strong>与 Histogram 类似，但它直接在客户端计算并暴露**分位数**（Quantiles），而不是桶。</p>
+    <h4>特点</h4>
+    <ul>
+      <li>同样用于记录一系列观测值的分布。</li>
+      <li>它不提供桶，而是直接计算并提供配置好的**分位数**（如 φ-quantiles: 0.5, 0.9, 0.99）。</li>
+      <li>Exporter 同样会生成 <code>_sum</code> 和 <code>_count</code> 指标。</li>
+      <li>**不可聚合性**：由于分位数无法被有意义地聚合（你不能对多个节点的 p99 延迟求平均值得到整体的 p99 延迟），Summary 不适合分布式系统的聚合分析。</li>
+    </ul>
+    <h4>常见用途</h4>
+    <ul>
+      <li>需要精确了解单个实例的延迟分布（p50, p90, p99）。</li>
+      <li>对聚合需求不高的场景，或者当预设 Histogram 的桶不方便时。</li>
+    </ul>
+    <h4>示例</h4>
+    <div class="code-wrapper"><pre><code class="language-bash"># HELP http_request_duration_seconds HTTP request latency summary
+# TYPE http_request_duration_seconds summary
+http_request_duration_seconds{quantile="0.5"} 0.25
+http_request_duration_seconds{quantile="0.9"} 0.42
+http_request_duration_seconds{quantile="0.99"} 0.78
+http_request_duration_seconds_sum 123.4
+http_request_duration_seconds_count 500</code></pre></div>
+    <p style="color:var(--muted-color); font-size:14px;"><strong>解读：</strong> 50%的请求延迟在0.25秒以下，90%的请求在0.42秒以下。</p>
+  </section>
+
+  <section id="comparison">
+    <h2><span class="material-icons-outlined">balance</span>⚖️ Histogram vs. Summary 对比与总结</h2>
+    <p>两者都用于测量延迟等分布性指标，但核心区别在于**计算和聚合的方式**。</p>
+    
+    <h4>一句话总结</h4>
+    <ul>
+      <li>想在**服务端聚合**多个实例的数据并计算分位数？用 **Histogram**。</li>
+      <li>只想看**单个实例**的精确分位数，且不需要聚合？用 **Summary**。</li>
+    </ul>
+
+    <table>
+      <thead>
+        <tr>
+          <th>特性</th>
+          <th>📊 Histogram</th>
+          <th>📉 Summary</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>核心机制</td>
+          <td>基于桶（Buckets）的计数</td>
+          <td>基于客户端计算的分位数</td>
+        </tr>
+        <tr>
+          <td>服务端聚合</td>
+          <td style="color:var(--success-color)">✅ **可聚合**</td>
+          <td style="color:var(--danger-color)">❌ **不可聚合**</td>
+        </tr>
+        <tr>
+          <td>分位数计算</td>
+          <td>需在 Prometheus 服务端通过 <code>histogram_quantile()</code> 函数估算</td>
+          <td>✅ 在客户端直接计算并暴露</td>
+        </tr>
+        <tr>
+          <td>资源开销</td>
+          <td>服务端计算开销较高</td>
+          <td>客户端计算开销较高</td>
+        </tr>
+        <tr>
+          <td>典型用途</td>
+          <td>分布式系统中的 SLA/SLO 监控、整体延迟分析</td>
+          <td>单个节点的性能调优、黑盒监控</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>可视化对比</h3>
+    <div class="graph-container">
+        <div id="graph-metrics"></div>
+    </div>
+  </section>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('pre').forEach(pre => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'code-wrapper';
+        if (pre.parentNode.tagName !== 'DIV' || !pre.parentNode.classList.contains('code-wrapper')) {
+            pre.parentNode.insertBefore(wrapper, pre);
+            wrapper.appendChild(pre);
+        }
+        const button = document.createElement('button');
+        button.className = 'copy-button';
+        button.textContent = '复制';
+        wrapper.appendChild(button);
+        button.addEventListener('click', () => {
+            const code = pre.querySelector('code').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                button.textContent = '已复制!';
+                setTimeout(() => { button.textContent = '复制'; }, 2000);
+            });
+        });
+    });
+
+    const graphContainer = document.getElementById('graph-metrics');
+    if (graphContainer) {
+      const dotString = `
+      digraph PrometheusMetrics {
+          graph [rankdir="TB", bgcolor="transparent", fontname="Inter, sans-serif", pad="0.5"];
+          node [shape=box, style="filled,rounded", fontname="Inter, sans-serif", margin="0.3,0.2", color="#D1D5DB", fontcolor="#F9FAFB", fillcolor="#1e293b"];
+          edge [color="#9CA3AF", fontname="Inter, sans-serif", fontsize=11];
+
+          subgraph cluster_types {
+              label="四大指标类型";
+              style="filled";
+              bgcolor="#111827";
+              node[style="filled,rounded"];
+              
+              Counter [label="Counter\n(只增不减)", fillcolor="#10B98120", color="#34D399"];
+              Gauge [label="Gauge\n(可增可减)", fillcolor="#FBBF2420", color="#FBBF24"];
+              Histogram [label="Histogram\n(服务端可聚合的桶)", fillcolor="#60A5FA20", color="#60A5FA"];
+              Summary [label="Summary\n(客户端计算的分位数)", fillcolor="#F472B620", color="#F472B6"];
+          }
+          
+          subgraph cluster_functions {
+              label="常用函数与关系";
+              style="invis";
+              rate [label="rate() / irate()", shape=ellipse, style=filled, fillcolor="#374151"];
+              quantile [label="histogram_quantile()", shape=ellipse, style=filled, fillcolor="#374151"];
+          }
+          
+          Counter -> rate [label="计算速率"];
+          Histogram -> quantile [label="计算分位数"];
+          
+          {rank=same; Counter; Gauge;}
+          {rank=same; Histogram; Summary;}
+          
+          edge[style=dashed, arrowhead=none, color="#818CF8"];
+          Histogram -> Summary [label="  测量目标类似\n(延迟/大小分布)"];
+      }
+      `;
+      const checkViz = setInterval(() => {
+          if (typeof Viz !== 'undefined') {
+              clearInterval(checkViz);
+              try {
+                const viz = new Viz({ worker: undefined });
+                viz.renderSVGElement(dotString).then(element => {
+                    graphContainer.innerHTML = '';
+                    graphContainer.appendChild(element);
+                }).catch(error => { throw error });
+              } catch (e) {
+                  graphContainer.innerHTML = `<p style="color:var(--danger-color);">Error rendering graph.</p>`;
+                  console.error(e);
+              }
+          }
+      }, 100);
+    }
+});
+</script>
+</body>
+</html>
