@@ -5,7 +5,7 @@ const matter = require('gray-matter');
 const CryptoJS = require('crypto-js');
 
 // 配置
-const EXCLUDED_DIRS = ['node_modules', '.git', 'dist', '_templates', '_content'];
+const EXCLUDED_DIRS = ['node_modules', '.git', 'dist', '_templates', '_content', '.history'];
 const TEMPLATE_PATH = '_templates/article.html';
 const OUTPUT_DIR = 'dist';
 
@@ -102,14 +102,27 @@ function processFile(filePath) {
     const titleMatch = fileContent.match(/<title>(.*?)<\/title>/i);
     title = titleMatch ? titleMatch[1] : path.basename(filePath, '.html');
     
-    // 提取日期（用于首页列表）
-    const timeMatch = fileContent.match(/<time[^>]*>(.*?)<\/time>/i);
-    if (timeMatch) {
-      date = timeMatch[1];
+    // 提取日期（用于首页列表），优先级：
+    // 1. <meta name="date" content="YYYY-MM-DD">
+    // 2. <time> 标签
+    // 3. 文件名中的日期
+    // 4. 文件修改时间
+    const dateMetaMatch = fileContent.match(/<meta\s+name=["']date["']\s+content=["'](.*?)["']/i);
+    if (dateMetaMatch) {
+      date = dateMetaMatch[1];
     } else {
-      // 如果 HTML 中没有时间，从文件修改时间获取
-      const stats = fs.statSync(filePath);
-      date = stats.mtime.toISOString().split('T')[0];
+      const timeMatch = fileContent.match(/<time[^>]*>(.*?)<\/time>/i);
+      if (timeMatch) {
+        date = timeMatch[1];
+      } else {
+        // 尝试从文件名提取日期
+        date = extractDateFromFilename(filePath);
+        if (!date) {
+          // 如果 HTML 中没有时间，从文件修改时间获取
+          const stats = fs.statSync(filePath);
+          date = stats.mtime.toISOString().split('T')[0];
+        }
+      }
     }
     
     // 提取描述（用于首页列表）

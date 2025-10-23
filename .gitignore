@@ -6,4 +6,5 @@ dist/
 .cache
 *.md
 *.sh
+.history
 
