@@ -104,24 +104,26 @@ function processFile(filePath) {
     
     // 提取日期（用于首页列表），优先级：
     // 1. <meta name="date" content="YYYY-MM-DD">
-    // 2. <time> 标签
-    // 3. 文件名中的日期
-    // 4. 文件修改时间
+    // 2. 自动生成当前日期（如果没有日期标签）
     const dateMetaMatch = fileContent.match(/<meta\s+name=["']date["']\s+content=["'](.*?)["']/i);
     if (dateMetaMatch) {
       date = dateMetaMatch[1];
     } else {
-      const timeMatch = fileContent.match(/<time[^>]*>(.*?)<\/time>/i);
-      if (timeMatch) {
-        date = timeMatch[1];
-      } else {
-        // 尝试从文件名提取日期
-        date = extractDateFromFilename(filePath);
-        if (!date) {
-          // 如果 HTML 中没有时间，从文件修改时间获取
-          const stats = fs.statSync(filePath);
-          date = stats.mtime.toISOString().split('T')[0];
-        }
+      // 没有日期meta标签，自动添加当前日期
+      date = new Date().toISOString().split('T')[0];
+      
+      // 在<title>标签后插入日期meta标签
+      const titleRegex = /(<title>.*?<\/title>)/i;
+      if (titleRegex.test(fileContent)) {
+        const updatedContent = fileContent.replace(
+          titleRegex,
+          `$1\n<meta name="date" content="${date}">`
+        );
+        
+        // 写回源文件
+        fs.writeFileSync(filePath, updatedContent, 'utf-8');
+        fileContent = updatedContent;
+        console.log(`  ✓ 已添加日期标签: ${date}`);
       }
     }
     
