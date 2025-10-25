@@ -670,6 +670,36 @@ function copyStaticAssets() {
     fs.copyFileSync(faviconSrc, faviconDest);
     console.log('✓ 复制 favicon');
   }
+  
+  // 复制 images 目录
+  const imagesSrc = 'images';
+  const imagesDest = path.join(OUTPUT_DIR, 'images');
+  
+  if (fs.existsSync(imagesSrc)) {
+    copyDirectoryRecursive(imagesSrc, imagesDest);
+    console.log('✓ 复制 images 目录');
+  }
+}
+
+// 递归复制目录
+function copyDirectoryRecursive(src, dest) {
+  if (!fs.existsSync(dest)) {
+    fs.mkdirSync(dest, { recursive: true });
+  }
+  
+  const items = fs.readdirSync(src);
+  
+  for (const item of items) {
+    const srcPath = path.join(src, item);
+    const destPath = path.join(dest, item);
+    const stat = fs.statSync(srcPath);
+    
+    if (stat.isDirectory()) {
+      copyDirectoryRecursive(srcPath, destPath);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
 }
 
 // 主流程
