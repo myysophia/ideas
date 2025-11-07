@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>一次前端资源Gzip压缩失效的深度排查与反思</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/full.render.js" defer></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<style>
+  :root {
+    --bg-color: #F9FAFB;
+    --text-color: #374151;
+    --heading-color: #11182D;
+    --muted-color: #6B7280;
+    --border-color: #E5E7EB;
+    --brand-color: #4F46E5; /* Indigo */
+    --danger-color: #DC2626;  /* Red */
+    --success-color: #059669; /* Emerald */
+    --card-bg: #FFFFFF;
+    --code-bg: #F3F4F6;
+    --shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
+  }
+  html,body{margin:0; scroll-behavior:smooth;}
+  body{
+    font-family:"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color); color: var(--text-color); line-height:1.8;
+  }
+  .container {
+    max-width: 900px; margin: 0 auto; padding: 48px 24px;
+  }
+  .article-header h1 {
+    font-size: clamp(2.25rem, 5vw, 2.75rem); 
+    color: var(--heading-color); 
+    margin: 0 0 16px; 
+    line-height: 1.2;
+    font-weight: 800;
+  }
+  .article-header .subtitle { 
+    font-size: 1.125rem; 
+    color: var(--muted-color); 
+    margin: 0 0 32px; 
+    border-left: 3px solid var(--brand-color);
+    padding-left: 16px;
+  }
+  
+  section { margin-bottom: 48px; }
+  h2 {
+    font-size: 28px; color: var(--heading-color); 
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px; margin: 56px 0 24px; display: flex; align-items: center; gap: 12px; font-weight: 700;
+  }
+  h2 .material-icons-outlined { color: var(--brand-color); }
+  h3 { font-size: 22px; color: var(--heading-color); margin: 32px 0 16px; font-weight: 600;}
+  p, ul li, ol li { color: var(--text-color); font-size: 16px; }
+  ul, ol { padding-left: 24px; }
+  
+  strong, b { color: var(--brand-color); font-weight: 600; font-style: normal; }
+  code {
+    background-color: var(--code-bg); color: #4338CA;
+    padding: 2px 6px; border-radius: 4px; font-family: "Fira Code", monospace; font-size: 0.9em;
+  }
+  .code-wrapper { position: relative; margin: 20px 0; }
+  pre {
+    background-color: #2d2d2d; color: #f8f8f2; border: 1px solid var(--border-color);
+    padding: 1.5em; border-radius: 8px; overflow-x: auto;
+    box-shadow: var(--shadow);
+  }
+  pre code { font-family: "Fira Code", monospace; background: none; color: inherit; padding: 0;}
+  .copy-button {
+    position: absolute; top: 12px; right: 12px;
+    background-color: #4B5563; color: white; border: none;
+    padding: 6px 10px; border-radius: 6px; cursor: pointer;
+    font-size: 12px; opacity: 0; transition: opacity 0.2s;
+  }
+  .code-wrapper:hover .copy-button { opacity: 1; }
+
+  .graph-container {
+    background-color: #FFFFFF; padding: 20px; border-radius: 8px;
+    border: 1px solid var(--border-color); text-align: center; margin: 32px 0;
+    box-shadow: var(--shadow);
+  }
+  .graph-container svg { max-width: 100%; height: auto; }
+  
+  .qa-block {
+    background: #EFF6FF; border: 1px solid #BFDBFE;
+    border-radius: 8px; margin: 24px 0;
+  }
+  .qa-block .question {
+    padding: 16px; font-weight: 600; color: #1E40AF;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .qa-block .answer {
+    padding: 0 16px 16px; border-top: 1px solid #BFDBFE;
+  }
+  .grid { display: grid; gap: 24px; }
+  .grid-3 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+  .card {
+      background: var(--card-bg); border: 1px solid var(--border-color);
+      border-radius: 12px; padding: 24px; box-shadow: var(--shadow);
+  }
+  .card h4 { margin: 0 0 12px; font-size: 18px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header class="article-header">
+    <h1>一次前端资源 Gzip 压缩失效的深度排查与反思</h1>
+    <p class="subtitle">一个看似简单的 Gzip 压缩问题，背后却牵扯出 K8s Ingress、多层 Nginx 代理、请求头传递等一系列链路问题。本文将完整复盘一次从现象到根因的深度排查过程，并对不同解决方案进行对比和反思。</p>
+  </header>
+
+  <section id="problem">
+    <h2><span class="material-icons-outlined">error_outline</span>一、问题的提出：Gzip 压缩为何失效？</h2>
+    <p>我们发现线上环境的前端静态资源 <code>https://eu.ampaura.tech/ems/umi.55c10ef3.js</code> 未开启 Gzip 压缩，导致文件体积过大，影响了页面加载性能。然而，检查业务容器内的 Nginx 配置后发现，Gzip 功能明明是开启的。这说明压缩在中间链路的某个环节被“熔断”了。</p>
+    <div class="graph-container">
+        <div id="graph-workflow"></div>
+    </div>
+  </section>
+  
+  <section id="investigation">
+    <h2><span class="material-icons-outlined">search</span>二、排查之旅：层层递进的证据链</h2>
+    <h3>Step 1: 外部验证</h3>
+    <p>首先，从外部直接请求资源，确认浏览器收到的响应头中确实**不包含** <code>Content-Encoding: gzip</code>。</p>
+    <div class="code-wrapper"><pre><code class="language-bash">curl -sI https://eu.ampaura.tech/ems/umi.55c10ef3.js
+# ...
+# 响应头中未找到 Content-Encoding
+# ...</code></pre></div>
+
+    <h3>Step 2: 深入业务容器 (ems-front)</h3>
+    <p>进入最终提供服务的 Pod (<code>ems-front-xxxx</code>)，直接在容器内部请求 Nginx，模拟最纯粹的环境。</p>
+    <div class="code-wrapper"><pre><code class="language-bash">kubectl exec -n ems-eu ems-front-6cf688c88-vkjlb -- \
+  curl -sI -H 'Accept-Encoding: gzip' http://127.0.0.1/umi.55c10ef3.js</code></pre></div>
+    <p>结果令人惊喜：响应头中明确包含了 <code>Content-Encoding: gzip</code>！这证明了**业务容器自身的 Nginx 压缩是正常的**。问题一定出在上游的代理链路上。</p>
+    
+    <h3>Step 3: 检查静态文件</h3>
+    <p>一个常见的优化是“静态预压缩”，即在构建阶段就生成 <code>.gz</code> 文件。我们检查了容器内是否存在这些文件。</p>
+    <div class="code-wrapper"><pre><code class="language-bash">kubectl exec -n ems-eu ems-front-6cf688c88-vkjlb -- find /app/dist -name '*.gz'
+# (无输出)</code></pre></div>
+    <p>结果为空，排除了使用 <code>gzip_static</code> 模块的可能性。压缩是在 Nginx 运行时动态进行的。</p>
+
+    <h3>Step 4: 定位中间链路 (ems-common-front)</h3>
+    <p>通过检查 K8s 的 Ingress 和 Service 配置，我们发现外部流量并不是直接打到 <code>ems-front</code>，而是先经过了一个名为 <code>ems-common-front</code> 的**聚合层 Nginx**。</p>
+    <p>现在，我们在聚合层 Pod 内部，去请求下游的 <code>ems-front</code> 服务。</p>
+    <div class="code-wrapper"><pre><code class="language-bash">kubectl exec -n ems-eu ems-common-front-d86f65654-2s8k6 -- \
+  curl -sI -H 'Accept-Encoding: gzip' http://ems-front/umi.55c10ef3.js</code></pre></div>
+    <p>结果再次确认，下游服务 (<code>ems-front</code>) 返回了 Gzip 压缩内容。到此，真相水落石出：问题就出在 <code>ems-common-front</code> 这个聚合层 Nginx 上。</p>
+  </section>
+
+  <section id="conclusion">
+    <h2><span class="material-icons-outlined">lightbulb</span>三、根因分析：被“遗忘”的请求头</h2>
+    <p>通过检查 <code>ems-common-front</code> 的 Nginx 配置 (存储在 ConfigMap 中)，我们发现了两个相互关联的缺陷：</p>
+    <ol>
+        <li><strong>未向上游转发 <code>Accept-Encoding</code> 头：</strong> Nginx 作为反向代理，默认不会将所有客户端请求头都转发给上游。由于聚合层没有显式转发 <code>Accept-Encoding</code>，导致下游的 <code>ems-front</code> 认为客户端不支持 Gzip，因此返回了未压缩的原始内容。</li>
+        <li><strong>自身 <code>gzip_types</code> 配置不完整：</strong> 聚合层 Nginx 自身虽然开启了 <code>gzip on;</code>，但其 <code>gzip_types</code> 配置列表很老旧，只包含了 <code>application/x-javascript</code>，而 Umi 打包后的 JS 文件 MIME 类型是 <code>application/javascript</code>。因此，即使下游返回了明文，聚合层也未能对其进行二次压缩。</li>
+    </ol>
+  </section>
+
+  <section id="solutions">
+      <h2><span class="material-icons-outlined">construction</span>四、解决方案对比与推荐</h2>
+      <div class="grid grid-3">
+          <div class="card">
+              <h4>方案一：转发请求头 (推荐)</h4>
+              <p>在聚合层 Nginx 的 `location` 块中，添加 <code>proxy_set_header Accept-Encoding $http_accept_encoding;</code>，让下游的压缩能力得到充分利用。</p>
+              <ul><li><strong style="color: var(--success-color);">优点:</strong> 改动最小，不增加聚合层CPU开销。</li><li><strong style="color: var(--danger-color);">缺点:</strong> 依赖下游压缩。</li></ul>
+          </div>
+          <div class="card">
+              <h4>方案二：聚合层压缩</h4>
+              <p>在聚合层 Nginx 中，将 <code>gzip_types</code> 补全，至少加入 <code>application/javascript</code> 和 <code>application/json</code>。</p>
+              <ul><li><strong style="color: var(--success-color);">优点:</strong> 即使下游不压缩，出口也能保证压缩。</li><li><strong style="color: var(--danger-color);">缺点:</strong> 增加聚合层CPU开销，内网带宽浪费。</li></ul>
+          </div>
+          <div class="card">
+              <h4>方案三：静态预压缩</h4>
+              <p>在前端构建流程中生成 <code>.gz</code>/<code>.br</code> 文件，并在两层 Nginx 中都开启 <code>gzip_static on;</code>。</p>
+              <ul><li><strong style="color: var(--success-color);">优点:</strong> 性能最优，最省CPU。</li><li><strong style="color: var(--danger-color);">缺点:</strong> 增加 CI/CD 复杂度。</li></ul>
+          </div>
+      </div>
+      
+      <h3>推荐实现</h3>
+      <p>我们采取了**“双管齐下”**的策略，以兼顾性能和兜底能力：</p>
+      <ol>
+          <li>**首选方案一：** 在 <code>ems-common-front</code> 的 ConfigMap 中添加 <code>proxy_set_header Accept-Encoding $http_accept_encoding;</code>，让请求头得以透传。</li>
+          <li>**同时执行方案二：** 扩充 <code>gzip_types</code>，确保即使下游偶尔返回明文，聚合层也能进行兜底压缩。</li>
+      </ol>
+  </section>
+  
+  <section id="reflection">
+      <h2><span class="material-icons-outlined">forum</span>五、追问与反思</h2>
+      <div class="qa-block">
+          <div class="question"><span class="material-icons-outlined">help_outline</span>为何没有先怀疑 Ingress 呢？</div>
+          <div class="answer">
+              <p>这是一个很好的问题。在本次排查中，Ingress 的嫌疑被后置，主要基于以下判断：</p>
+              <ul>
+                  <li><strong>默认行为：</strong> Nginx Ingress Controller 默认仅做透传，不会主动解压或修改压缩相关的响应头，除非有特定的注解 (Annotation)。我们检查了 Ingress 对象，未发现此类注解。</li>
+                  <li><strong>链路特征：</strong> 外部请求响应头中虽然没有 <code>Content-Encoding</code>，但包含了 <code>Vary: Accept-Encoding</code>，这暗示着链路中至少有服务考虑了编码问题。如果是 Ingress 强制解压，这些头信息可能也会被清除。</li>
+                  <li><strong>交叉验证：</strong> 在聚合层 Pod 内部直接访问下游服务（有效）和公网域名（无效）的对比测试，是**定位问题的关键**。它将问题范围精确地锁定在了“聚合层 Nginx 的出口”这一环节。</li>
+              </ul>
+          </div>
+      </div>
+      <div class="qa-block">
+          <div class="question"><span class="material-icons-outlined">lightbulb</span>为何只改 gzip_types 也能生效？</div>
+          <div class="answer">
+              <p>确实，只在聚合层补全 <code>gzip_types</code> 也能让浏览器收到压缩内容。但这其实是一个“将错就错”的结果：</p>
+              <ol>
+                <li>聚合层 Nginx (<code>ems-common-front</code>) 未向上游转发 <code>Accept-Encoding</code>。</li>
+                <li>下游 Nginx (<code>ems-front</code>) 收到一个“不接受压缩”的请求，因此返回了**未压缩**的 JS 文件（约 940KB）。</li>
+                <li>聚合层 Nginx 收到这个明文响应，此时因为我们补全了 <code>gzip_types</code>，它识别出 <code>application/javascript</code> 是需要压缩的类型，于是**自己动手**进行了压缩，并返回给浏览器。</li>
+              </ol>
+              <p>这种方式虽然能“解决”问题，但会在内网中传输更大的未压缩文件，并增加聚合层的 CPU 负载。因此，透传 <code>Accept-Encoding</code> 仍然是更优的实践。</p>
+          </div>
+      </div>
+  </section>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('pre').forEach(pre => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'code-wrapper';
+        if (pre.parentNode.tagName !== 'DIV' || !pre.parentNode.classList.contains('code-wrapper')) {
+            pre.parentNode.insertBefore(wrapper, pre);
+            wrapper.appendChild(pre);
+        }
+        const button = document.createElement('button');
+        button.className = 'copy-button';
+        button.textContent = '复制';
+        wrapper.appendChild(button);
+        button.addEventListener('click', () => {
+            const code = pre.querySelector('code').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                button.textContent = '已复制!';
+                setTimeout(() => { button.textContent = '复制'; }, 2000);
+            });
+        });
+    });
+
+    const graphContainer = document.getElementById('graph-workflow');
+    if (graphContainer) {
+      const dotString = `
+      digraph GzipWorkflow {
+          graph [rankdir="LR", bgcolor="transparent", fontname="Inter, sans-serif"];
+          node [shape=box, style="filled,rounded", fontname="Inter, sans-serif", margin="0.3,0.2", fillcolor="#F3F4F6", color="#E5E7EB", fontcolor="#11182D"];
+          edge [color="#6B7280", fontname="Inter, sans-serif", fontsize=11];
+
+          browser [label="浏览器"];
+          ingress [label="K8s Ingress"];
+          common_front [label="聚合层 Nginx\\n(ems-common-front)"];
+          front [label="业务层 Nginx\\n(ems-front)"];
+
+          browser -> ingress [label="1. GET /...\\nAccept-Encoding: gzip"];
+          ingress -> common_front [label="2. proxy_pass"];
+          common_front -> front [label="3. proxy_pass\\n(Accept-Encoding丢失!)", color="#DC2626", style=dashed, fontcolor="#DC2626"];
+          front -> common_front [label="4. 返回未压缩内容", color="#DC2626", style=dashed, fontcolor="#DC2626"];
+          common_front -> ingress [label="5. 尝试压缩但类型不匹配(X)\\n返回未压缩内容", color="#DC2626", style=dashed, fontcolor="#DC2626"];
+          ingress -> browser [label="6. 返回未压缩内容"];
+      }
+      `;
+      const checkViz = setInterval(() => {
+          if (typeof Viz !== 'undefined') {
+              clearInterval(checkViz);
+              try {
+                const viz = new Viz({ worker: undefined });
+                viz.renderSVGElement(dotString).then(element => {
+                    graphContainer.innerHTML = '';
+                    graphContainer.appendChild(element);
+                }).catch(error => { throw error });
+              } catch (e) {
+                  graphContainer.innerHTML = `<p style="color:var(--danger-color);">Error rendering graph.</p>`;
+                  console.error(e);
+              }
+          }
+      }, 100);
+    }
+    
+    // Run Prism highlighting
+    if(window.Prism) {
+        Prism.highlightAll();
+    }
+});
+</script>
+</body>
+</html>
