@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ACM vs. Cloudflare 代理证书：深度对比与选型指南</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/full.render.js" defer></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<style>
+  :root {
+    --bg-color: #F9FAFB;
+    --text-color: #374151;
+    --heading-color: #11182D;
+    --muted-color: #6B7280;
+    --border-color: #E5E7EB;
+    --brand-color-aws: #FF9900;
+    --brand-color-cf: #F38020;
+    --card-bg: #FFFFFF;
+    --code-bg: #F3F4F6;
+    --shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
+  }
+  html,body{margin:0; scroll-behavior:smooth;}
+  body{
+    font-family:"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color); color: var(--text-color); line-height:1.8;
+  }
+  .container {
+    max-width: 900px; margin: 0 auto; padding: 48px 24px;
+  }
+  .article-header h1 {
+    font-size: clamp(2.25rem, 5vw, 2.75rem); 
+    color: var(--heading-color); 
+    margin: 0 0 16px; 
+    line-height: 1.2;
+    font-weight: 800;
+    text-align: center;
+  }
+  .article-header p { 
+    font-size: 1.125rem; 
+    color: var(--muted-color); 
+    margin: 0 auto 32px; 
+    text-align: center;
+    max-width: 700px;
+  }
+  
+  h2 {
+    font-size: 28px; color: var(--heading-color); 
+    text-align: center;
+    margin: 56px 0 24px; font-weight: 700;
+  }
+  h3 { font-size: 22px; color: var(--heading-color); margin: 32px 0 16px; font-weight: 600;}
+  p, ul li, ol li { color: var(--text-color); font-size: 16px; }
+  ul, ol { padding-left: 24px; }
+  
+  code {
+    background-color: var(--code-bg); color: #4F46E5;
+    padding: 2px 6px; border-radius: 4px; font-family: "Fira Code", monospace; font-size: 0.9em;
+  }
+  .graph-container {
+    background-color: #FFFFFF; padding: 20px; border-radius: 8px;
+    border: 1px solid var(--border-color); text-align: center; margin: 32px 0;
+    box-shadow: var(--shadow);
+  }
+  .graph-container svg { max-width: 100%; height: auto; }
+  
+  .grid { display: grid; gap: 24px; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 768px) {
+      .grid-2 { grid-template-columns: 1fr; }
+  }
+  .card {
+      background: var(--card-bg); border: 1px solid var(--border-color);
+      border-radius: 12px; padding: 24px; box-shadow: var(--shadow);
+  }
+  .card h4 { margin: 0 0 12px; font-size: 18px; display: flex; align-items: center; gap: 8px;}
+  .card .material-icons-outlined {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background-color: #EEF2FF; color: #4F46E5;
+  }
+
+  .summary-box {
+      background-color: #F0F9FF;
+      border: 1px solid #BAE6FD;
+      border-left: 4px solid #3B82F6;
+      border-radius: 8px;
+      padding: 24px;
+      margin-top: 32px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header class="article-header">
+    <h1>ACM vs. Cloudflare 代理证书：深度对比与选型指南</h1>
+    <p>选择 SSL/TLS 证书方案时，AWS Certificate Manager (ACM) 和 Cloudflare 的代理证书是两个主流选择。它们看似相似，但在部署控制、安全链路、性能、成本和合规性上却有本质区别。本文将深入对比，助你做出明智决策。</p>
+  </header>
+
+  <section id="core-difference">
+    <h2>核心区别：自家门卫 vs. 小区保安</h2>
+    <p>简单来说，两者的核心区别在于 **TLS 终止点**的位置：</p>
+    <ul>
+        <li><strong>ACM 证书：</strong> 部署在你的 AWS 资源（如 ALB, CloudFront）上，相当于你雇的**“自家门卫”**。你完全掌控从访客进门到你家门口的全过程。</li>
+        <li><strong>Cloudflare 代理：</strong> 部署在 Cloudflare 的全球边缘节点上，相当于**“小区保安”**。访客先进小区大门（Cloudflare 边缘），由保安完成安检，然后再引导到你家。</li>
+    </ul>
+
+    <div class="grid grid-2">
+        <div class="graph-container">
+            <h4>ACM: 端到端可控链路</h4>
+            <div id="graph-acm"></div>
+        </div>
+        <div class="graph-container">
+            <h4>Cloudflare: 边缘托管链路</h4>
+            <div id="graph-cf"></div>
+        </div>
+    </div>
+  </section>
+
+  <section id="detailed-comparison">
+    <h2>七大维度深度对比</h2>
+    <div class="grid">
+      <div class="card">
+        <h4><span class="material-icons-outlined">vpn_key</span>1. 证书部署与控制</h4>
+        <p><strong>ACM:</strong> 证书绑定在 AWS 受管入口（ALB/CloudFront 等），你掌控 TLS 终止点，链路内外都可统一策略。</p>
+        <p><strong>Cloudflare:</strong> 橙云代理会在边缘用它的通配证书对外，源站只需自签或 Origin Cert 即可。证书管理更简单，但 TLS 握手被 Cloudflare 托管。</p>
+      </div>
+      <div class="card">
+        <h4><span class="material-icons-outlined">security</span>2. 链路安全深度</h4>
+        <p><strong>ACM:</strong> 可做到“客户端→AWS→后端”全链路同一套安全策略，便于实现 mTLS 和细粒度的 Cipher 配置。</p>
+        <p><strong>Cloudflare:</strong> 默认 “Flexible SSL” 模式只加密到边缘，存在安全风险。需切换到 “Full (Strict)” 并配合 Origin Certificate 才实现端到端加密，但仍需信任 Cloudflare 作为中间人解密流量。</p>
+      </div>
+      <div class="card">
+        <h4><span class="material-icons-outlined">speed</span>3. 性能与网络能力</h4>
+        <p><strong>ACM:</strong> 本身不提供加速，性能取决于所挂载的 AWS 服务（如 CloudFront）。若只用 ALB，需自行构建全球加速或多区域部署。</p>
+        <p><strong>Cloudflare:</strong> 自带全球边缘网络、Anycast、缓存、压缩和 HTTP/3 支持，可显著降低跨区域 RTT，开箱即用的全球加速能力。</p>
+      </div>
+      <div class="card">
+        <h4><span class="material-icons-outlined">widgets</span>4. 附加功能</h4>
+        <p><strong>ACM:</strong> 只负责证书。WAF、CDN、Bot 防护等需分别在 AWS WAF、CloudFront、Shield 等服务里配置，组合度高但需要更多运维工作。</p>
+        <p><strong>Cloudflare:</strong> 代理服务附送 WAF、速率限制、Bot 防护、Workers、Pages 等一体化能力，功能集成度高。</p>
+      </div>
+      <div class="card">
+        <h4><span class="material-icons-outlined">price_check</span>5. 配置与成本</h4>
+        <p><strong>ACM:</strong> 公共证书免费、自动续期，但仅能用于 AWS 服务。</p>
+        <p><strong>Cloudflare:</strong> Universal SSL 也免费且自动续期，可直接保护多域名，对第三方托管站点非常方便。若需要自定义证书或高级 WAF，则有额外费用。</p>
+      </div>
+      <div class="card">
+        <h4><span class="material-icons-outlined">gavel</span>6. 合规与可控性</h4>
+        <p><strong>ACM:</strong> TLS 终止在企业可控的 AWS 环境内，更容易满足特定行业的安全合规与审计要求。</p>
+        <p><strong>Cloudflare:</strong> 作为反向代理会解密流量，需评估其数据处理、驻留策略是否满足你的合规要求。</p>
+      </div>
+      <div class="card">
+        <h4><span class="material-icons-outlined">sync_alt</span>7. 依赖与可迁移性</h4>
+        <p><strong>ACM:</strong> 方案强绑定在 AWS 生态系统。</p>
+        <p><strong>Cloudflare:</strong> 对云平台中立，但会让 DNS 强依赖 Cloudflare。在 Cloudflare 故障时，所有流量和证书服务都会受影响，需评估单点风险。</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="recommendations">
+    <h2>适用场景与建议</h2>
+    <div class="summary-box">
+        <ol>
+            <li><strong>偏好云内统一、可控链路：</strong> 如果你的业务完全构建在 AWS 上，且对安全链路的可控性和审计有较高要求，首选 <strong>ACM + AWS 原生栈</strong>。</li>
+            <li><strong>跨云/跨地域、需边缘加速：</strong> 如果你的客户遍布全球，或服务部署在多个云平台，<strong>Cloudflare 代理</strong>能快速提供全球访问加速和开箱即用的安全能力。</li>
+            <li><strong>混合策略：</strong> 对核心域名和 API 使用 <strong>ACM + CloudFront + AWS WAF</strong> 实现深度控制；对其他客户定制域名或静态站点，走 <strong>Cloudflare 代理</strong>，通过 DNS 分层管理，兼顾控制与效率。</li>
+        </ol>
+        <p>最终决策应根据业务对<strong>性能、安全、合规、成本</strong>的侧重进行权衡，或采取混合使用的策略。</p>
+    </div>
+  </section>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const graphs = {
+        'graph-acm': `
+            digraph G {
+                bgcolor="transparent"; rankdir=LR;
+                node [shape=box, style="filled,rounded", fontname="Inter, sans-serif", margin="0.3,0.2", fillcolor="#FFFBEB", color="#FBBF24", fontcolor="#92400E"];
+                edge [color="#6B7280", fontname="Inter, sans-serif", fontsize=11];
+
+                Client [label="客户端"];
+                ALB [label="AWS ALB / CloudFront\\n(TLS 终止点)"];
+                Backend [label="源站服务器"];
+                
+                Client -> ALB [label="TLS (ACM Cert)"];
+                ALB -> Backend [label="HTTP/HTTPS"];
+            }`,
+        'graph-cf': `
+            digraph G {
+                bgcolor="transparent"; rankdir=LR;
+                node [shape=box, style="filled,rounded", fontname="Inter, sans-serif", margin="0.3,0.2", fillcolor="#FEF2F2", color="#FCA5A5", fontcolor="#991B1B"];
+                edge [color="#6B7280", fontname="Inter, sans-serif", fontsize=11];
+
+                Client [label="客户端"];
+                CF_Edge [label="Cloudflare 边缘\\n(TLS 终止点)"];
+                Backend [label="源站服务器"];
+                
+                Client -> CF_Edge [label="TLS (CF Cert)"];
+                CF_Edge -> Backend [label="TLS (Origin Cert)\\n或 HTTP (不安全)"];
+            }`
+    };
+
+    const checkViz = setInterval(() => {
+        if (typeof Viz !== 'undefined') {
+            clearInterval(checkViz);
+            try {
+                const viz = new Viz({ worker: undefined });
+                for (const [id, dot] of Object.entries(graphs)) {
+                    const container = document.getElementById(id);
+                    if (container) {
+                        viz.renderSVGElement(dot)
+                           .then(element => { container.innerHTML = ''; container.appendChild(element); })
+                           .catch(error => { console.error(error); });
+                    }
+                }
+            } catch (e) {
+                console.error("Viz.js initialization failed.", e);
+            }
+        }
+    }, 100);
+});
+</script>
+</body>
+</html>
