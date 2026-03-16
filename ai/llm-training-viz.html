@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM 训练过程可视化</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --panel: #16161f;
+    --border: #2a2a3a;
+    --accent: #7c6af7;
+    --accent2: #f7a26a;
+    --accent3: #6af7c8;
+    --accent4: #f76a8a;
+    --text: #e8e8f0;
+    --muted: #6a6a8a;
+    --glow: rgba(124,106,247,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(124,106,247,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,106,247,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 60px;
+    animation: fadeDown 0.8s ease forwards;
+  }
+
+  .header-tag {
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    opacity: 0.8;
+  }
+
+  .header h1 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 700;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+
+  .header p {
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+
+  /* Phase nav */
+  .phase-nav {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 40px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    animation: fadeUp 0.8s ease 0.2s both;
+  }
+
+  .phase-btn {
+    flex-shrink: 0;
+    padding: 10px 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.25s;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .phase-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+
+  .phase-btn:hover { color: var(--text); border-color: var(--accent); }
+  .phase-btn:hover::before { opacity: 0.08; }
+
+  .phase-btn.active {
+    color: var(--text);
+    border-color: var(--accent);
+    background: rgba(124,106,247,0.12);
+    box-shadow: 0 0 20px var(--glow);
+  }
+
+  .phase-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Main content */
+  .content { animation: fadeUp 0.6s ease 0.3s both; }
+
+  .phase-panel {
+    display: none;
+    gap: 24px;
+    grid-template-columns: 1fr 1fr;
+    animation: panelIn 0.4s ease forwards;
+  }
+
+  .phase-panel.active { display: grid; }
+
+  @media (max-width: 700px) {
+    .phase-panel { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--card-accent, var(--accent));
+    opacity: 0.8;
+  }
+
+  .card-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .card-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  .card.full { grid-column: 1 / -1; }
+
+  /* Overview phase */
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .tl-item {
+    display: flex;
+    gap: 16px;
+    cursor: pointer;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    transition: all 0.2s;
+    align-items: flex-start;
+  }
+
+  .tl-item:last-child { border-bottom: none; }
+  .tl-item:hover .tl-title { color: var(--accent); }
+
+  .tl-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: rgba(124,106,247,0.15);
+    border: 1px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .tl-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+    transition: color 0.2s;
+  }
+
+  .tl-desc { font-size: 11px; color: var(--muted); line-height: 1.6; }
+
+  .tl-badge {
+    margin-left: auto;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1px solid;
+    flex-shrink: 0;
+    align-self: center;
+  }
+
+  /* Data phase */
+  .data-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .data-source {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    transition: all 0.2s;
+    cursor: default;
+  }
+
+  .data-source:hover { border-color: var(--card-accent, var(--accent)); background: rgba(255,255,255,0.05); }
+
+  .data-icon {
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .data-label { font-size: 12px; flex: 1; }
+  .data-size { font-size: 10px; color: var(--muted); }
+
+  .data-bar-wrap { width: 80px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .data-bar { height: 100%; border-radius: 2px; transition: width 1s ease; }
+
+  /* Token viz */
+  .token-flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    line-height: 1;
+  }
+
+  .token {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    border: 1px solid;
+    animation: tokenPop 0.3s ease both;
+  }
+
+  /* Transformer */
+  .transformer-viz {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .tf-layer {
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tf-layer:hover { transform: translateX(4px); }
+
+  .tf-layer .layer-glow {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 0;
+  }
+
+  .tf-label { font-weight: 600; }
+  .tf-info { color: var(--muted); font-size: 10px; }
+
+  /* Loss chart */
+  .loss-chart {
+    width: 100%;
+    height: 120px;
+    position: relative;
+  }
+
+  .loss-chart canvas { width: 100% !important; height: 100% !important; }
+
+  /* RLHF */
+  .rlhf-loop {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .rlhf-step {
+    padding: 16px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    position: relative;
+  }
+
+  .rlhf-step-num {
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+  }
+
+  .rlhf-step-title {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .rlhf-step-desc { font-size: 11px; color: var(--muted); line-height: 1.6; }
+
+  .arrow-down {
+    text-align: center;
+    color: var(--muted);
+    font-size: 18px;
+    padding: 4px;
+  }
+
+  /* Metric bars */
+  .metric { margin-bottom: 14px; }
+  .metric-head { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .metric-label { font-size: 11px; color: var(--muted); }
+  .metric-val { font-size: 11px; color: var(--text); }
+  .metric-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .metric-fill { height: 100%; border-radius: 3px; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); }
+
+  /* Attention matrix */
+  .attn-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    margin-top: 8px;
+  }
+
+  .attn-cell {
+    aspect-ratio: 1;
+    border-radius: 2px;
+    transition: opacity 0.3s;
+    cursor: pointer;
+  }
+
+  .attn-cell:hover { opacity: 0.7 !important; }
+
+  .attn-labels {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    margin-bottom: 4px;
+  }
+
+  .attn-lbl {
+    font-size: 9px;
+    color: var(--muted);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Probability bars */
+  .prob-bars { display: flex; flex-direction: column; gap: 8px; }
+
+  .prob-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .prob-token { font-size: 12px; width: 80px; flex-shrink: 0; }
+  .prob-track { flex: 1; height: 20px; background: var(--border); border-radius: 3px; overflow: hidden; position: relative; }
+  .prob-fill { height: 100%; border-radius: 3px; transition: width 1s ease; display: flex; align-items: center; padding-left: 8px; }
+  .prob-pct { font-size: 10px; color: rgba(255,255,255,0.7); position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
+
+  /* Animations */
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes panelIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes tokenPop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+  @keyframes scanline { from { transform: translateY(-100%); } to { transform: translateY(100vh); } }
+
+  .pulse { animation: pulse 2s infinite; }
+
+  /* Scan effect */
+  .scan-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.3;
+    animation: scanline 4s linear infinite;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* Progress indicator */
+  .progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.3s;
+    z-index: 200;
+  }
+
+  /* Tooltips */
+  .tooltip-host { position: relative; cursor: help; }
+  .tooltip-host:hover .tooltip { display: block; }
+  .tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--text);
+    white-space: nowrap;
+    z-index: 50;
+    pointer-events: none;
+  }
+
+  /* Info box */
+  .info-box {
+    padding: 14px 16px;
+    background: rgba(124,106,247,0.06);
+    border: 1px solid rgba(124,106,247,0.2);
+    border-radius: 6px;
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  .info-box strong { color: var(--accent); }
+
+  /* Tabs for detail */
+  .mini-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+  .mini-tab {
+    font-size: 10px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    color: var(--muted);
+    background: transparent;
+    font-family: inherit;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+  }
+  .mini-tab.active { border-color: var(--accent); color: var(--accent); background: rgba(124,106,247,0.1); }
+  .mini-tab:hover:not(.active) { color: var(--text); }
+
+  .mini-content { display: none; }
+  .mini-content.active { display: block; }
+</style>
+</head>
+<body>
+<div class="scan-overlay"></div>
+<div class="progress-bar" id="progress"></div>
+
+<div class="container">
+  <div class="header">
+    <div class="header-tag">深度学习 · 自然语言处理</div>
+    <h1>大语言模型训练过程</h1>
+    <p>交互式可视化解析 · Large Language Model Training Pipeline</p>
+  </div>
+
+  <div class="phase-nav" id="phaseNav">
+    <button class="phase-btn active" data-phase="overview" onclick="setPhase('overview',this)">
+      <span class="phase-dot" style="background:#7c6af7"></span>总览
+    </button>
+    <button class="phase-btn" data-phase="data" onclick="setPhase('data',this)">
+      <span class="phase-dot" style="background:#f7a26a"></span>① 数据收集
+    </button>
+    <button class="phase-btn" data-phase="tokenize" onclick="setPhase('tokenize',this)">
+      <span class="phase-dot" style="background:#6af7c8"></span>② 分词处理
+    </button>
+    <button class="phase-btn" data-phase="pretrain" onclick="setPhase('pretrain',this)">
+      <span class="phase-dot" style="background:#f76a8a"></span>③ 预训练
+    </button>
+    <button class="phase-btn" data-phase="finetune" onclick="setPhase('finetune',this)">
+      <span class="phase-dot" style="background:#6ab4f7"></span>④ 微调
+    </button>
+    <button class="phase-btn" data-phase="rlhf" onclick="setPhase('rlhf',this)">
+      <span class="phase-dot" style="background:#c86af7"></span>⑤ RLHF
+    </button>
+    <button class="phase-btn" data-phase="inference" onclick="setPhase('inference',this)">
+      <span class="phase-dot" style="background:#f7e06a"></span>⑥ 推理生成
+    </button>
+  </div>
+
+  <div class="content">
+
+    <!-- OVERVIEW -->
+    <div class="phase-panel active" id="phase-overview">
+      <div class="card full">
+        <div class="card-title">训练流程总览</div>
+        <div class="card-sub">点击各阶段查看详细说明</div>
+        <div class="timeline">
+          <div class="tl-item" onclick="setPhaseByName('data')">
+            <div class="tl-num">1</div>
+            <div>
+              <div class="tl-title">数据收集与清洗</div>
+              <div class="tl-desc">从互联网、书籍、代码库等来源收集海量文本，经过去重、过滤、质量评分等处理，构建高质量预训练语料库。</div>
+            </div>
+            <div class="tl-badge" style="color:#f7a26a;border-color:#f7a26a">数万亿 tokens</div>
+          </div>
+          <div class="tl-item" onclick="setPhaseByName('tokenize')">
+            <div class="tl-num">2</div>
+            <div>
+              <div class="tl-title">分词 & 词表构建</div>
+              <div class="tl-desc">将原始文本转换为 token 序列。使用 BPE 或 SentencePiece 算法构建词表，实现字符到整数 ID 的映射。</div>
+            </div>
+            <div class="tl-badge" style="color:#6af7c8;border-color:#6af7c8">词表 32K~128K</div>
+          </div>
+          <div class="tl-item" onclick="setPhaseByName('pretrain')">
+            <div class="tl-num">3</div>
+            <div>
+              <div class="tl-title">自监督预训练（CLM）</div>
+              <div class="tl-desc">以"预测下一个 token"为目标，在数千块 GPU 上进行大规模并行训练，使模型学会语言规律、世界知识和推理能力。</div>
+            </div>
+            <div class="tl-badge" style="color:#f76a8a;border-color:#f76a8a">数月 / 数千 GPU</div>
+          </div>
+          <div class="tl-item" onclick="setPhaseByName('finetune')">
+            <div class="tl-num">4</div>
+            <div>
+              <div class="tl-title">指令微调（SFT）</div>
+              <div class="tl-desc">使用高质量的"指令-回答"对进行监督微调，让模型学会按照人类意图回应各类指令，具备对话和任务执行能力。</div>
+            </div>
+            <div class="tl-badge" style="color:#6ab4f7;border-color:#6ab4f7">数万~百万样本</div>
+          </div>
+          <div class="tl-item" onclick="setPhaseByName('rlhf')">
+            <div class="tl-num">5</div>
+            <div>
+              <div class="tl-title">RLHF 强化学习对齐</div>
+              <div class="tl-desc">训练奖励模型学习人类偏好，再用 PPO 算法优化语言模型，使输出更加有帮助、无害且诚实（HHH）。</div>
+            </div>
+            <div class="tl-badge" style="color:#c86af7;border-color:#c86af7">对齐阶段</div>
+          </div>
+          <div class="tl-item" onclick="setPhaseByName('inference')">
+            <div class="tl-num">6</div>
+            <div>
+              <div class="tl-title">推理与生成策略</div>
+              <div class="tl-desc">通过 Temperature、Top-p 等参数控制生成多样性，KV Cache 加速推理，量化压缩模型体积，最终部署服务。</div>
+            </div>
+            <div class="tl-badge" style="color:#f7e06a;border-color:#f7e06a">部署上线</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">模型规模演进</div>
+        <div class="card-sub">参数量级对比</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+          <div class="metric">
+            <div class="metric-head"><span class="metric-label">GPT-2 (2019)</span><span class="metric-val">1.5B</span></div>
+            <div class="metric-track"><div class="metric-fill" style="width:8%;background:linear-gradient(90deg,#7c6af7,#9c8af7)"></div></div>
+          </div>
+          <div class="metric">
+            <div class="metric-head"><span class="metric-label">GPT-3 (2020)</span><span class="metric-val">175B</span></div>
+            <div class="metric-track"><div class="metric-fill" style="width:35%;background:linear-gradient(90deg,#7c6af7,#9c8af7)"></div></div>
+          </div>
+          <div class="metric">
+            <div class="metric-head"><span class="metric-label">PaLM (2022)</span><span class="metric-val">540B</span></div>
+            <div class="metric-track"><div class="metric-fill" style="width:60%;background:linear-gradient(90deg,#f7a26a,#f7c26a)"></div></div>
+          </div>
+          <div class="metric">
+            <div class="metric-head"><span class="metric-label">GPT-4 est. (2023)</span><span class="metric-val">~1T+</span></div>
+            <div class="metric-track"><div class="metric-fill" style="width:88%;background:linear-gradient(90deg,#f76a8a,#f7a26a)"></div></div>
+          </div>
+          <div class="metric">
+            <div class="metric-head"><span class="metric-label">未来模型</span><span class="metric-val">???</span></div>
+            <div class="metric-track"><div class="metric-fill pulse" style="width:95%;background:linear-gradient(90deg,#6af7c8,#6ab4f7)"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Transformer 核心组件</div>
+        <div class="card-sub">模型内部架构</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+          <div class="tf-layer" style="background:rgba(247,162,106,0.08);border-color:rgba(247,162,106,0.3)">
+            <div class="layer-glow" style="background:#f7a26a"></div>
+            <span class="tf-label" style="padding-left:8px">Input Embedding</span>
+            <span class="tf-info">token → vector</span>
+          </div>
+          <div style="text-align:center;color:var(--muted);font-size:14px">↓ × N layers</div>
+          <div class="tf-layer" style="background:rgba(124,106,247,0.08);border-color:rgba(124,106,247,0.3)">
+            <div class="layer-glow" style="background:#7c6af7"></div>
+            <span class="tf-label" style="padding-left:8px">Multi-Head Attention</span>
+            <span class="tf-info">关注上下文</span>
+          </div>
+          <div class="tf-layer" style="background:rgba(106,247,200,0.08);border-color:rgba(106,247,200,0.3)">
+            <div class="layer-glow" style="background:#6af7c8"></div>
+            <span class="tf-label" style="padding-left:8px">Feed-Forward Network</span>
+            <span class="tf-info">特征变换</span>
+          </div>
+          <div class="tf-layer" style="background:rgba(247,106,138,0.08);border-color:rgba(247,106,138,0.3)">
+            <div class="layer-glow" style="background:#f76a8a"></div>
+            <span class="tf-label" style="padding-left:8px">LayerNorm + Residual</span>
+            <span class="tf-info">稳定训练</span>
+          </div>
+          <div class="tf-layer" style="background:rgba(247,224,106,0.08);border-color:rgba(247,224,106,0.3)">
+            <div class="layer-glow" style="background:#f7e06a"></div>
+            <span class="tf-label" style="padding-left:8px">LM Head (Softmax)</span>
+            <span class="tf-info">输出概率分布</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATA -->
+    <div class="phase-panel" id="phase-data" style="--card-accent:#f7a26a">
+      <div class="card" style="--card-accent:#f7a26a">
+        <div class="card-title">数据来源</div>
+        <div class="card-sub">预训练语料构成</div>
+        <div class="data-flow">
+          <div class="data-source">
+            <div class="data-icon" style="background:rgba(247,162,106,0.15)">🌐</div>
+            <div>
+              <div class="data-label">Web 文本 (Common Crawl)</div>
+              <div class="data-size">~67% · 数千亿 tokens</div>
+            </div>
+            <div style="text-align:right">
+              <div class="data-bar-wrap"><div class="data-bar" style="width:67%;background:#f7a26a"></div></div>
+            </div>
+          </div>
+          <div class="data-source">
+            <div class="data-icon" style="background:rgba(106,180,247,0.15)">📚</div>
+            <div>
+              <div class="data-label">书籍 & 学术论文</div>
+              <div class="data-size">~15% · 深度知识</div>
+            </div>
+            <div><div class="data-bar-wrap"><div class="data-bar" style="width:15%;background:#6ab4f7"></div></div></div>
+          </div>
+          <div class="data-source">
+            <div class="data-icon" style="background:rgba(106,247,200,0.15)">💻</div>
+            <div>
+              <div class="data-label">代码 (GitHub)</div>
+              <div class="data-size">~10% · 结构化推理</div>
+            </div>
+            <div><div class="data-bar-wrap"><div class="data-bar" style="width:10%;background:#6af7c8"></div></div></div>
+          </div>
+          <div class="data-source">
+            <div class="data-icon" style="background:rgba(247,106,138,0.15)">💬</div>
+            <div>
+              <div class="data-label">对话 & 问答</div>
+              <div class="data-size">~5% · 交互能力</div>
+            </div>
+            <div><div class="data-bar-wrap"><div class="data-bar" style="width:5%;background:#f76a8a"></div></div></div>
+          </div>
+          <div class="data-source">
+            <div class="data-icon" style="background:rgba(200,106,247,0.15)">🗂️</div>
+            <div>
+              <div class="data-label">其他 (Wikipedia 等)</div>
+              <div class="data-size">~3%</div>
+            </div>
+            <div><div class="data-bar-wrap"><div class="data-bar" style="width:3%;background:#c86af7"></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent:#f7a26a">
+        <div class="card-title">数据处理流程</div>
+        <div class="card-sub">原始 → 高质量语料</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="padding:12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:6px">
+            <div style="font-size:11px;color:var(--accent2);margin-bottom:4px">① 原始爬取</div>
+            <div style="font-size:11px;color:var(--muted)">HTML 解析 → 提取正文 → 语言检测</div>
+          </div>
+          <div style="text-align:center;color:var(--muted)">↓</div>
+          <div style="padding:12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:6px">
+            <div style="font-size:11px;color:var(--accent2);margin-bottom:4px">② 质量过滤</div>
+            <div style="font-size:11px;color:var(--muted)">困惑度过滤 · 关键词黑名单 · 长度过滤</div>
+          </div>
+          <div style="text-align:center;color:var(--muted)">↓</div>
+          <div style="padding:12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:6px">
+            <div style="font-size:11px;color:var(--accent2);margin-bottom:4px">③ 去重</div>
+            <div style="font-size:11px;color:var(--muted)">MinHash LSH · 精确匹配 · 模糊去重</div>
+          </div>
+          <div style="text-align:center;color:var(--muted)">↓</div>
+          <div style="padding:12px;background:rgba(106,247,200,0.08);border:1px solid rgba(106,247,200,0.3);border-radius:6px">
+            <div style="font-size:11px;color:#6af7c8;margin-bottom:4px">✓ 最终语料库</div>
+            <div style="font-size:11px;color:var(--muted)">数万亿 tokens · 高质量 · 多样化</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOKENIZE -->
+    <div class="phase-panel" id="phase-tokenize">
+      <div class="card full" style="--card-accent:#6af7c8">
+        <div class="card-title">分词过程演示</div>
+        <div class="card-sub">输入文本 → Token 序列 → Token ID</div>
+        <div class="mini-tabs">
+          <button class="mini-tab active" onclick="switchMiniTab('tok',0,this)">原文示例</button>
+          <button class="mini-tab" onclick="switchMiniTab('tok',1,this)">BPE 算法</button>
+          <button class="mini-tab" onclick="switchMiniTab('tok',2,this)">特殊 Token</button>
+        </div>
+        <div class="mini-content active" id="tok-0">
+          <div class="info-box" style="margin-bottom:14px">
+            <strong>原始文本：</strong>"The large language model learns from data."
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">分词结果（BPE）：</div>
+          <div class="token-flow" id="tokenFlow">
+            <div class="token" style="background:rgba(124,106,247,0.15);border-color:rgba(124,106,247,0.5);animation-delay:0s">The</div>
+            <div class="token" style="background:rgba(247,162,106,0.15);border-color:rgba(247,162,106,0.5);animation-delay:0.05s">▁large</div>
+            <div class="token" style="background:rgba(106,247,200,0.15);border-color:rgba(106,247,200,0.5);animation-delay:0.1s">▁language</div>
+            <div class="token" style="background:rgba(247,106,138,0.15);border-color:rgba(247,106,138,0.5);animation-delay:0.15s">▁model</div>
+            <div class="token" style="background:rgba(106,180,247,0.15);border-color:rgba(106,180,247,0.5);animation-delay:0.2s">▁learns</div>
+            <div class="token" style="background:rgba(200,106,247,0.15);border-color:rgba(200,106,247,0.5);animation-delay:0.25s">▁from</div>
+            <div class="token" style="background:rgba(247,224,106,0.15);border-color:rgba(247,224,106,0.5);animation-delay:0.3s">▁data</div>
+            <div class="token" style="background:rgba(124,106,247,0.15);border-color:rgba(124,106,247,0.5);animation-delay:0.35s">.</div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:14px;margin-bottom:8px">Token ID 序列：</div>
+          <div style="font-family:'JetBrains Mono';font-size:12px;color:var(--accent3);background:rgba(0,0,0,0.3);padding:10px 14px;border-radius:4px;letter-spacing:1px">
+            [464, 1588, 3303, 2746, 33160, 422, 1366, 13]
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:12px">
+            ▁ 表示词首空格（SentencePiece 格式）· 每个 token 对应词表中的唯一整数 ID
+          </div>
+        </div>
+        <div class="mini-content" id="tok-1">
+          <div class="info-box">
+            <strong>BPE（字节对编码）算法步骤：</strong><br><br>
+            1. 初始化：将所有文本拆成字符级别（单字节）<br>
+            2. 统计：找出频率最高的字符对，如 "e", "r" → "er"<br>
+            3. 合并：将该字符对替换为新 token，更新词表<br>
+            4. 重复：不断合并直到词表达到目标大小（如 50,257）<br>
+            5. 编码：用训练好的合并规则对新文本进行编码<br><br>
+            <strong>优势：</strong>平衡词表大小与序列长度 · 处理未见词 · 跨语言通用
+          </div>
+        </div>
+        <div class="mini-content" id="tok-2">
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <div style="padding:10px 14px;background:rgba(124,106,247,0.1);border:1px solid rgba(124,106,247,0.3);border-radius:6px">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:4px">起始标记</div>
+              <div style="font-size:13px;color:var(--accent)">&lt;BOS&gt;</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:4px">Begin of Sequence</div>
+            </div>
+            <div style="padding:10px 14px;background:rgba(247,106,138,0.1);border:1px solid rgba(247,106,138,0.3);border-radius:6px">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:4px">结束标记</div>
+              <div style="font-size:13px;color:var(--accent4)">&lt;EOS&gt;</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:4px">End of Sequence</div>
+            </div>
+            <div style="padding:10px 14px;background:rgba(106,247,200,0.1);border:1px solid rgba(106,247,200,0.3);border-radius:6px">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:4px">填充标记</div>
+              <div style="font-size:13px;color:var(--accent3)">&lt;PAD&gt;</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:4px">对齐序列长度</div>
+            </div>
+            <div style="padding:10px 14px;background:rgba(247,224,106,0.1);border:1px solid rgba(247,224,106,0.3);border-radius:6px">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:4px">分隔标记</div>
+              <div style="font-size:13px;color:#f7e06a">&lt;SEP&gt;</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:4px">区分输入段落</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent:#6af7c8">
+        <div class="card-title">注意力矩阵可视化</div>
+        <div class="card-sub">每个 token 对其他 token 的注意力权重</div>
+        <div class="attn-labels" id="attnLabels"></div>
+        <div class="attn-grid" id="attnGrid"></div>
+        <div style="font-size:10px;color:var(--muted);margin-top:10px">颜色越深表示注意力权重越高 · 点击格子查看权重</div>
+      </div>
+
+      <div class="card" style="--card-accent:#6af7c8">
+        <div class="card-title">位置编码</div>
+        <div class="card-sub">让模型感知 token 的顺序位置</div>
+        <div class="info-box">
+          <strong>正弦位置编码（Sinusoidal PE）</strong><br><br>
+          每个位置 pos 对应一个唯一向量：<br>
+          <span style="color:#6af7c8;font-family:'JetBrains Mono'">PE(pos, 2i) = sin(pos / 10000^(2i/d))</span><br>
+          <span style="color:#6af7c8;font-family:'JetBrains Mono'">PE(pos, 2i+1) = cos(pos / 10000^(2i/d))</span><br><br>
+          现代 LLM 多用 <strong>RoPE（旋转位置编码）</strong>，通过旋转矩阵将位置信息直接注入 Q/K 计算，支持更长上下文外推。
+        </div>
+      </div>
+    </div>
+
+    <!-- PRETRAIN -->
+    <div class="phase-panel" id="phase-pretrain">
+      <div class="card full" style="--card-accent:#f76a8a">
+        <div class="card-title">自回归预训练目标（CLM）</div>
+        <div class="card-sub">Causal Language Modeling · 预测下一个 token</div>
+        <div class="info-box" style="margin-bottom:16px">
+          给定序列 [t₁, t₂, t₃, ... tₙ]，模型学习最大化：<br>
+          <span style="color:#f76a8a;font-family:'JetBrains Mono';font-size:13px">L = -Σ log P(tₙ | t₁, t₂, ..., tₙ₋₁)</span><br><br>
+          每个 token 只能看到它之前的 token（<strong>因果掩码</strong>），模型通过无监督方式在海量数据上自学语言规律。
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">示例：输入序列预测过程</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <div class="token" style="background:rgba(106,247,200,0.15);border-color:#6af7c8">The</div>
+          <div class="token" style="background:rgba(106,247,200,0.15);border-color:#6af7c8">sky</div>
+          <div class="token" style="background:rgba(106,247,200,0.15);border-color:#6af7c8">is</div>
+          <div style="color:var(--muted);font-size:14px">→</div>
+          <div class="token" style="background:rgba(247,106,138,0.2);border-color:#f76a8a;animation:pulse 1.5s infinite">blue</div>
+          <div style="font-size:11px;color:var(--muted);margin-left:8px">✓ 正确预测 → 低损失</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px">
+          <div class="token" style="background:rgba(106,247,200,0.15);border-color:#6af7c8">The</div>
+          <div class="token" style="background:rgba(106,247,200,0.15);border-color:#6af7c8">sky</div>
+          <div class="token" style="background:rgba(106,247,200,0.15);border-color:#6af7c8">is</div>
+          <div style="color:var(--muted);font-size:14px">→</div>
+          <div class="token" style="background:rgba(247,162,106,0.2);border-color:#f7a26a">running</div>
+          <div style="font-size:11px;color:var(--muted);margin-left:8px">✗ 错误预测 → 高损失 → 反向传播更新权重</div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent:#f76a8a">
+        <div class="card-title">训练损失曲线</div>
+        <div class="card-sub">Cross-Entropy Loss 随训练步数下降</div>
+        <canvas id="lossCanvas" height="120" style="margin-top:8px"></canvas>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px">
+          <span style="color:#f76a8a">■</span> 训练损失 &nbsp;
+          <span style="color:#6ab4f7">■</span> 验证损失 &nbsp;
+          早停（Early Stopping）防止过拟合
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent:#f76a8a">
+        <div class="card-title">分布式训练策略</div>
+        <div class="card-sub">大规模并行加速</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="padding:10px 14px;background:rgba(247,106,138,0.08);border:1px solid rgba(247,106,138,0.3);border-radius:6px">
+            <div style="font-size:11px;font-weight:600;margin-bottom:3px">数据并行（DP）</div>
+            <div style="font-size:11px;color:var(--muted)">同一模型复制到多 GPU，各自处理不同 batch，梯度汇总更新</div>
+          </div>
+          <div style="padding:10px 14px;background:rgba(124,106,247,0.08);border:1px solid rgba(124,106,247,0.3);border-radius:6px">
+            <div style="font-size:11px;font-weight:600;margin-bottom:3px">张量并行（TP）</div>
+            <div style="font-size:11px;color:var(--muted)">将矩阵计算切分到多 GPU 并行执行，处理超大模型层</div>
+          </div>
+          <div style="padding:10px 14px;background:rgba(106,247,200,0.08);border:1px solid rgba(106,247,200,0.3);border-radius:6px">
+            <div style="font-size:11px;font-weight:600;margin-bottom:3px">流水线并行（PP）</div>
+            <div style="font-size:11px;color:var(--muted)">不同层分配到不同设备，形成流水线传递激活值</div>
+          </div>
+          <div style="padding:10px 14px;background:rgba(247,224,106,0.08);border:1px solid rgba(247,224,106,0.3);border-radius:6px">
+            <div style="font-size:11px;font-weight:600;margin-bottom:3px">ZeRO 优化</div>
+            <div style="font-size:11px;color:var(--muted)">切片存储优化器状态/梯度/参数，显存占用降低 8x</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FINETUNE -->
+    <div class="phase-panel" id="phase-finetune">
+      <div class="card full" style="--card-accent:#6ab4f7">
+        <div class="card-title">指令微调（SFT）数据格式</div>
+        <div class="card-sub">Supervised Fine-Tuning · 学习遵循指令</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:8px">训练样本格式：</div>
+            <div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:6px;padding:14px;font-size:11px;line-height:1.8">
+              <span style="color:#6ab4f7">### System:</span><br>
+              你是一个有帮助的 AI 助手。<br><br>
+              <span style="color:#6af7c8">### Human:</span><br>
+              请解释什么是递归？<br><br>
+              <span style="color:#f7a26a">### Assistant:</span><br>
+              递归是函数调用自身的编程技术...
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:8px">微调方式对比：</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="padding:10px;background:rgba(106,180,247,0.08);border:1px solid rgba(106,180,247,0.3);border-radius:6px">
+                <div style="font-size:11px;font-weight:600;margin-bottom:3px">全量微调（Full SFT）</div>
+                <div style="font-size:11px;color:var(--muted)">更新所有参数，效果最好，成本高</div>
+              </div>
+              <div style="padding:10px;background:rgba(106,247,200,0.08);border:1px solid rgba(106,247,200,0.3);border-radius:6px">
+                <div style="font-size:11px;font-weight:600;margin-bottom:3px">LoRA（低秩适配）</div>
+                <div style="font-size:11px;color:var(--muted)">只训练低秩矩阵，参数量减少 99%+</div>
+              </div>
+              <div style="padding:10px;background:rgba(200,106,247,0.08);border:1px solid rgba(200,106,247,0.3);border-radius:6px">
+                <div style="font-size:11px;font-weight:600;margin-bottom:3px">Prefix Tuning</div>
+                <div style="font-size:11px;color:var(--muted)">在输入前添加可学习向量，冻结主模型</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent:#6ab4f7">
+        <div class="card-title">LoRA 原理</div>
+        <div class="card-sub">Low-Rank Adaptation</div>
+        <div class="info-box">
+          原始权重矩阵 <strong>W</strong>（冻结）<br>
+          新增低秩矩阵：<strong>ΔW = A × B</strong><br>
+          其中 A ∈ R^(d×r), B ∈ R^(r×k), r &lt;&lt; d<br><br>
+          前向传播：<strong>h = Wx + (AB)x · α/r</strong><br><br>
+          例：W 为 4096×4096（1.7亿参数）<br>
+          r=16 时：A+B 只需 <strong>13万参数</strong>（节省 99.9%）
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent:#6ab4f7">
+        <div class="card-title">SFT 能力提升</div>
+        <div class="card-sub">微调前后对比</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="metric">
+            <div class="metric-head"><span class="metric-label">指令遵循</span><span class="metric-val">↑ 大幅提升</span></div>
+            <div class="metric-track"><div class="metric-fill" style="width:90%;background:linear-gradient(90deg,#6ab4f7,#6af7c8)"></div></div>
+          </div>
+          <div class="metric">
+            <div class="metric-head"><span class="metric-label">对话连贯性</span><span class="metric-val">↑ 显著改善</span></div>
+            <div class="metric-track"><div class="metric-fill" style="width:80%;background:linear-gradient(90deg,#6ab4f7,#6af7c8)"></div></div>
+          </div>
+          <div class="metric">
+            <div class="metric-head"><span class="metric-label">格式控制</span><span class="metric-val">↑ 明显改善</span></div>
+            <div class="metric-track"><div class="metric-fill" style="width:85%;background:linear-gradient(90deg,#6ab4f7,#6af7c8)"></div></div>
+          </div>
+          <div class="metric">
+            <div class="metric-head"><span class="metric-label">知识准确性</span><span class="metric-val">≈ 基本持平</span></div>
+            <div class="metric-track"><div class="metric-fill" style="width:50%;background:linear-gradient(90deg,#f7a26a,#f7e06a)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RLHF -->
+    <div class="phase-panel" id="phase-rlhf">
+      <div class="card full" style="--card-accent:#c86af7">
+        <div class="card-title">RLHF 三阶段流程</div>
+        <div class="card-sub">Reinforcement Learning from Human Feedback</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+          <div style="padding:16px;background:rgba(200,106,247,0.08);border:1px solid rgba(200,106,247,0.3);border-radius:8px;text-align:center">
+            <div style="font-size:24px;margin-bottom:8px">👥</div>
+            <div style="font-size:12px;font-weight:600;margin-bottom:6px;color:#c86af7">阶段一：收集人类偏好</div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.6">向标注员展示同一提示的多个模型回答，让其按质量排序或选出更好的回答</div>
+          </div>
+          <div style="padding:16px;background:rgba(106,180,247,0.08);border:1px solid rgba(106,180,247,0.3);border-radius:8px;text-align:center">
+            <div style="font-size:24px;margin-bottom:8px">🏆</div>
+            <div style="font-size:12px;font-weight:600;margin-bottom:6px;color:#6ab4f7">阶段二：训练奖励模型</div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.6">用偏好数据训练奖励模型（RM），学会为任意回答打分，量化人类满意度</div>
+          </div>
+          <div style="padding:16px;background:rgba(106,247,200,0.08);border:1px solid rgba(106,247,200,0.3);border-radius:8px;text-align:center">
+            <div style="font-size:24px;margin-bottom:8px">🎯</div>
+            <div style="font-size:12px;font-weight:600;margin-bottom:6px;color:#6af7c8">阶段三：PPO 优化</div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.6">用 PPO 算法，以奖励模型分数为奖励信号，不断更新语言模型参数</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent:#c86af7">
+        <div class="card-title">PPO 目标函数</div>
+        <div class="card-sub">平衡性能与安全</div>
+        <div class="info-box">
+          <strong>目标：最大化</strong><br><br>
+          <span style="color:#c86af7;font-family:'JetBrains Mono';font-size:11px">E[r_θ(x,y)] - β·KL[π_θ || π_ref]</span><br><br>
+          • <strong>r_θ(x,y)</strong>：奖励模型打分（越高越好）<br>
+          • <strong>KL 散度惩罚</strong>：防止模型偏离原始行为太远（β 控制强度）<br>
+          • <strong>平衡点</strong>：使模型在提升人类偏好的同时保持稳定性<br><br>
+          <strong>替代方案：</strong>DPO（直接偏好优化）— 无需单独训练奖励模型，直接在偏好数据上优化
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent:#c86af7">
+        <div class="card-title">对齐目标（HHH）</div>
+        <div class="card-sub">Helpful · Harmless · Honest</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="width:36px;height:36px;background:rgba(106,247,200,0.15);border:1px solid #6af7c8;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">✓</div>
+            <div>
+              <div style="font-size:12px;font-weight:600;color:#6af7c8;margin-bottom:3px">Helpful（有帮助）</div>
+              <div style="font-size:11px;color:var(--muted)">理解用户意图，提供准确、有用的回答，完成各类任务</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="width:36px;height:36px;background:rgba(247,106,138,0.15);border:1px solid #f76a8a;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">🛡️</div>
+            <div>
+              <div style="font-size:12px;font-weight:600;color:#f76a8a;margin-bottom:3px">Harmless（无害）</div>
+              <div style="font-size:11px;color:var(--muted)">拒绝有害请求，避免输出有偏见、暴力或危险内容</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="width:36px;height:36px;background:rgba(247,224,106,0.15);border:1px solid #f7e06a;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">💡</div>
+            <div>
+              <div style="font-size:12px;font-weight:600;color:#f7e06a;margin-bottom:3px">Honest（诚实）</div>
+              <div style="font-size:11px;color:var(--muted)">承认不确定性，不捏造事实，如实表达自身局限</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INFERENCE -->
+    <div class="phase-panel" id="phase-inference">
+      <div class="card full" style="--card-accent:#f7e06a">
+        <div class="card-title">下一个 Token 生成概率分布</div>
+        <div class="card-sub">输入："今天天气真" → 模型输出各 token 的概率</div>
+        <div class="prob-bars" id="probBars"></div>
+        <div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap">
+          <div style="font-size:11px;color:var(--muted)">
+            <span style="color:#f7e06a">Temperature</span>：控制随机性。T→0 越确定，T→∞ 越随机
+          </div>
+          <div style="font-size:11px;color:var(--muted)">
+            <span style="color:#6af7c8">Top-p (nucleus)</span>：只从累计概率达到 p 的 token 中采样
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent:#f7e06a">
+        <div class="card-title">解码策略对比</div>
+        <div class="card-sub">生成方式选择</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="padding:10px 14px;background:rgba(247,224,106,0.08);border:1px solid rgba(247,224,106,0.3);border-radius:6px">
+            <div style="font-size:11px;font-weight:600;margin-bottom:3px">贪心解码（Greedy）</div>
+            <div style="font-size:11px;color:var(--muted)">每步选最高概率 token，确定但重复性高</div>
+          </div>
+          <div style="padding:10px 14px;background:rgba(124,106,247,0.08);border:1px solid rgba(124,106,247,0.3);border-radius:6px">
+            <div style="font-size:11px;font-weight:600;margin-bottom:3px">束搜索（Beam Search）</div>
+            <div style="font-size:11px;color:var(--muted)">保留 top-k 候选路径，全局更优但计算代价高</div>
+          </div>
+          <div style="padding:10px 14px;background:rgba(106,247,200,0.08);border:1px solid rgba(106,247,200,0.3);border-radius:6px">
+            <div style="font-size:11px;font-weight:600;margin-bottom:3px">采样（Sampling）</div>
+            <div style="font-size:11px;color:var(--muted)">按概率分布随机采样，创意任务首选</div>
+          </div>
+          <div style="padding:10px 14px;background:rgba(247,106,138,0.08);border:1px solid rgba(247,106,138,0.3);border-radius:6px">
+            <div style="font-size:11px;font-weight:600;margin-bottom:3px">Top-k + Top-p 采样</div>
+            <div style="font-size:11px;color:var(--muted)">先过滤再采样，平衡质量与多样性，最常用</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="--card-accent:#f7e06a">
+        <div class="card-title">推理加速技术</div>
+        <div class="card-sub">部署优化</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="metric">
+            <div class="metric-head">
+              <span class="metric-label">KV Cache（缓存 K/V 矩阵）</span>
+              <span class="metric-val" style="color:#6af7c8">↑ ~10x</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">避免重复计算历史 token 的 Key/Value，大幅提升推理速度</div>
+          </div>
+          <div class="metric">
+            <div class="metric-head">
+              <span class="metric-label">量化（INT8/INT4/FP8）</span>
+              <span class="metric-val" style="color:#f7a26a">↓ 4x 显存</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">将 FP32 权重降精度，压缩模型体积，几乎不损失质量</div>
+          </div>
+          <div class="metric">
+            <div class="metric-head">
+              <span class="metric-label">Flash Attention</span>
+              <span class="metric-val" style="color:#c86af7">↑ 3x</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">IO 感知的注意力算法，减少 HBM 访问次数</div>
+          </div>
+          <div class="metric">
+            <div class="metric-head">
+              <span class="metric-label">推测解码（Speculative Decoding）</span>
+              <span class="metric-val" style="color:#6ab4f7">↑ 2-3x</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">小模型草稿 + 大模型验证，并行提升吞吐</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Phase switching
+function setPhase(name, btn) {
+  document.querySelectorAll('.phase-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.phase-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('phase-' + name).classList.add('active');
+  btn.classList.add('active');
+  updateProgress(name);
+  if (name === 'pretrain') drawLossChart();
+  if (name === 'inference') drawProbBars();
+  if (name === 'tokenize') buildAttnGrid();
+}
+
+function setPhaseByName(name) {
+  const btn = document.querySelector(`[data-phase="${name}"]`);
+  setPhase(name, btn);
+}
+
+function updateProgress(name) {
+  const phases = ['overview','data','tokenize','pretrain','finetune','rlhf','inference'];
+  const idx = phases.indexOf(name);
+  document.getElementById('progress').style.width = ((idx + 1) / phases.length * 100) + '%';
+}
+
+// Mini tabs
+function switchMiniTab(group, idx, btn) {
+  const tabs = btn.parentElement.querySelectorAll('.mini-tab');
+  tabs.forEach((t, i) => {
+    t.classList.toggle('active', i === idx);
+    document.getElementById(group + '-' + i).classList.toggle('active', i === idx);
+  });
+}
+
+// Loss chart
+function drawLossChart() {
+  const canvas = document.getElementById('lossCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * 2;
+  canvas.height = 240;
+  ctx.scale(2, 2);
+  const w = canvas.width / 2, h = canvas.height / 2;
+
+  // Generate smooth loss curve
+  const steps = 60;
+  const trainLoss = [], valLoss = [];
+  for (let i = 0; i < steps; i++) {
+    const t = i / steps;
+    trainLoss.push(3.5 * Math.exp(-3.5 * t) + 0.8 + Math.random() * 0.08);
+    valLoss.push(3.5 * Math.exp(-3.2 * t) + 0.95 + Math.random() * 0.06);
+  }
+
+  const minL = 0.5, maxL = 3.8;
+  const px = i => (i / (steps - 1)) * (w - 20) + 10;
+  const py = v => h - 16 - ((v - minL) / (maxL - minL)) * (h - 28);
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const y = 12 + i * (h - 28) / 4;
+    ctx.beginPath(); ctx.moveTo(10, y); ctx.lineTo(w - 10, y); ctx.stroke();
+  }
+
+  // Draw train loss
+  function drawLine(data, color) {
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.lineJoin = 'round';
+    data.forEach((v, i) => i === 0 ? ctx.moveTo(px(i), py(v)) : ctx.lineTo(px(i), py(v)));
+    ctx.stroke();
+  }
+
+  // Fill area
+  ctx.beginPath();
+  trainLoss.forEach((v, i) => i === 0 ? ctx.moveTo(px(i), py(v)) : ctx.lineTo(px(i), py(v)));
+  ctx.lineTo(px(steps - 1), h - 16);
+  ctx.lineTo(px(0), h - 16);
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, 'rgba(247,106,138,0.15)');
+  grad.addColorStop(1, 'rgba(247,106,138,0)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  drawLine(trainLoss, '#f76a8a');
+  drawLine(valLoss, '#6ab4f7');
+
+  // Labels
+  ctx.fillStyle = 'rgba(106,106,138,0.8)';
+  ctx.font = '9px JetBrains Mono';
+  ctx.fillText('训练步数 →', w - 55, h - 2);
+  ctx.fillText('High', 2, 16);
+  ctx.fillText('Low', 2, h - 14);
+}
+
+// Prob bars
+function drawProbBars() {
+  const data = [
+    { token: '"好"', prob: 0.42, color: '#f7e06a' },
+    { token: '"不错"', prob: 0.28, color: '#6af7c8' },
+    { token: '"棒"', prob: 0.15, color: '#7c6af7' },
+    { token: '"好啊"', prob: 0.09, color: '#f7a26a' },
+    { token: '"的"', prob: 0.04, color: '#6ab4f7' },
+    { token: '"差"', prob: 0.02, color: '#f76a8a' },
+  ];
+  const container = document.getElementById('probBars');
+  container.innerHTML = data.map(d => `
+    <div class="prob-item">
+      <span class="prob-token">${d.token}</span>
+      <div class="prob-track">
+        <div class="prob-fill" style="width:${d.prob * 100}%;background:${d.color}40;border:1px solid ${d.color}60"></div>
+        <span class="prob-pct">${(d.prob * 100).toFixed(0)}%</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Attention grid
+function buildAttnGrid() {
+  const tokens = ['The', 'sky', 'is', 'blue', 'and', 'clear', 'today'];
+  const n = tokens.length;
+  const labelsEl = document.getElementById('attnLabels');
+  const gridEl = document.getElementById('attnGrid');
+  if (!labelsEl || !gridEl) return;
+
+  // Random-ish attention weights
+  const weights = Array.from({length: n}, (_, i) =>
+    Array.from({length: n}, (_, j) => {
+      if (j > i) return 0; // causal mask
+      const base = Math.random() * 0.6;
+      const self = i === j ? 0.3 : 0;
+      return Math.min(1, base + self);
+    })
+  );
+
+  labelsEl.innerHTML = tokens.map(t => `<div class="attn-lbl">${t}</div>`).join('');
+  gridEl.innerHTML = '';
+
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      const cell = document.createElement('div');
+      cell.className = 'attn-cell';
+      const v = weights[i][j];
+      const opacity = j > i ? 0.05 : v;
+      cell.style.background = `rgba(124,106,247,${opacity})`;
+      cell.style.opacity = j > i ? '0.15' : '1';
+      cell.title = j <= i ? `${tokens[i]} → ${tokens[j]}: ${(v*100).toFixed(0)}%` : '(masked)';
+      gridEl.appendChild(cell);
+    }
+  }
+}
+
+// Init
+drawProbBars();
+updateProgress('overview');
+
+// Animate metric bars on load
+setTimeout(() => {
+  document.querySelectorAll('.metric-fill').forEach(el => {
+    const w = el.style.width;
+    el.style.width = '0';
+    setTimeout(() => el.style.width = w, 50);
+  });
+}, 100);
+</script>
+</body>
+</html>
