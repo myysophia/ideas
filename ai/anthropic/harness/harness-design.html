@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harness 设计：长任务自主应用开发</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1814;
+    --ink-muted: #5a5650;
+    --ink-faint: #a09890;
+    --paper: #f5f0e8;
+    --paper-warm: #ede8dc;
+    --paper-card: #faf7f2;
+    --accent: #c8430a;
+    --accent-soft: #f0d4c4;
+    --accent-2: #2d5a8e;
+    --accent-2-soft: #ccdaed;
+    --gold: #b8920a;
+    --gold-soft: #f0e4b0;
+    --teal: #1a7060;
+    --teal-soft: #c4e0d8;
+    --rule: #c8bfb0;
+    --serif: 'DM Serif Display', 'Noto Serif SC', Georgia, serif;
+    --sans: 'Noto Sans SC', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.85;
+    font-weight: 300;
+  }
+
+  /* ── Masthead ── */
+  header {
+    border-bottom: 2px solid var(--ink);
+    padding: 20px 40px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .masthead-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+  .masthead-brand {
+    font-family: var(--serif);
+    font-size: 22px;
+    letter-spacing: 0.01em;
+  }
+  .masthead-date {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 80px 40px 60px;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+  }
+  .hero-kicker {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .hero-kicker::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--accent);
+    opacity: 0.3;
+    max-width: 120px;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-size: clamp(36px, 5vw, 62px);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin-bottom: 28px;
+    font-weight: 400;
+  }
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .hero-sub {
+    font-size: 18px;
+    color: var(--ink-muted);
+    max-width: 620px;
+    line-height: 1.6;
+    margin-bottom: 32px;
+  }
+  .hero-byline {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--ink-muted);
+    font-family: var(--mono);
+  }
+  .hero-byline span { color: var(--ink); font-weight: 500; }
+  .byline-dot {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--rule);
+  }
+
+  /* ── Layout ── */
+  .content-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 40px;
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    gap: 0 60px;
+    align-items: start;
+  }
+  .main-col { padding: 60px 0; }
+  .side-col {
+    padding: 60px 0;
+    position: sticky;
+    top: 40px;
+  }
+
+  /* ── Section headers ── */
+  h2 {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 400;
+    line-height: 1.2;
+    margin: 56px 0 20px;
+    padding-top: 56px;
+    border-top: 1px solid var(--rule);
+  }
+  h2:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+  h3 {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 400;
+    margin: 36px 0 14px;
+    letter-spacing: 0.01em;
+  }
+
+  /* ── Body text ── */
+  p { margin-bottom: 20px; color: var(--ink); }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── Pull quote ── */
+  .pull-quote {
+    border-left: 3px solid var(--accent);
+    padding: 20px 0 20px 28px;
+    margin: 40px 0;
+    font-family: var(--serif);
+    font-size: 22px;
+    line-height: 1.4;
+    color: var(--accent);
+    font-style: italic;
+  }
+
+  /* ── Highlight box ── */
+  .highlight-box {
+    background: var(--paper-card);
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--accent);
+    padding: 28px 32px;
+    margin: 36px 0;
+    border-radius: 0 0 4px 4px;
+  }
+  .highlight-box .box-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+
+  /* ── Agent cards ── */
+  .agent-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    margin: 36px 0;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .agent-card {
+    background: var(--paper-card);
+    padding: 24px 20px;
+    transition: background 0.2s;
+  }
+  .agent-card:hover { background: var(--paper-warm); }
+  .agent-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+  .tag-planner { background: var(--teal-soft); color: var(--teal); }
+  .tag-generator { background: var(--accent-2-soft); color: var(--accent-2); }
+  .tag-evaluator { background: var(--gold-soft); color: var(--gold); }
+  .agent-name {
+    font-family: var(--serif);
+    font-size: 18px;
+    margin-bottom: 8px;
+    font-weight: 400;
+  }
+  .agent-desc {
+    font-size: 13px;
+    color: var(--ink-muted);
+    line-height: 1.6;
+  }
+
+  /* ── Score criteria ── */
+  .criteria-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 28px 0;
+  }
+  .criterion {
+    padding: 20px;
+    background: var(--paper-card);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden;
+  }
+  .criterion::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .criterion.high::before { background: var(--accent); }
+  .criterion.low::before { background: var(--rule); }
+  .criterion-name {
+    font-family: var(--serif);
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+  .criterion-desc { font-size: 13px; color: var(--ink-muted); line-height: 1.5; }
+  .criterion-weight {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 10px;
+    color: var(--accent);
+  }
+  .criterion.low .criterion-weight { color: var(--ink-faint); }
+
+  /* ── Comparison table ── */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 28px 0;
+    font-size: 14px;
+  }
+  .compare-table th {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 2px solid var(--ink);
+    color: var(--ink-muted);
+  }
+  .compare-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table tr:hover td { background: var(--paper-warm); }
+  .compare-table .val-bad { color: var(--accent); font-family: var(--mono); }
+  .compare-table .val-good { color: var(--teal); font-family: var(--mono); }
+
+  /* ── Bug log ── */
+  .bug-log {
+    background: #1a1814;
+    color: #d4cfc5;
+    padding: 24px 28px;
+    margin: 28px 0;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-x: auto;
+  }
+  .bug-log .log-label {
+    color: var(--gold);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    opacity: 0.7;
+  }
+  .bug-entry { margin-bottom: 16px; }
+  .bug-criterion { color: #a09890; margin-bottom: 4px; }
+  .bug-result { color: #f0845a; margin-bottom: 4px; }
+  .bug-detail { color: #d4cfc5; font-size: 12px; opacity: 0.75; }
+
+  /* ── Cost breakdown ── */
+  .cost-rows { margin: 20px 0; }
+  .cost-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: 14px;
+  }
+  .cost-row:last-child { border-bottom: 2px solid var(--ink); font-weight: 500; }
+  .cost-agent {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    color: var(--ink-muted);
+    min-width: 150px;
+  }
+  .cost-bar-wrap { flex: 1; height: 6px; background: var(--rule); border-radius: 3px; overflow: hidden; }
+  .cost-bar { height: 100%; background: var(--accent-2); border-radius: 3px; transition: width 1.2s cubic-bezier(.4,0,.2,1); }
+  .cost-val {
+    font-family: var(--mono);
+    font-size: 12px;
+    min-width: 80px;
+    text-align: right;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar-section { margin-bottom: 40px; }
+  .sidebar-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .toc-list { list-style: none; }
+  .toc-list li {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .toc-list a {
+    font-size: 13px;
+    color: var(--ink-muted);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.15s;
+  }
+  .toc-list a:hover { color: var(--ink); }
+  .toc-list a::before {
+    content: '';
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--rule);
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .toc-list a:hover::before { background: var(--accent); }
+
+  .stat-pair { margin-bottom: 20px; }
+  .stat-num {
+    font-family: var(--serif);
+    font-size: 36px;
+    line-height: 1;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .stat-label { font-size: 12px; color: var(--ink-muted); }
+
+  /* ── Key insight ── */
+  .key-insight {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 32px 36px;
+    margin: 40px 0;
+    border-radius: 4px;
+    position: relative;
+  }
+  .key-insight::before {
+    content: '"';
+    position: absolute;
+    top: 16px; left: 24px;
+    font-family: var(--serif);
+    font-size: 72px;
+    color: var(--accent);
+    opacity: 0.4;
+    line-height: 1;
+  }
+  .key-insight p {
+    font-family: var(--serif);
+    font-size: 19px;
+    line-height: 1.5;
+    color: var(--paper);
+    padding-left: 36px;
+  }
+
+  /* ── Footer ── */
+  footer {
+    border-top: 2px solid var(--ink);
+    padding: 32px 40px;
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-muted);
+    letter-spacing: 0.1em;
+  }
+  footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  footer a:hover { text-decoration: underline; }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .hero, .agent-card, .criterion {
+    animation: fadeUp 0.6s ease both;
+  }
+  .agent-card:nth-child(2) { animation-delay: 0.1s; }
+  .agent-card:nth-child(3) { animation-delay: 0.2s; }
+
+  /* ── Responsive ── */
+  @media (max-width: 720px) {
+    .content-wrap { grid-template-columns: 1fr; }
+    .side-col { display: none; }
+    .agent-grid { grid-template-columns: 1fr; }
+    .criteria-grid { grid-template-columns: 1fr; }
+    header { padding: 16px 20px; }
+    .hero { padding: 48px 20px 40px; }
+    .content-wrap { padding: 0 20px; }
+    footer { flex-direction: column; gap: 12px; padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="masthead-label">Engineering at Anthropic</div>
+  <div class="masthead-brand">Anthropic</div>
+  <div class="masthead-date">Mar 24, 2026</div>
+</header>
+
+<div class="hero">
+  <div class="hero-kicker">工程博客 · Labs 团队</div>
+  <h1>Harness 设计<br>与<em>长任务自主</em><br>应用开发</h1>
+  <p class="hero-sub">如何通过多智能体架构与评估循环，突破 Claude 在前端设计和自主编程上的性能天花板。</p>
+  <div class="hero-byline">
+    <span>Prithvi Rajasekaran</span>
+    <div class="byline-dot"></div>
+    <span>Anthropic Labs</span>
+    <div class="byline-dot"></div>
+    <span>2026年3月24日</span>
+  </div>
+</div>
+
+<div class="content-wrap">
+  <main class="main-col">
+
+    <!-- Section 1 -->
+    <h2>为什么朴素实现会失败</h2>
+    <p>哪怕在现有的 Harness 基础上做了很多优化，长任务编程依然面临两个顽固问题：</p>
+
+    <div class="highlight-box">
+      <div class="box-label">核心问题 01</div>
+      <p><strong>上下文焦虑（Context Anxiety）</strong>：随着上下文窗口被填满，模型会开始提前收尾——即便任务尚未完成，它也会草草了事。上下文压缩（Compaction）虽能缓解，但不能根治，因为模型并没有获得真正"清空"的机会。只有上下文重置（Reset）才能给下一个 Agent 一块干净的白板。</p>
+    </div>
+
+    <div class="highlight-box">
+      <div class="box-label">核心问题 02</div>
+      <p><strong>自我评估偏差（Self-Evaluation Bias）</strong>：当 Agent 被要求评价自己的输出时，它几乎总是给出溢美之词——即便在人类看来质量平平。对于设计这类主观任务，这个问题尤为突出，没有二进制测试可以验证"这个设计好不好看"。</p>
+    </div>
+
+    <div class="pull-quote">
+      将做事的 Agent 和评判的 Agent 分离，是解决自我评估偏差最有力的手段。
+    </div>
+
+    <!-- Section 2 -->
+    <h2>借鉴 GAN：生成器 × 评估器架构</h2>
+    <p>受生成对抗网络（GAN）启发，作者设计了一个生成器与评估器分离的多智能体结构：评估器不做事，只负责挑毛病，并被明确调校为"持怀疑态度"。这比让生成器自我批判容易得多，也有效得多。</p>
+
+    <div class="agent-grid">
+      <div class="agent-card">
+        <div class="agent-tag tag-planner">Planner</div>
+        <div class="agent-name">规划器</div>
+        <div class="agent-desc">将用户 1-4 句话的简短提示，扩展为完整的产品规格。专注于产品上下文与高层技术设计，刻意回避过细的实现细节（防止错误向下游级联）。同时主动在规格中嵌入 AI 功能机会。</div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-tag tag-generator">Generator</div>
+        <div class="agent-name">生成器</div>
+        <div class="agent-desc">按"冲刺"逐功能实现应用，技术栈为 React + Vite + FastAPI + SQLite/PostgreSQL。每个冲刺结束后自评，再交给评估器。配合 git 进行版本控制，可在评估不通过时回滚。</div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-tag tag-evaluator">Evaluator</div>
+        <div class="agent-name">评估器</div>
+        <div class="agent-desc">持有 Playwright MCP，像真实用户一样点击运行中的应用，测试 UI 功能、API 端点与数据库状态，然后对每条验收标准打分。任意一项低于阈值，整个冲刺视为失败。</div>
+      </div>
+    </div>
+
+    <p>三个 Agent 之间通过文件通信：一方写文件，另一方读取并在同一文件中回应，或写一个新文件让对方读取。这样既保持了上下文的完整传递，又避免了复杂的进程间通信。</p>
+
+    <!-- Section 3 -->
+    <h2>前端设计：让主观质量可量化</h2>
+    <p>在前端设计实验中，作者为生成器和评估器各自的 Prompt 写入了四条评分标准，明确告诉模型什么叫"好设计"：</p>
+
+    <div class="criteria-grid">
+      <div class="criterion high">
+        <div class="criterion-name">设计质量</div>
+        <div class="criterion-desc">整体是否浑然一体？颜色、字体、布局、图像是否共同塑造出独特的视觉氛围与身份感？</div>
+        <div class="criterion-weight">↑ 高权重</div>
+      </div>
+      <div class="criterion high">
+        <div class="criterion-name">原创性</div>
+        <div class="criterion-desc">是否有明显的定制决策？人类设计师能否识别出刻意的创意选择？紫色渐变 + 白色卡片这类 AI 惯用模板会被直接判定失败。</div>
+        <div class="criterion-weight">↑ 高权重</div>
+      </div>
+      <div class="criterion low">
+        <div class="criterion-name">工艺</div>
+        <div class="criterion-desc">技术执行层面：字体层级、间距一致性、色彩和谐、对比度比率。这是能力检查而非创意检查，大多数合理实现默认能通过。</div>
+        <div class="criterion-weight">基础权重</div>
+      </div>
+      <div class="criterion low">
+        <div class="criterion-name">功能性</div>
+        <div class="criterion-desc">独立于美观的可用性：用户能否理解界面的用途、找到主要操作、不靠猜测完成任务？</div>
+        <div class="criterion-weight">基础权重</div>
+      </div>
+    </div>
+
+    <p>将设计质量和原创性的权重调高，是因为 Claude 在工艺和功能性上本已表现不错，真正的短板在于容易产出"无聊、安全、无特点"的设计。通过明确惩罚 AI 通用模板，迫使模型去冒审美风险。</p>
+
+    <div class="key-insight">
+      <p>在第十次迭代时，模型彻底推翻了前九次的方向——它重新想象了一个荷兰艺术博物馆网站，把它做成了一个 3D 空间体验：棋盘格地板、透视走廊、艺术品挂在墙上，用"走进门"替代了滚动或点击导航。</p>
+    </div>
+
+    <!-- Section 4 -->
+    <h2>扩展至全栈编码</h2>
+    <h3>冲刺契约机制</h3>
+    <p>每个冲刺开始前，生成器与评估器会协商一份"冲刺契约"：双方在写任何代码之前，先就"完成"的定义达成一致。生成器提出要构建的内容和验收方式，评估器审查提案，两者迭代至达成共识。这桥接了高层用户故事与可测试实现之间的鸿沟。</p>
+
+    <h3>评估器调校</h3>
+    <p>开箱即用的 Claude 是糟糕的 QA 工程师。早期运行中，经常看到它识别出真实问题后又自我说服"这没什么大不了的"，然后批准了有缺陷的工作。调校过程是：阅读评估器日志 → 找出它的判断与作者判断的分歧 → 更新 QA Prompt。经过数轮迭代，评估器才达到令人满意的水准。</p>
+
+    <p>以下是评估器在复古游戏制作器项目中捕获的真实 Bug 样例：</p>
+
+    <div class="bug-log">
+      <div class="log-label">QA 评估器输出 — Sprint 3 样例</div>
+      <div class="bug-entry">
+        <div class="bug-criterion">▸ 矩形填充工具应支持拖拽填充矩形区域</div>
+        <div class="bug-result">✗ FAIL</div>
+        <div class="bug-detail">工具仅在拖拽起点/终点放置图块，未填充整个区域。fillRectangle 函数存在但 mouseUp 时未正确触发。</div>
+      </div>
+      <div class="bug-entry">
+        <div class="bug-criterion">▸ 用户可选中并删除已放置的实体生成点</div>
+        <div class="bug-result">✗ FAIL</div>
+        <div class="bug-detail">LevelEditor.tsx:892 的 Delete 键处理器同时要求 selection 和 selectedEntityId 均已设置，但点击实体仅设置 selectedEntityId。条件应改为 selection || (selectedEntityId && activeLayer === 'entity')。</div>
+      </div>
+      <div class="bug-entry">
+        <div class="bug-criterion">▸ 用户可通过 API 重排动画帧</div>
+        <div class="bug-result">✗ FAIL</div>
+        <div class="bug-detail">PUT /frames/reorder 路由定义在 /{frame_id} 路由之后，FastAPI 将 'reorder' 匹配为整数 frame_id，返回 422: "unable to parse string as an integer"。</div>
+      </div>
+    </div>
+
+    <!-- Section 5: Comparison -->
+    <h2>效果对比</h2>
+    <p>以"创建一个 2D 复古游戏制作器"为提示，对比单智能体与完整 Harness 的输出差异：</p>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>维度</th>
+          <th>单智能体（Solo）</th>
+          <th>完整 Harness</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>运行时长</td>
+          <td class="val-bad">20 分钟</td>
+          <td class="val-good">6 小时</td>
+        </tr>
+        <tr>
+          <td>费用</td>
+          <td class="val-bad">$9</td>
+          <td>$200</td>
+        </tr>
+        <tr>
+          <td>功能规格</td>
+          <td>基础 4 项</td>
+          <td class="val-good">16 项（含动画、音效、AI 生成、游戏导出）</td>
+        </tr>
+        <tr>
+          <td>核心玩法</td>
+          <td class="val-bad">游戏无法运行，实体无响应</td>
+          <td class="val-good">可正常运行，移动/物理引擎可用</td>
+        </tr>
+        <tr>
+          <td>AI 功能集成</td>
+          <td class="val-bad">无</td>
+          <td class="val-good">内置 Claude 集成，可通过提示生成关卡</td>
+        </tr>
+        <tr>
+          <td>界面布局</td>
+          <td>固定高度面板，空间浪费</td>
+          <td class="val-good">全视口 Canvas，面板尺寸合理，视觉一致</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Section 6: V2 Harness -->
+    <h2>迭代：简化 Harness</h2>
+    <p>随着 Opus 4.6 的发布，模型能力大幅提升（更长的持续工作时间、更好的大型代码库处理能力、更强的自调试技能），许多原本靠脚手架补偿的缺陷变得不再必要。</p>
+
+    <p>作者移除了冲刺分解结构，Opus 4.6 在没有上下文重置的情况下连续运行了超过两小时仍保持连贯。评估器改为每轮构建结束后进行一次性评估，而非按冲刺逐次评分。以 DAW（数字音频工作站）为案例，V2 Harness 的成本分布如下：</p>
+
+    <div class="cost-rows">
+      <div class="cost-row">
+        <div class="cost-agent">Planner</div>
+        <div class="cost-bar-wrap"><div class="cost-bar" style="width:0.4%"></div></div>
+        <div class="cost-val">$0.46 · 4.7min</div>
+      </div>
+      <div class="cost-row">
+        <div class="cost-agent">Build Round 1</div>
+        <div class="cost-bar-wrap"><div class="cost-bar" style="width:57%"></div></div>
+        <div class="cost-val">$71.08 · 2hr7min</div>
+      </div>
+      <div class="cost-row">
+        <div class="cost-agent">QA Round 1</div>
+        <div class="cost-bar-wrap"><div class="cost-bar" style="width:2.6%"></div></div>
+        <div class="cost-val">$3.24 · 8.8min</div>
+      </div>
+      <div class="cost-row">
+        <div class="cost-agent">Build Round 2</div>
+        <div class="cost-bar-wrap"><div class="cost-bar" style="width:29.6%"></div></div>
+        <div class="cost-val">$36.89 · 1hr2min</div>
+      </div>
+      <div class="cost-row">
+        <div class="cost-agent">QA Round 2</div>
+        <div class="cost-bar-wrap"><div class="cost-bar" style="width:2.5%"></div></div>
+        <div class="cost-val">$3.09 · 6.8min</div>
+      </div>
+      <div class="cost-row">
+        <div class="cost-agent">Build Round 3</div>
+        <div class="cost-bar-wrap"><div class="cost-bar" style="width:4.7%"></div></div>
+        <div class="cost-val">$5.88 · 10.9min</div>
+      </div>
+      <div class="cost-row">
+        <div class="cost-agent">QA Round 3</div>
+        <div class="cost-bar-wrap"><div class="cost-bar" style="width:3.3%"></div></div>
+        <div class="cost-val">$4.06 · 9.6min</div>
+      </div>
+      <div class="cost-row" style="font-weight:500">
+        <div class="cost-agent" style="color:var(--ink)">总计</div>
+        <div class="cost-bar-wrap"><div class="cost-bar" style="width:100%;background:var(--accent)"></div></div>
+        <div class="cost-val" style="color:var(--accent)">$124.70 · 3hr50min</div>
+      </div>
+    </div>
+
+    <!-- Section 7: Conclusions -->
+    <h2>核心经验</h2>
+    <p>随着模型能力不断提升，某些脚手架会变得多余；但更强的模型同时也开辟了此前无法实现的复杂 Harness 组合的新空间。Harness 的有趣组合并不会随模型进步而收缩，而是会<em>移动</em>。</p>
+
+    <div class="highlight-box">
+      <div class="box-label">三条核心经验</div>
+      <p style="margin-bottom:12px">① <strong>持续实验与调优</strong>：在真实问题上阅读 trace，针对期望输出调整 Prompt，不依赖一次性设置。</p>
+      <p style="margin-bottom:12px">② <strong>分解 + 专用 Agent</strong>：对于复杂任务，将任务分解并为每个维度配置专门的智能体，往往有超越基线的空间。</p>
+      <p>③ <strong>随模型迭代 Harness</strong>：每当新模型发布，重新审视 Harness，移除不再必要的部件，增加能实现新能力的部件。</p>
+    </div>
+
+    <div class="pull-quote">
+      AI 工程师的核心工作，是不断找到下一个有趣的新组合。
+    </div>
+
+  </main>
+
+  <!-- Sidebar -->
+  <aside class="side-col">
+    <div class="sidebar-section">
+      <div class="sidebar-label">目录</div>
+      <ul class="toc-list">
+        <li><a href="#">为什么朴素实现会失败</a></li>
+        <li><a href="#">借鉴 GAN：三智能体架构</a></li>
+        <li><a href="#">前端设计评分标准</a></li>
+        <li><a href="#">扩展至全栈编码</a></li>
+        <li><a href="#">效果对比</a></li>
+        <li><a href="#">迭代简化 Harness</a></li>
+        <li><a href="#">核心经验</a></li>
+      </ul>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">关键数据</div>
+      <div class="stat-pair">
+        <div class="stat-num">20×</div>
+        <div class="stat-label">完整 Harness 的 token 成本<br>是单智能体的约 20 倍</div>
+      </div>
+      <div class="stat-pair">
+        <div class="stat-num">16</div>
+        <div class="stat-label">Harness 规划器为复古游戏<br>制作器生成的功能数量</div>
+      </div>
+      <div class="stat-pair">
+        <div class="stat-num">5–15×</div>
+        <div class="stat-label">前端设计实验的<br>单次生成迭代轮次</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">技术栈</div>
+      <ul class="toc-list">
+        <li><a href="#">React + Vite</a></li>
+        <li><a href="#">FastAPI + SQLite/PostgreSQL</a></li>
+        <li><a href="#">Claude Agent SDK</a></li>
+        <li><a href="#">Playwright MCP</a></li>
+        <li><a href="#">Git 版本控制</a></li>
+      </ul>
+    </div>
+  </aside>
+</div>
+
+<footer>
+  <span>原文：<a href="https://www.anthropic.com/engineering/harness-design-long-running-apps" target="_blank">anthropic.com/engineering</a></span>
+  <span>作者：Prithvi Rajasekaran · Anthropic Labs</span>
+  <span>2026年3月24日</span>
+</footer>
+
+</body>
+</html>
