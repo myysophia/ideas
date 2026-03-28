@@ -55,6 +55,7 @@ description: 文章摘要（可选）
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>文章标题</title>
+  <meta name="date" content="2025-01-15">
   <meta name="description" content="文章摘要">
 </head>
 <body>
@@ -74,7 +75,7 @@ description: 文章摘要（可选）
 </html>
 ```
 
-构建脚本会自动提取标题和日期，并应用统一样式。
+构建脚本会优先读取 `<meta name="date">` 作为文章日期；如果缺失，会继续尝试读取 `<time datetime>` 或文件名中的日期前缀。`<time>` 主要用于正文展示。
 
 ### 部署到 Cloudflare Pages
 

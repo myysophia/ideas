@@ -5,7 +5,7 @@ const matter = require('gray-matter');
 const CryptoJS = require('crypto-js');
 
 // 配置
-const EXCLUDED_DIRS = ['node_modules', '.git', 'dist', '_templates', '_content', '.history'];
+const EXCLUDED_DIRS = ['node_modules', '.git', 'dist', '_templates', '_content', '.history', 'docs'];
 const TEMPLATE_PATH = '_templates/article.html';
 const OUTPUT_DIR = 'dist';
 
@@ -74,13 +74,7 @@ function processFile(filePath) {
     const parsed = matter(fileContent);
     
     title = parsed.data.title || path.basename(filePath, '.md');
-    // 确保日期是 YYYY-MM-DD 格式
-    if (parsed.data.date) {
-      const d = new Date(parsed.data.date);
-      date = d.toISOString().split('T')[0];
-    } else {
-      date = extractDateFromFilename(filePath);
-    }
+    date = normalizeDateValue(parsed.data.date) || extractDateFromFilename(filePath);
     description = parsed.data.description || '';
     password = parsed.data.password || '';
     
@@ -104,28 +98,10 @@ function processFile(filePath) {
     
     // 提取日期（用于首页列表），优先级：
     // 1. <meta name="date" content="YYYY-MM-DD">
-    // 2. 自动生成当前日期（如果没有日期标签）
-    const dateMetaMatch = fileContent.match(/<meta\s+name=["']date["']\s+content=["'](.*?)["']/i);
-    if (dateMetaMatch) {
-      date = dateMetaMatch[1];
-    } else {
-      // 没有日期meta标签，自动添加当前日期
-      date = new Date().toISOString().split('T')[0];
-      
-      // 在<title>标签后插入日期meta标签
-      const titleRegex = /(<title>.*?<\/title>)/i;
-      if (titleRegex.test(fileContent)) {
-        const updatedContent = fileContent.replace(
-          titleRegex,
-          `$1\n<meta name="date" content="${date}">`
-        );
-        
-        // 写回源文件
-        fs.writeFileSync(filePath, updatedContent, 'utf-8');
-        fileContent = updatedContent;
-        console.log(`  ✓ 已添加日期标签: ${date}`);
-      }
-    }
+    // 2. <time datetime="YYYY-MM-DD">
+    // 3. <time>YYYY-MM-DD</time>
+    // 4. 文件名日期前缀
+    date = extractDateFromHtml(fileContent, filePath);
     
     // 提取描述（用于首页列表）
     const descMatch = fileContent.match(/<meta name="description" content="(.*?)"/i);
@@ -303,6 +279,59 @@ function extractDateFromFilename(filename) {
   const basename = path.basename(filename);
   const match = basename.match(/^(\d{4}-\d{2}-\d{2})/);
   return match ? match[1] : '';
+}
+
+// 规范化日期值为 YYYY-MM-DD，避免 UTC 转换带来的跨天偏差
+function normalizeDateValue(value) {
+  if (!value) {
+    return '';
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    const directMatch = trimmed.match(/^(\d{4}-\d{2}-\d{2})$/);
+    if (directMatch) {
+      return directMatch[1];
+    }
+
+    const isoPrefixMatch = trimmed.match(/^(\d{4}-\d{2}-\d{2})[T\s]/);
+    if (isoPrefixMatch) {
+      return isoPrefixMatch[1];
+    }
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function extractDateFromHtml(fileContent, filePath) {
+  const dateMetaMatch = fileContent.match(/<meta\s+name=["']date["']\s+content=["'](.*?)["']/i);
+  if (dateMetaMatch) {
+    return normalizeDateValue(dateMetaMatch[1]);
+  }
+
+  const timeDatetimeMatch = fileContent.match(/<time\b[^>]*datetime=["'](.*?)["'][^>]*>/i);
+  if (timeDatetimeMatch) {
+    return normalizeDateValue(timeDatetimeMatch[1]);
+  }
+
+  const timeTextMatch = fileContent.match(/<time\b[^>]*>([\s\S]*?)<\/time>/i);
+  if (timeTextMatch) {
+    const timeText = timeTextMatch[1].replace(/<[^>]*>/g, '').trim();
+    const normalizedTimeText = normalizeDateValue(timeText);
+    if (normalizedTimeText) {
+      return normalizedTimeText;
+    }
+  }
+
+  return extractDateFromFilename(filePath);
 }
 
 // 提取第一段作为摘要
@@ -719,4 +748,3 @@ copyStaticAssets();
 
 console.log(`\n✓ 构建完成！共处理 ${articles.length} 篇文章`);
 console.log(`✓ 输出目录: ${OUTPUT_DIR}/`);
-

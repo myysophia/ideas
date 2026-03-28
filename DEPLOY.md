@@ -100,6 +100,7 @@ description: 文章简介
 <head>
   <meta charset="UTF-8">
   <title>我的新文章</title>
+  <meta name="date" content="2025-01-15">
   <meta name="description" content="文章简介">
 </head>
 <body>
@@ -113,6 +114,8 @@ description: 文章简介
 </body>
 </html>
 ```
+
+构建脚本会优先读取 `<meta name="date">`；如果缺失，会继续尝试读取 `<time datetime>` 或文件名日期前缀。推荐始终显式填写 `meta date`，这样排序最稳定。
 
 提交推送：
 
@@ -174,4 +177,3 @@ Cloudflare Pages 自动提供：
 3. **Plausible Analytics**
 
 在模板文件中添加对应的跟踪代码即可。
-
