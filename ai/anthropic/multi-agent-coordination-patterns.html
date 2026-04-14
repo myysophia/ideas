@@ -592,33 +592,51 @@ a:hover {
             <h2 class="panel-h2 reveal" style="margin-top: var(--content-gap); margin-bottom: var(--content-gap);">
                 五种协调模式
             </h2>
-            <div class="stagger" style="display: flex; flex-direction: column; gap: clamp(0.4rem, 1.5vh, 1rem);">
-                <div class="reveal" style="display: flex; align-items: center; gap: clamp(0.5rem, 1.5vw, 1.5rem);">
-                    <span style="color: var(--accent-neon); font-weight: 700; font-size: var(--h3-size); min-width: 2ch;">01</span>
-                    <span style="font-weight: 700;">Generator-Verifier</span>
-                    <span class="panel-small" style="margin-left: auto;">生成-验证</span>
+            <div class="stagger" style="display: flex; flex-direction: column; gap: clamp(0.3rem, 1.2vh, 0.8rem);">
+                <div class="reveal" style="display: grid; grid-template-columns: 2.5rem 1fr auto; align-items: center; gap: clamp(0.5rem, 1.5vw, 1.5rem);">
+                    <span style="color: var(--accent-neon); font-weight: 700; font-size: var(--h3-size);">01</span>
+                    <div>
+                        <span style="font-weight: 700;">Generator-Verifier</span>
+                        <span class="panel-small" style="margin-left: 0.5em;">一个生成、一个验证、循环迭代</span>
+                    </div>
+                    <span class="panel-small" style="text-align: right;">生成-验证</span>
                 </div>
-                <div class="reveal" style="display: flex; align-items: center; gap: clamp(0.5rem, 1.5vw, 1.5rem);">
-                    <span style="color: var(--accent-neon); font-weight: 700; font-size: var(--h3-size); min-width: 2ch;">02</span>
-                    <span style="font-weight: 700;">Orchestrator-Subagent</span>
-                    <span class="panel-small" style="margin-left: auto;">编排-子Agent</span>
+                <div class="reveal" style="display: grid; grid-template-columns: 2.5rem 1fr auto; align-items: center; gap: clamp(0.5rem, 1.5vw, 1.5rem);">
+                    <span style="color: var(--accent-neon); font-weight: 700; font-size: var(--h3-size);">02</span>
+                    <div>
+                        <span style="font-weight: 700;">Orchestrator-Subagent</span>
+                        <span class="panel-small" style="margin-left: 0.5em;">Team Lead 分派任务、汇总结果</span>
+                    </div>
+                    <span class="panel-small" style="text-align: right;">编排-子Agent</span>
                 </div>
-                <div class="reveal" style="display: flex; align-items: center; gap: clamp(0.5rem, 1.5vw, 1.5rem);">
-                    <span style="color: var(--accent-neon); font-weight: 700; font-size: var(--h3-size); min-width: 2ch;">03</span>
-                    <span style="font-weight: 700;">Agent Teams</span>
-                    <span class="panel-small" style="margin-left: auto;">Agent 团队</span>
+                <div class="reveal" style="display: grid; grid-template-columns: 2.5rem 1fr auto; align-items: center; gap: clamp(0.5rem, 1.5vw, 1.5rem);">
+                    <span style="color: var(--accent-neon); font-weight: 700; font-size: var(--h3-size);">03</span>
+                    <div>
+                        <span style="font-weight: 700;">Agent Teams</span>
+                        <span class="panel-small" style="margin-left: 0.5em;">持久 Worker 跨轮次积累上下文</span>
+                    </div>
+                    <span class="panel-small" style="text-align: right;">Agent 团队</span>
                 </div>
-                <div class="reveal" style="display: flex; align-items: center; gap: clamp(0.5rem, 1.5vw, 1.5rem);">
-                    <span style="color: var(--accent-neon); font-weight: 700; font-size: var(--h3-size); min-width: 2ch;">04</span>
-                    <span style="font-weight: 700;">Message Bus</span>
-                    <span class="panel-small" style="margin-left: auto;">消息总线</span>
+                <div class="reveal" style="display: grid; grid-template-columns: 2.5rem 1fr auto; align-items: center; gap: clamp(0.5rem, 1.5vw, 1.5rem);">
+                    <span style="color: var(--accent-neon); font-weight: 700; font-size: var(--h3-size);">04</span>
+                    <div>
+                        <span style="font-weight: 700;">Message Bus</span>
+                        <span class="panel-small" style="margin-left: 0.5em;">发布/订阅共享通信层</span>
+                    </div>
+                    <span class="panel-small" style="text-align: right;">消息总线</span>
                 </div>
-                <div class="reveal" style="display: flex; align-items: center; gap: clamp(0.5rem, 1.5vw, 1.5rem);">
-                    <span style="color: var(--accent-neon); font-weight: 700; font-size: var(--h3-size); min-width: 2ch;">05</span>
-                    <span style="font-weight: 700;">Shared State</span>
-                    <span class="panel-small" style="margin-left: auto;">共享状态</span>
+                <div class="reveal" style="display: grid; grid-template-columns: 2.5rem 1fr auto; align-items: center; gap: clamp(0.5rem, 1.5vw, 1.5rem);">
+                    <span style="color: var(--accent-neon); font-weight: 700; font-size: var(--h3-size);">05</span>
+                    <div>
+                        <span style="font-weight: 700;">Shared State</span>
+                        <span class="panel-small" style="margin-left: 0.5em;">无中央协调者，读写共享存储</span>
+                    </div>
+                    <span class="panel-small" style="text-align: right;">共享状态</span>
                 </div>
             </div>
+            <p class="panel-small reveal" style="margin-top: var(--content-gap); text-align: center;">
+                从简单到复杂 · 复杂度递增 · 按需演进而非一步到位
+            </p>
         </div>
     </div>
     <div class="slide-number">02</div>
@@ -635,10 +653,13 @@ a:hover {
                 Generator-Verifier
             </h2>
             <p class="panel-body reveal" style="margin-top: var(--element-gap);">
-                一个 Agent 生成输出，另一个评估。通过就结束，不通过就打回重做，循环直到通过或达到最大迭代次数。
+                一个 Agent 生成输出，另一个评估。通过就结束，不通过就把反馈打回给生成方，重新来一轮。循环直到通过或达到最大迭代次数。
+            </p>
+            <p class="panel-body reveal" style="margin-top: var(--element-gap);">
+                最典型的应用是代码生成：一个 Agent 写代码，另一个写测试、跑测试。客服场景也适用——生成方起草邮件回复，验证方检查是否准确引用了产品文档、是否回应了用户提到的每个问题。
             </p>
             <p class="panel-small reveal" style="margin-top: var(--element-gap);">
-                典型场景：代码生成 + 测试、客服邮件起草 + 事实核查
+                适用条件：输出质量关键且评估标准可以明确化
             </p>
         </div>
         <div class="panel-dark" style="align-items: center;">
@@ -664,7 +685,7 @@ a:hover {
                         验证标准太模糊
                     </p>
                     <p class="panel-body">
-                        只告诉验证方"检查输出是否足够好"，它大概率会糊弄人，放行所有东西。验证方的价值完全取决于你能不能把"好"拆成具体的、可检查的标准。
+                        只告诉验证方"检查输出是否足够好"，它大概率会糊弄人，放行所有东西。验证方的价值完全取决于你能不能把"好"拆成具体的、可检查的标准。Anthropic 的工程师 Prithvi 花了很多精力调教 Evaluator，反复看日志、找判断偏差、改 Prompt，来回迭代好几轮才让评分标准达到合理水平。
                     </p>
                 </div>
                 <div class="struggle-card reveal">
@@ -672,7 +693,7 @@ a:hover {
                         迭代循环卡死
                     </p>
                     <p class="panel-body">
-                        生成方解决不了验证方提的问题，两边来回震荡不收敛。必须设最大迭代次数，加兜底策略：升级给人处理，或返回当前最好的版本并标注问题。
+                        生成方解决不了验证方提的问题，两边来回震荡不收敛。这个模式还假设生成和验证是可分离的技能——如果评估一个创意方案和生成它一样难，验证方可能抓不住问题。必须设最大迭代次数，加兜底策略：升级给人处理，或返回当前最好的版本并标注问题。
                     </p>
                 </div>
             </div>
@@ -695,10 +716,10 @@ a:hover {
                 Orchestrator-Subagent
             </h2>
             <p class="panel-body reveal" style="margin-top: var(--element-gap);">
-                一个 Agent 当 Team Lead，负责规划任务、分配工作、汇总结果。子 Agent 接到具体任务后执行完就汇报。
+                一个 Agent 当 Team Lead，负责规划任务、分配工作、汇总结果。子 Agent 接到具体任务后执行完就汇报。Claude Code 就是这个模式——主 Agent 自己写代码，需要搜索代码库时就在后台派 subagent，自己继续手头的活。
             </p>
-            <p class="panel-small reveal" style="margin-top: var(--element-gap);">
-                Claude Code 就是这个模式：主 Agent 写代码，后台派 subagent 搜索代码库。
+            <p class="panel-body reveal" style="margin-top: var(--element-gap);">
+                适合任务拆分清晰、子任务之间依赖少的场景。比如自动化代码审查：一个 PR 进来，需要查安全漏洞、检查测试覆盖率、评估代码风格、验证架构一致性，每个检查维度独立、输出格式明确。
             </p>
         </div>
     </div>
@@ -742,10 +763,10 @@ a:hover {
                 Agent Teams
             </h2>
             <p class="panel-body reveal" style="margin-top: var(--element-gap);">
-                Worker 是持久的。不重置，不遗忘。每个 worker 在多轮迭代中积累对自己负责领域的熟悉度。
+                编排模式里的子 Agent 是用完即弃的，但团队模式里的 Worker 是持久的——不重置，不遗忘。协调者启动多个 worker 作为独立进程，领任务、干活、交结果，每个 worker 在多轮迭代中积累对自己负责领域的熟悉度。
             </p>
-            <p class="panel-small reveal" style="margin-top: var(--element-gap);">
-                典型场景：大规模代码迁移，每个 worker 分管一个服务，反复处理后逐渐摸清它的脾气。
+            <p class="panel-body reveal" style="margin-top: var(--element-gap);">
+                最直观的例子是大规模代码迁移。每个 worker 分管一个服务，在反复处理这个服务的依赖、测试、部署配置的过程中逐渐摸清它的脾气。一次性 subagent 每次接手都要重新理解，持久 worker 第一次弄明白之后后续迭代直接复用。
             </p>
         </div>
         <div class="panel-dark" style="align-items: center;">
@@ -771,7 +792,7 @@ a:hover {
                         无中间人传话
                     </p>
                     <p class="panel-body">
-                        Worker 之间没有中间人帮忙传话。一个 worker 的改动影响了另一个，谁都不知道，产出可能冲突。
+                        Worker 之间没有中间人帮忙传话。一个 worker 的改动影响了另一个，谁都不知道，产出可能冲突。多个 worker 操作同一个代码库时尤其明显，常见应对方式是文件级别的分区或者合并前跑冲突检测。
                     </p>
                 </div>
                 <div class="struggle-card reveal">
@@ -779,7 +800,7 @@ a:hover {
                         完成时间参差
                     </p>
                     <p class="panel-body">
-                        一个 worker 两分钟搞定，另一个要二十分钟。协调者得有耐心等，增加了整体复杂度。
+                        一个 worker 两分钟搞定，另一个要二十分钟。协调者得有耐心等，还得处理部分完成的中间状态，增加了整体复杂度。
                     </p>
                 </div>
             </div>
@@ -805,10 +826,10 @@ a:hover {
                 Message Bus
             </h2>
             <p class="panel-body reveal" style="margin-top: var(--element-gap);">
-                共享通信层，发布 + 订阅。新 Agent 上线不需要改已有连接，订阅相关 topic 就能接收工作。本质上就是 Kafka 那套思路。
+                共享通信层，核心操作就两个：发布和订阅。Agent 订阅自己关心的 topic，路由器负责分发。新 Agent 上线不需要改已有连接，订阅相关 topic 就能接收工作。搞过微服务事件驱动架构的不陌生，本质上就是 Kafka 那套思路。
             </p>
-            <p class="panel-small reveal" style="margin-top: var(--element-gap);">
-                典型场景：安全运维自动化，告警从多个来源进来，分诊后路由给对应的调查 Agent。
+            <p class="panel-body reveal" style="margin-top: var(--element-gap);">
+                Anthropic 举的例子是安全运维自动化。告警从多个来源进来，分诊 Agent 分类后路由给对应的调查 Agent，调查结果再流向响应协调 Agent。事件一个阶段接一个阶段地流下去，新出了什么威胁类型就加个新 Agent。
             </p>
         </div>
     </div>
@@ -861,10 +882,10 @@ a:hover {
                 Shared State
             </h2>
             <p class="panel-body reveal" style="margin-top: var(--element-gap);">
-                没有中央协调者。Agent 自主运行，读写共享的数据库、文件系统或文档。
+                没有中央协调者。Agent 自主运行，读写共享的数据库、文件系统或文档。工作从往存储里丢一个问题或数据集开始，停下来条件有几种：时间到了、结果收敛了，或者有个专门的 Agent 判断存储里的东西已经够用了。
             </p>
-            <p class="panel-small reveal" style="margin-top: var(--element-gap);">
-                典型场景：研究综合——学术 Agent 的发现对行业 Agent 立刻有用，不用等协调者路由。
+            <p class="panel-body reveal" style="margin-top: var(--element-gap);">
+                研究综合是主场。多个 Agent 分头调查一个复杂问题的不同方面——学术 Agent 发现了一个关键研究者，这条信息对行业 Agent 立刻有用。发现直接写进存储，其他 Agent 马上就能看到。附带好处是没有单点故障，任何一个 Agent 停了，其他 Agent 继续读写。
             </p>
         </div>
         <div class="panel-dark" style="align-items: center;">
@@ -914,22 +935,25 @@ a:hover {
                 编排 vs 团队
             </h2>
             <p class="panel-body reveal" style="margin-top: var(--element-gap);">
-                区别在于 worker 需要维持上下文多久。
+                两者都有协调者分派工作，区别在于 worker 需要维持上下文多久。
             </p>
             <div class="stagger" style="margin-top: var(--element-gap); display: flex; flex-direction: column; gap: var(--element-gap);">
                 <div class="reveal" style="display: flex; gap: var(--element-gap); align-items: flex-start;">
                     <span style="color: var(--accent-neon); font-weight: 700; min-width: 2ch;">L</span>
                     <p class="panel-body" style="font-size: var(--body-size);">
-                        子任务短小、输出明确 → <strong style="color:var(--text-light)">编排模式</strong>
+                        子任务短小、输出明确，subagent 不需要跨调用保留状态 → <strong style="color:var(--text-light)">编排模式</strong>
                     </p>
                 </div>
                 <div class="reveal" style="display: flex; gap: var(--element-gap); align-items: flex-start;">
                     <span style="color: var(--accent-neon); font-weight: 700; min-width: 2ch;">R</span>
                     <p class="panel-body" style="font-size: var(--body-size);">
-                        子任务需要多步骤持续工作 → <strong style="color:var(--text-light)">团队模式</strong>
+                        子任务需要多步骤持续工作、从积累的上下文中受益 → <strong style="color:var(--text-light)">团队模式</strong>
                     </p>
                 </div>
             </div>
+            <p class="panel-small reveal" style="margin-top: var(--element-gap); color: rgba(255,255,255,0.45);">
+                例：代码审查用编排（每次检查独立），代码迁移用团队（每个 worker 需要持续理解服务上下文）
+            </p>
         </div>
     </div>
     <div class="slide-number">13</div>
@@ -946,24 +970,24 @@ a:hover {
                 编排 vs 消息总线
             </h2>
             <p class="panel-body reveal" style="margin-top: var(--element-gap);">
-                区别在于工作流结构是否可预测。
+                两者都能处理多步骤工作流，区别在于工作流结构是否可预测。
             </p>
             <div class="stagger" style="margin-top: var(--element-gap); display: flex; flex-direction: column; gap: var(--element-gap);">
                 <div class="reveal" style="display: flex; gap: var(--element-gap); align-items: flex-start;">
                     <span style="color: var(--accent-neon); font-weight: 700; min-width: 2ch;">L</span>
                     <p class="panel-body" style="font-size: var(--body-size);">
-                        步骤顺序事先已知 → <strong style="color:var(--text-light)">编排模式</strong>
+                        步骤顺序事先已知（固定流水线）→ <strong style="color:var(--text-light)">编排模式</strong>
                     </p>
                 </div>
                 <div class="reveal" style="display: flex; gap: var(--element-gap); align-items: flex-start;">
                     <span style="color: var(--accent-neon); font-weight: 700; min-width: 2ch;">R</span>
                     <p class="panel-body" style="font-size: var(--body-size);">
-                        事件驱动、随发现变化 → <strong style="color:var(--text-light)">消息总线</strong>
+                        事件驱动、随发现变化、新类型不断出现 → <strong style="color:var(--text-light)">消息总线</strong>
                     </p>
                 </div>
             </div>
-            <p class="panel-small reveal" style="margin-top: var(--element-gap); color: rgba(255,255,255,0.5);">
-                经验法则：编排 Agent 里的条件分支越来越多时，考虑换消息总线。
+            <p class="panel-small reveal" style="margin-top: var(--element-gap); color: rgba(255,255,255,0.45);">
+                经验法则：编排 Agent 里的条件分支越来越多、需要处理越来越多的特殊情况时，就该考虑换消息总线了。
             </p>
         </div>
         <div class="panel-dark" style="align-items: center; justify-content: center;">
@@ -987,22 +1011,25 @@ a:hover {
                 团队 vs 共享状态
             </h2>
             <p class="panel-body reveal" style="margin-top: var(--element-gap);">
-                区别在于发现是否需要实时流通。
+                两者都让 Agent 自主工作，区别在于发现是否需要实时流通。
             </p>
             <div class="stagger" style="margin-top: var(--element-gap); display: flex; flex-direction: column; gap: var(--element-gap);">
                 <div class="reveal" style="display: flex; gap: var(--element-gap); align-items: flex-start;">
                     <span style="color: var(--accent-neon); font-weight: 700; min-width: 2ch;">L</span>
                     <p class="panel-body" style="font-size: var(--body-size);">
-                        各管各的互不交叉 → <strong style="color:var(--text-light)">团队模式</strong>
+                        各管各的互不交叉，最后汇总结果即可 → <strong style="color:var(--text-light)">团队模式</strong>
                     </p>
                 </div>
                 <div class="reveal" style="display: flex; gap: var(--element-gap); align-items: flex-start;">
                     <span style="color: var(--accent-neon); font-weight: 700; min-width: 2ch;">R</span>
                     <p class="panel-body" style="font-size: var(--body-size);">
-                        发现需要实时流通 → <strong style="color:var(--text-light)">共享状态</strong>
+                        Agent 之间需要互相沟通而不只是汇总结果 → <strong style="color:var(--text-light)">共享状态</strong>
                     </p>
                 </div>
             </div>
+            <p class="panel-small reveal" style="margin-top: var(--element-gap); color: rgba(255,255,255,0.45);">
+                例：代码迁移用团队（各改各的服务），研究综合用共享状态（学术发现影响行业调查）
+            </p>
         </div>
     </div>
     <div class="slide-number">15</div>
@@ -1019,24 +1046,24 @@ a:hover {
                 消息总线 vs 共享状态
             </h2>
             <p class="panel-body reveal" style="margin-top: var(--element-gap);">
-                区别在于工作是离散事件还是持续积累。
+                两者都支持复杂协调，区别在于工作是离散事件还是持续积累。
             </p>
             <div class="stagger" style="margin-top: var(--element-gap); display: flex; flex-direction: column; gap: var(--element-gap);">
                 <div class="reveal" style="display: flex; gap: var(--element-gap); align-items: flex-start;">
                     <span style="color: var(--accent-neon); font-weight: 700; min-width: 2ch;">L</span>
                     <p class="panel-body" style="font-size: var(--body-size);">
-                        事件从一阶段触发到下一阶段 → <strong style="color:var(--text-light)">消息总线</strong>
+                        事件从一阶段触发到下一阶段然后完成 → <strong style="color:var(--text-light)">消息总线</strong>
                     </p>
                 </div>
                 <div class="reveal" style="display: flex; gap: var(--element-gap); align-items: flex-start;">
                     <span style="color: var(--accent-neon); font-weight: 700; min-width: 2ch;">R</span>
                     <p class="panel-body" style="font-size: var(--body-size);">
-                        Agent 在持续积累的知识上迭代 → <strong style="color:var(--text-light)">共享状态</strong>
+                        Agent 在持续积累的知识基础上反复迭代 → <strong style="color:var(--text-light)">共享状态</strong>
                     </p>
                 </div>
             </div>
-            <p class="panel-small reveal" style="margin-top: var(--element-gap); color: rgba(255,255,255,0.5);">
-                如果 Agent 发布事件是为了分享发现而不是触发动作，你可能需要的是共享状态。
+            <p class="panel-small reveal" style="margin-top: var(--element-gap); color: rgba(255,255,255,0.45);">
+                值得留意的信号：如果消息总线里的 Agent 发布事件是为了分享发现而不是触发动作，那你可能需要的是共享状态。
             </p>
         </div>
         <div class="panel-dark" style="align-items: center; justify-content: center;">
@@ -1057,10 +1084,10 @@ a:hover {
                 演进建议
             </h2>
             <p class="panel-body reveal" style="margin-top: var(--element-gap);">
-                从编排-子Agent 开始。它能覆盖最广的问题范围，协调开销也最低。
+                Anthropic 的建议：从编排-子Agent 开始。它能覆盖最广的问题范围，协调开销也最低。等它在特定场景下撑不住了，再根据具体瓶颈演进到其他模式。
             </p>
             <p class="panel-body reveal" style="margin-top: var(--element-gap);">
-                这五种模式是积木，不是互斥的选项。实际生产系统往往混用多种模式。
+                这五种模式是积木，不是互斥的选项。Claude Code 就是编排-子Agent 的典型实现，对大多数日常任务完全够用。只有当任务复杂到需要多个 Agent 持续协作、共享中间发现的时候，才值得引入更复杂的模式。
             </p>
         </div>
         <div class="panel-dark">
@@ -1095,8 +1122,11 @@ a:hover {
         <div class="inner">
             <div class="badge reveal">Resources</div>
             <h2 class="panel-h2 reveal" style="margin-top: var(--content-gap); margin-bottom: var(--content-gap);">
-                相关资源
+                相关资源 & 框架对比
             </h2>
+            <p class="panel-body reveal" style="margin-bottom: var(--content-gap);">
+                不同框架对协调模式的抽象思路差异很大。Anthropic 偏描述性，告诉你有哪些模式、怎么选。LangGraph 走 graph-based 路子，用状态图定义 Agent 之间的流转逻辑。CrewAI 角色分工优先，协调模式隐含在角色关系里。三种抽象各有适用场景，但底层要解决的问题一样：<strong style="color: var(--text-light);">谁跟谁通信、信息怎么流、什么时候该停。</strong>
+            </p>
             <div class="stagger" style="display: flex; flex-direction: column; gap: clamp(0.5rem, 1.2vh, 1rem);">
                 <a href="https://claude.com/blog/multi-agent-coordination-patterns" target="_blank" class="reveal" style="font-size: var(--body-size); padding: var(--element-gap) 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
                     Multi-agent coordination patterns — Anthropic Blog
