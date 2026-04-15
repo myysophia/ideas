@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent 最佳实践 — 来自 Paseo 的实战经验</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%230066ff'/><text x='16' y='23' text-anchor='middle' font-size='20' font-weight='bold' fill='%23d4ff00' font-family='monospace'>A</text></svg>">
+
+    <!-- === FONTS === -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <style>
+    /* ===========================================
+       CSS CUSTOM PROPERTIES — CREATIVE VOLTAGE
+       =========================================== */
+    :root {
+        --bg-primary: #0066ff;
+        --bg-dark: #1a1a2e;
+        --bg-darker: #0f0f1e;
+        --accent-neon: #d4ff00;
+        --accent-neon-glow: rgba(212, 255, 0, 0.3);
+        --accent-blue: #4d8bff;
+        --text-light: #ffffff;
+        --text-muted: rgba(255,255,255,0.7);
+
+        --font-display: 'Syne', sans-serif;
+        --font-body: 'Space Mono', monospace;
+
+        --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+        --duration-normal: 0.6s;
+    }
+
+    /* ===========================================
+       VIEWPORT FITTING: MANDATORY BASE STYLES
+       =========================================== */
+    html, body {
+        height: 100%;
+        overflow-x: hidden;
+        margin: 0; padding: 0;
+    }
+
+    html {
+        scroll-snap-type: y mandatory;
+        scroll-behavior: smooth;
+    }
+
+    .slide {
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+        scroll-snap-align: start;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    .slide-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        max-height: 100%;
+        overflow: hidden;
+        padding: var(--slide-padding);
+    }
+
+    :root {
+        --title-size: clamp(1.5rem, 5vw, 4rem);
+        --h2-size: clamp(1.25rem, 3.5vw, 2.5rem);
+        --h3-size: clamp(1rem, 2.5vw, 1.75rem);
+        --body-size: clamp(0.75rem, 1.5vw, 1.125rem);
+        --small-size: clamp(0.65rem, 1vw, 0.875rem);
+        --slide-padding: clamp(1rem, 4vw, 4rem);
+        --content-gap: clamp(0.5rem, 2vw, 2rem);
+        --element-gap: clamp(0.25rem, 1vw, 1rem);
+    }
+
+    .card, .container, .content-box {
+        max-width: min(90vw, 1000px);
+        max-height: min(80vh, 700px);
+    }
+
+    .feature-list, .bullet-list {
+        list-style: none; padding: 0;
+        gap: clamp(0.4rem, 1vh, 1rem);
+    }
+
+    .feature-list li, .bullet-list li {
+        font-size: var(--body-size);
+        line-height: 1.4;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+        gap: clamp(0.5rem, 1.5vw, 1rem);
+    }
+
+    img, .image-container {
+        max-width: 100%;
+        max-height: min(50vh, 400px);
+        object-fit: contain;
+    }
+
+    @media (max-height: 700px) {
+        :root {
+            --slide-padding: clamp(0.75rem, 3vw, 2rem);
+            --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+            --title-size: clamp(1.25rem, 4.5vw, 2.5rem);
+            --h2-size: clamp(1rem, 3vw, 1.75rem);
+        }
+    }
+
+    @media (max-height: 600px) {
+        :root {
+            --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem);
+            --content-gap: clamp(0.3rem, 1vw, 0.75rem);
+            --title-size: clamp(1.1rem, 4vw, 2rem);
+            --body-size: clamp(0.7rem, 1.2vw, 0.95rem);
+        }
+        .nav-dots, .keyboard-hint, .decorative { display: none; }
+    }
+
+    @media (max-height: 500px) {
+        :root {
+            --slide-padding: clamp(0.4rem, 2vw, 1rem);
+            --title-size: clamp(1rem, 3.5vw, 1.5rem);
+            --h2-size: clamp(0.9rem, 2.5vw, 1.25rem);
+            --body-size: clamp(0.65rem, 1vw, 0.85rem);
+        }
+    }
+
+    @media (max-width: 600px) {
+        :root { --title-size: clamp(1.25rem, 7vw, 2.5rem); }
+        .grid { grid-template-columns: 1fr; }
+        .two-col { grid-template-columns: 1fr !important; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.2s !important;
+        }
+        html { scroll-behavior: auto; }
+    }
+
+    /* ===========================================
+       BASE STYLES
+       =========================================== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: var(--font-body);
+        color: var(--text-light);
+        background: var(--bg-darker);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===========================================
+       PROGRESS BAR
+       =========================================== */
+    .progress-bar {
+        position: fixed;
+        top: 0; left: 0;
+        height: 3px;
+        background: var(--accent-neon);
+        z-index: 1000;
+        transition: width 0.3s ease;
+        box-shadow: 0 0 10px var(--accent-neon-glow);
+    }
+
+    /* ===========================================
+       NAV DOTS
+       =========================================== */
+    .nav-dots {
+        position: fixed;
+        right: clamp(0.5rem, 2vw, 1.5rem);
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 999;
+    }
+
+    .nav-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.3);
+        background: transparent;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        padding: 0;
+    }
+
+    .nav-dot.active {
+        background: var(--accent-neon);
+        border-color: var(--accent-neon);
+        box-shadow: 0 0 8px var(--accent-neon-glow);
+        transform: scale(1.3);
+    }
+
+    .nav-dot:hover { border-color: rgba(255,255,255,0.6); }
+
+    /* ===========================================
+       KEYBOARD HINT
+       =========================================== */
+    .keyboard-hint {
+        position: fixed;
+        bottom: clamp(0.5rem, 2vh, 1rem);
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: var(--small-size);
+        color: rgba(255,255,255,0.25);
+        z-index: 998;
+        letter-spacing: 0.05em;
+    }
+
+    /* ===========================================
+       REVEAL ANIMATIONS
+       =========================================== */
+    .reveal {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: opacity var(--duration-normal) var(--ease-out-expo),
+                    transform var(--duration-normal) var(--ease-out-expo);
+    }
+
+    .slide.visible .reveal {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .reveal:nth-child(1) { transition-delay: 0.1s; }
+    .reveal:nth-child(2) { transition-delay: 0.2s; }
+    .reveal:nth-child(3) { transition-delay: 0.3s; }
+    .reveal:nth-child(4) { transition-delay: 0.35s; }
+    .reveal:nth-child(5) { transition-delay: 0.4s; }
+    .reveal:nth-child(6) { transition-delay: 0.45s; }
+
+    /* Slide from left variant */
+    .reveal-left {
+        opacity: 0;
+        transform: translateX(-40px);
+        transition: opacity 0.6s var(--ease-out-expo),
+                    transform 0.6s var(--ease-out-expo);
+    }
+    .slide.visible .reveal-left { opacity: 1; transform: translateX(0); }
+
+    /* Scale in variant */
+    .reveal-scale {
+        opacity: 0;
+        transform: scale(0.85);
+        transition: opacity 0.7s var(--ease-out-expo),
+                    transform 0.7s var(--ease-out-expo);
+    }
+    .slide.visible .reveal-scale { opacity: 1; transform: scale(1); }
+
+    /* ===========================================
+       HALFTONE TEXTURE (Global overlay)
+       =========================================== */
+    .halftone-overlay {
+        position: absolute; inset: 0;
+        background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+        background-size: 14px 14px;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    /* ===========================================
+       SLIDE BACKGROUNDS
+       =========================================== */
+    .slide-title {
+        background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-dark) 60%, var(--bg-darker) 100%);
+    }
+
+    .slide-content-dark {
+        background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
+    }
+
+    .slide-blue {
+        background: linear-gradient(135deg, var(--bg-primary) 0%, #0044cc 50%, var(--bg-dark) 100%);
+    }
+
+    .slide-neon {
+        background: linear-gradient(135deg, var(--bg-darker) 0%, #1a1a3e 50%, var(--bg-dark) 100%);
+    }
+
+    .slide-end {
+        background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-dark) 100%);
+    }
+
+    /* ===========================================
+       TITLE SLIDE
+       =========================================== */
+    .title-layout {
+        flex: 1; display: flex; align-items: center;
+        padding: var(--slide-padding);
+        position: relative; z-index: 2;
+    }
+
+    .title-left { flex: 1; padding-right: clamp(1rem, 3vw, 3rem); }
+
+    .title-right {
+        width: clamp(180px, 30vw, 400px);
+        display: flex; align-items: center; justify-content: center;
+    }
+
+    .title-badge {
+        display: inline-block;
+        background: var(--accent-neon);
+        color: var(--bg-dark);
+        font-size: clamp(0.55rem, 1vw, 0.7rem);
+        font-weight: 700;
+        padding: clamp(0.2rem, 0.5vw, 0.35rem) clamp(0.5rem, 1vw, 0.9rem);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-bottom: clamp(0.5rem, 1.5vh, 1.2rem);
+        transform: rotate(-2deg);
+    }
+
+    .title-slide h1 {
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: clamp(2rem, 6vw, 4rem);
+        line-height: 1.05;
+        margin-bottom: clamp(0.4rem, 1vh, 0.8rem);
+    }
+
+    .title-slide .subtitle {
+        font-size: clamp(0.7rem, 1.2vw, 0.95rem);
+        color: var(--text-muted);
+        line-height: 1.6;
+        max-width: 480px;
+    }
+
+    .title-date {
+        margin-top: clamp(0.4rem, 1vh, 0.8rem);
+        font-size: clamp(0.6rem, 0.9vw, 0.75rem);
+        color: rgba(255,255,255,0.35);
+        letter-spacing: 0.08em;
+    }
+
+    /* Morphing shape on title */
+    .title-shape {
+        width: clamp(120px, 18vw, 240px);
+        height: clamp(120px, 18vw, 240px);
+        border: 3px solid var(--accent-neon);
+        border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+        position: relative;
+        animation: morphShape 10s ease-in-out infinite;
+    }
+
+    .title-shape::after {
+        content: ''; position: absolute; inset: 25%;
+        background: var(--accent-neon);
+        border-radius: 50%;
+        opacity: 0.12;
+        animation: pulse 4s ease-in-out infinite;
+    }
+
+    .title-number {
+        position: absolute;
+        top: clamp(1rem, 3vh, 2rem);
+        left: var(--slide-padding);
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: clamp(0.7rem, 1.2vw, 1rem);
+        color: rgba(255,255,255,0.15);
+        z-index: 3;
+    }
+
+    /* ===========================================
+       SECTION NUMBER STYLE
+       =========================================== */
+    .section-num {
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: clamp(0.65rem, 1.1vw, 0.9rem);
+        color: var(--accent-neon);
+        letter-spacing: 0.05em;
+        margin-bottom: clamp(0.3rem, 0.8vh, 0.6rem);
+        display: block;
+    }
+
+    .slide-content h2 {
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: var(--h2-size);
+        line-height: 1.15;
+        margin-bottom: clamp(0.4rem, 1.5vh, 1rem);
+    }
+
+    .slide-content p {
+        font-size: var(--body-size);
+        line-height: 1.7;
+        color: var(--text-muted);
+        max-width: 640px;
+    }
+
+    .slide-content .highlight {
+        color: var(--accent-neon);
+        font-weight: 700;
+    }
+
+    /* ===========================================
+       BULLET LIST STYLE
+       =========================================== */
+    .styled-list {
+        list-style: none; padding: 0;
+        display: flex; flex-direction: column;
+        gap: clamp(0.4rem, 1.2vh, 0.8rem);
+        max-width: 700px;
+    }
+
+    .styled-list li {
+        font-size: var(--body-size);
+        line-height: 1.5;
+        color: var(--text-muted);
+        padding-left: clamp(1rem, 1.5vw, 1.5rem);
+        position: relative;
+    }
+
+    .styled-list li::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0.55em;
+        width: clamp(6px, 0.8vw, 10px);
+        height: clamp(6px, 0.8vw, 10px);
+        background: var(--accent-neon);
+        border-radius: 2px;
+        transform: rotate(45deg);
+    }
+
+    /* ===========================================
+       TWO-COLUMN LAYOUT
+       =========================================== */
+    .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(1rem, 3vw, 3rem);
+        align-items: center;
+    }
+
+    .two-col .col-text { max-width: 100%; }
+    .two-col .col-visual { display: flex; justify-content: center; align-items: center; }
+
+    /* ===========================================
+       CARD GRID
+       =========================================== */
+    .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+        gap: clamp(0.6rem, 1.5vw, 1.2rem);
+        max-width: min(95vw, 900px);
+    }
+
+    .neon-card {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px;
+        padding: clamp(0.6rem, 1.5vw, 1.2rem);
+        transition: border-color 0.3s ease, transform 0.3s ease;
+    }
+
+    .neon-card:hover {
+        border-color: var(--accent-neon);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(212, 255, 0, 0.1);
+    }
+
+    .neon-card h3 {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: var(--h3-size);
+        margin-bottom: clamp(0.2rem, 0.5vh, 0.4rem);
+    }
+
+    .neon-card p {
+        font-size: clamp(0.65rem, 1.1vw, 0.85rem);
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    /* ===========================================
+       QUOTE SLIDE
+       =========================================== */
+    .quote-block {
+        max-width: min(90vw, 700px);
+        text-align: center;
+        margin: 0 auto;
+    }
+
+    .quote-mark {
+        font-family: var(--font-display);
+        font-size: clamp(2rem, 5vw, 4rem);
+        color: var(--accent-neon);
+        opacity: 0.5;
+        line-height: 1;
+        margin-bottom: clamp(-0.5rem, -1vh, -0.5rem);
+    }
+
+    .quote-text {
+        font-family: var(--font-body);
+        font-style: italic;
+        font-size: clamp(0.9rem, 1.6vw, 1.2rem);
+        line-height: 1.8;
+        color: var(--text-light);
+        margin-bottom: clamp(0.5rem, 1vh, 1rem);
+    }
+
+    .quote-source {
+        font-size: var(--small-size);
+        color: var(--accent-neon);
+        opacity: 0.8;
+    }
+
+    /* ===========================================
+       NEON ACCENT BAR
+       =========================================== */
+    .neon-bar {
+        width: clamp(30px, 5vw, 50px);
+        height: 3px;
+        background: var(--accent-neon);
+        box-shadow: 0 0 8px var(--accent-neon-glow);
+        margin-bottom: clamp(0.4rem, 1vh, 0.8rem);
+        border-radius: 2px;
+    }
+
+    /* ===========================================
+       END SLIDE
+       =========================================== */
+    .end-content {
+        flex: 1; display: flex; flex-direction: column;
+        justify-content: center; align-items: center;
+        text-align: center;
+        position: relative; z-index: 2;
+        padding: var(--slide-padding);
+    }
+
+    .end-content h2 {
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: clamp(1.8rem, 5vw, 3.5rem);
+        margin-bottom: clamp(0.5rem, 1.5vh, 1rem);
+    }
+
+    .end-content p {
+        font-size: var(--body-size);
+        color: var(--text-muted);
+        max-width: 500px;
+    }
+
+    .end-shapes {
+        position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+    }
+
+    .end-circle {
+        position: absolute;
+        border: 2px solid var(--accent-neon);
+        border-radius: 50%;
+        opacity: 0.08;
+    }
+
+    .end-circle:nth-child(1) {
+        width: clamp(100px, 20vw, 300px); height: clamp(100px, 20vw, 300px);
+        top: 10%; left: 5%;
+        animation: floatSlow 12s ease-in-out infinite;
+    }
+
+    .end-circle:nth-child(2) {
+        width: clamp(150px, 25vw, 400px); height: clamp(150px, 25vw, 400px);
+        bottom: 5%; right: 0;
+        animation: floatSlow 15s ease-in-out infinite reverse;
+    }
+
+    /* ===========================================
+       INLINE EDITING
+       =========================================== */
+    .edit-hotzone {
+        position: fixed; top: 0; left: 0;
+        width: 80px; height: 80px;
+        z-index: 10000;
+        cursor: pointer;
+    }
+
+    .edit-toggle {
+        position: fixed; top: 12px; left: 12px;
+        width: 36px; height: 36px;
+        border-radius: 50%;
+        background: var(--bg-dark);
+        border: 1px solid rgba(255,255,255,0.15);
+        color: var(--accent-neon);
+        font-size: 14px;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease, background 0.2s;
+        z-index: 10001;
+    }
+
+    .edit-toggle.show, .edit-toggle.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .edit-toggle.active {
+        background: var(--accent-neon);
+        color: var(--bg-dark);
+    }
+
+    .edit-save-notice {
+        position: fixed;
+        bottom: clamp(2rem, 4vh, 3rem);
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: var(--bg-dark);
+        border: 1px solid var(--accent-neon);
+        color: var(--accent-neon);
+        font-size: var(--small-size);
+        padding: 0.4rem 1rem;
+        border-radius: 6px;
+        opacity: 0;
+        transition: opacity 0.3s, transform 0.3s;
+        z-index: 10001;
+        pointer-events: none;
+    }
+
+    .edit-save-notice.visible {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    [contenteditable="true"] {
+        outline: 1px dashed rgba(212, 255, 0, 0.5);
+        outline-offset: 2px;
+        border-radius: 3px;
+        cursor: text;
+    }
+
+    [contenteditable="true"]:focus {
+        outline-color: var(--accent-neon);
+    }
+
+    /* ===========================================
+       KEYFRAME ANIMATIONS
+       =========================================== */
+    @keyframes morphShape {
+        0%,100% { border-radius: 30% 70% 70% 30%/30% 30% 70% 70%; }
+        25% { border-radius: 58% 42% 75% 25%/76% 46% 54% 24%; }
+        50% { border-radius: 50% 50% 33% 67%/55% 27% 73% 45%; }
+        75% { border-radius: 33% 67% 58% 42%/63% 68% 32% 37%; }
+    }
+
+    @keyframes pulse {
+        0%,100% { opacity: 0.12; transform: scale(1); }
+        50% { opacity: 0.25; transform: scale(1.1); }
+    }
+
+    @keyframes floatSlow {
+        0%,100% { transform: translate(0, 0); }
+        33% { transform: translate(12px, -8px); }
+        66% { transform: translate(-8px, 6px); }
+    }
+
+    @keyframes scanline {
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(100vh); }
+    }
+
+    /* Scanline decoration for content slides */
+    .scanline-deco {
+        position: absolute;
+        left: 0; width: 100%; height: 1px;
+        background: linear-gradient(90deg, transparent, var(--accent-neon), transparent);
+        opacity: 0.08;
+        animation: scanline 8s linear infinite;
+        z-index: 0;
+        pointer-events: none;
+    }
+    </style>
+</head>
+<body>
+    <!-- === PROGRESS BAR === -->
+    <div class="progress-bar" id="progressBar"></div>
+
+    <!-- === NAV DOTS === -->
+    <nav class="nav-dots" id="navDots" aria-label="Slide navigation"></nav>
+
+    <!-- === KEYBOARD HINT === -->
+    <div class="keyboard-hint">Space / Arrow Keys / Scroll</div>
+
+    <!-- =============================================
+         SLIDE 1: TITLE
+         ============================================= -->
+    <section class="slide slide-title" data-slide="0">
+        <div class="halftone-overlay"></div>
+        <div class="title-layout">
+            <div class="title-left">
+                <div class="title-badge reveal">AI Agent 最佳实践</div>
+                <h1 class="reveal">Agent 替代的是<br>打字，不是思考</h1>
+                <p class="subtitle reveal">来自 Paseo 的日常使用经验——不是规则，只是行之有效的模式</p>
+                <p class="title-date reveal">2025.04.15</p>
+            </div>
+            <div class="title-right reveal-scale">
+                <div class="title-shape"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =============================================
+         SLIDE 2: 核心理念
+         ============================================= -->
+    <section class="slide slide-content-dark" data-slide="1">
+        <div class="halftone-overlay"></div>
+        <div class="scanline-deco"></div>
+        <div class="slide-content">
+            <span class="section-num reveal">01</span>
+            <div class="neon-bar reveal"></div>
+            <h2 class="reveal">你的角色已经改变</h2>
+            <p class="reveal">你不再是逐行写代码的人。你是<span class="highlight">做决策</span>的人：构建什么、如何工作、架构如何设计。</p>
+            <ul class="styled-list" style="margin-top: clamp(0.5rem, 1.5vh, 1rem);">
+                <li class="reveal">Agent 执行，你指挥——思考不是可选的</li>
+                <li class="reveal">不能只说"实现功能 X"然后就走开</li>
+                <li class="reveal">最难的部分仍然是：决定构建什么、权衡取舍</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- =============================================
+         SLIDE 3: 验证循环
+         ============================================= -->
+    <section class="slide slide-blue" data-slide="2">
+        <div class="halftone-overlay"></div>
+        <div class="slide-content">
+            <span class="section-num reveal">02</span>
+            <div class="neon-bar reveal"></div>
+            <h2 class="reveal">验证循环</h2>
+            <div class="two-col">
+                <div class="col-text">
+                    <p class="reveal">Agent 需要一种方式来验证自己的工作。TDD 是这个模式的一个实现：</p>
+                    <ul class="styled-list" style="margin-top: clamp(0.3rem, 1vh, 0.8rem);">
+                        <li class="reveal">让 Agent 写一个失败的测试</li>
+                        <li class="reveal">验证它因为正确的原因而失败</li>
+                        <li class="reveal">让 Agent 使测试通过</li>
+                    </ul>
+                    <p class="reveal" style="margin-top: clamp(0.3rem, 1vh, 0.8rem);">Agent 可以自主循环——因为它知道<span class="highlight">"完成"意味着什么</span>。</p>
+                </div>
+                <div class="col-visual reveal-scale">
+                    <div style="width:clamp(80px,15vw,160px);height:clamp(80px,15vw,160px);border:3px solid var(--accent-neon);border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;">
+                        <span style="font-family:var(--font-display);font-weight:800;font-size:clamp(1.2rem,3vw,2.5rem);color:var(--accent-neon);">TDD</span>
+                        <div style="position:absolute;inset:-12px;border:1px dashed rgba(212,255,0,0.3);border-radius:50%;animation:morphShape 8s ease-in-out infinite;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =============================================
+         SLIDE 4: 投资工具
+         ============================================= -->
+    <section class="slide slide-neon" data-slide="3">
+        <div class="halftone-overlay"></div>
+        <div class="slide-content">
+            <span class="section-num reveal">03</span>
+            <div class="neon-bar reveal"></div>
+            <h2 class="reveal">投资工具</h2>
+            <div class="two-col">
+                <div class="col-text">
+                    <p class="reveal">不仅是测试运行器。为 Web 应用构建 Playwright MCP，让 Agent 截图验证 UI 变更。</p>
+                    <p class="reveal" style="margin-top:clamp(0.3rem,1vh,0.6rem);">我为一个 SaaS 构建了 CLI，封装所有业务逻辑——Agent 可以直接启动任务、检查状态、抓取数据。</p>
+                </div>
+                <div class="col-text">
+                    <div class="quote-block" style="text-align:left;">
+                        <div class="quote-mark">"</div>
+                        <p class="quote-text reveal">代码在 AI Agent 时代变得廉价。以前觉得浪费精力的事，现在先做工具——回报是<span class="highlight">指数级</span>的。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =============================================
+         SLIDE 5: 高效协作 — 多 Agent & 语音
+         ============================================= -->
+    <section class="slide slide-content-dark" data-slide="4">
+        <div class="halftone-overlay"></div>
+        <div class="slide-content">
+            <span class="section-num reveal">04</span>
+            <div class="neon-bar reveal"></div>
+            <h2 class="reveal">高效协作</h2>
+            <div class="card-grid">
+                <div class="neon-card reveal">
+                    <h3>并行 Agent</h3>
+                    <p>不要吝啬——启动多个 Agent 在隔离的 worktree 中独立工作，完成时通知你。</p>
+                </div>
+                <div class="neon-card reveal">
+                    <h3>语音输入</h3>
+                    <p>语音比文字更自然。Agent 会比你自己写的 prompt 更好地解析和组织你的想法。</p>
+                </div>
+                <div class="neon-card reveal">
+                    <h3>走路时工作</h3>
+                    <p>散步时用语音启动一个 Agent，再启动另一个。它们独立工作，你只需等待通知。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =============================================
+         SLIDE 6: 匹配方法
+         ============================================= -->
+    <section class="slide slide-blue" data-slide="5">
+        <div class="halftone-overlay"></div>
+        <div class="slide-content">
+            <span class="section-num reveal">05</span>
+            <div class="neon-bar reveal"></div>
+            <h2 class="reveal">匹配方法到任务</h2>
+            <div class="two-col">
+                <div class="neon-card reveal" style="border-color: var(--accent-neon);">
+                    <h3 style="color: var(--accent-neon);">规划模式</h3>
+                    <p>设计规范 → 验证 → 让 Agent 执行。可能需要多个 Agent 协同。</p>
+                </div>
+                <div class="neon-card reveal">
+                    <h3>对话模式</h3>
+                    <p>启动单个 Agent，直接开始对话，提问、探索、快速迭代。</p>
+                </div>
+            </div>
+            <p class="reveal" style="margin-top:clamp(0.5rem,1.5vh,1rem);text-align:center;">根据任务的复杂度和不确定性，选择合适的方法。</p>
+        </div>
+    </section>
+
+    <!-- =============================================
+         SLIDE 7: 持续迭代
+         ============================================= -->
+    <section class="slide slide-neon" data-slide="6">
+        <div class="halftone-overlay"></div>
+        <div class="slide-content">
+            <span class="section-num reveal">06</span>
+            <div class="neon-bar reveal"></div>
+            <h2 class="reveal">持续迭代</h2>
+            <div class="two-col">
+                <div class="col-text">
+                    <p class="reveal">不要期望完美，期望<span class="highlight">可用</span>。</p>
+                    <ul class="styled-list" style="margin-top:clamp(0.3rem,1vh,0.8rem);">
+                        <li class="reveal">先让它跑起来 → 再改对 → 再变美</li>
+                        <li class="reveal">每次迭代都更接近目标</li>
+                        <li class="reveal">有测试在，重构成本很低</li>
+                    </ul>
+                </div>
+                <div class="col-visual reveal-scale">
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:clamp(0.3rem,1vh,0.6rem);">
+                        <div style="display:flex;align-items:center;gap:clamp(0.5rem,1vw,1rem);">
+                            <div style="width:clamp(40px,8vw,70px);height:clamp(40px,8vw,70px);border:2px solid var(--accent-neon);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:var(--small-size);opacity:0.5;">Make it work</div>
+                            <span style="color:var(--accent-neon);font-size:clamp(0.8rem,1.5vw,1.2rem);">&rarr;</span>
+                            <div style="width:clamp(40px,8vw,70px);height:clamp(40px,8vw,70px);border:2px solid var(--accent-blue);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:var(--small-size);opacity:0.7;">Make it right</div>
+                            <span style="color:var(--accent-neon);font-size:clamp(0.8rem,1.5vw,1.2rem);">&rarr;</span>
+                            <div style="width:clamp(40px,8vw,70px);height:clamp(40px,8vw,70px);border:2px solid var(--accent-neon);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:var(--small-size);box-shadow:0 0 12px var(--accent-neon-glow);">Make it beautiful</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =============================================
+         SLIDE 8: 交叉验证 & 了解 Agent
+         ============================================= -->
+    <section class="slide slide-content-dark" data-slide="7">
+        <div class="halftone-overlay"></div>
+        <div class="slide-content">
+            <span class="section-num reveal">07</span>
+            <div class="neon-bar reveal"></div>
+            <h2 class="reveal">交叉验证与深度了解</h2>
+            <div class="card-grid">
+                <div class="neon-card reveal">
+                    <h3>Agent 检查 Agent</h3>
+                    <p>让 Agent 审查自己的代码，永远不会发现问题。启动一个全新的 Agent 来审查——它会捕捉到第一个 Agent 遗漏的细节。</p>
+                </div>
+                <div class="neon-card reveal">
+                    <h3>了解 Agent 的个性</h3>
+                    <p>每个模型有长处和短板。了解它们比追逐基准测试更有用。不要问"哪个模型更好"，问"它适合做什么"。</p>
+                </div>
+            </div>
+            <p class="reveal" style="margin-top:clamp(0.5rem,1.5vh,1rem);text-align:center;font-size:var(--small-size);color:var(--text-muted);">为任务选对模型——就像为工作选对工具。</p>
+        </div>
+    </section>
+
+    <!-- =============================================
+         SLIDE 9: ENDING
+         ============================================= -->
+    <section class="slide slide-end" data-slide="8">
+        <div class="halftone-overlay"></div>
+        <div class="end-shapes">
+            <div class="end-circle"></div>
+            <div class="end-circle"></div>
+        </div>
+        <div class="end-content">
+            <div class="title-badge reveal" style="transform:rotate(-1deg);margin-bottom:clamp(0.5rem,1.5vh,1rem);">思考 &rarr; 指挥 &rarr; 验证</div>
+            <h2 class="reveal">开始用 Agent 的方式工作</h2>
+            <p class="reveal">来源：<span class="highlight">paseo.sh/docs/best-practices</span></p>
+        </div>
+    </section>
+
+    <!-- === EDIT HOTZONE === -->
+    <div class="edit-hotzone" id="editHotzone"></div>
+    <button class="edit-toggle" id="editToggle" title="编辑模式 (E)">&#9998;</button>
+    <div class="edit-save-notice" id="editSaveNotice">已保存到本地</div>
+
+    <!-- =============================================
+       JAVASCRIPT — SLIDE CONTROLLER + INLINE EDITING
+       ============================================= -->
+    <script>
+    /* === SLIDE PRESENTATION CONTROLLER === */
+    class SlidePresentation {
+        constructor() {
+            this.slides = document.querySelectorAll('.slide');
+            this.totalSlides = this.slides.length;
+            this.currentSlide = 0;
+            this.isScrolling = false;
+            this.touchStartY = 0;
+            this.init();
+        }
+
+        init() {
+            this.setupIntersectionObserver();
+            this.setupKeyboardNav();
+            this.setupTouchNav();
+            this.setupWheelNav();
+            this.setupProgressBar();
+            this.setupNavDots();
+        }
+
+        /* Intersection Observer — add .visible when slide enters viewport */
+        setupIntersectionObserver() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        this.currentSlide = parseInt(entry.target.dataset.slide);
+                        this.updateProgress();
+                        this.updateNavDots();
+                    }
+                });
+            }, { threshold: 0.4 });
+
+            this.slides.forEach(slide => observer.observe(slide));
+        }
+
+        /* Keyboard navigation */
+        setupKeyboardNav() {
+            document.addEventListener('keydown', (e) => {
+                if (e.target.getAttribute('contenteditable') === 'true') return;
+                const key = e.key;
+                if (key === 'ArrowDown' || key === ' ' || key === 'PageDown') {
+                    e.preventDefault();
+                    this.goToSlide(this.currentSlide + 1);
+                } else if (key === 'ArrowUp' || key === 'PageUp') {
+                    e.preventDefault();
+                    this.goToSlide(this.currentSlide - 1);
+                } else if (key === 'Home') {
+                    e.preventDefault();
+                    this.goToSlide(0);
+                } else if (key === 'End') {
+                    e.preventDefault();
+                    this.goToSlide(this.totalSlides - 1);
+                }
+            });
+        }
+
+        /* Touch/swipe navigation */
+        setupTouchNav() {
+            document.addEventListener('touchstart', (e) => {
+                this.touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+
+            document.addEventListener('touchend', (e) => {
+                const diff = this.touchStartY - e.changedTouches[0].clientY;
+                if (Math.abs(diff) > 50) {
+                    if (diff > 0) this.goToSlide(this.currentSlide + 1);
+                    else this.goToSlide(this.currentSlide - 1);
+                }
+            }, { passive: true });
+        }
+
+        /* Mouse wheel navigation with debounce */
+        setupWheelNav() {
+            document.addEventListener('wheel', (e) => {
+                if (this.isScrolling) return;
+                this.isScrolling = true;
+                if (e.deltaY > 30) this.goToSlide(this.currentSlide + 1);
+                else if (e.deltaY < -30) this.goToSlide(this.currentSlide - 1);
+                setTimeout(() => { this.isScrolling = false; }, 800);
+            }, { passive: true });
+        }
+
+        /* Navigate to a specific slide */
+        goToSlide(index) {
+            if (index < 0 || index >= this.totalSlides) return;
+            this.slides[index].scrollIntoView({ behavior: 'smooth' });
+        }
+
+        /* Progress bar */
+        setupProgressBar() {
+            this.progressBar = document.getElementById('progressBar');
+        }
+
+        updateProgress() {
+            if (!this.progressBar) return;
+            const progress = ((this.currentSlide + 1) / this.totalSlides) * 100;
+            this.progressBar.style.width = progress + '%';
+        }
+
+        /* Navigation dots */
+        setupNavDots() {
+            const container = document.getElementById('navDots');
+            for (let i = 0; i < this.totalSlides; i++) {
+                const dot = document.createElement('button');
+                dot.className = 'nav-dot';
+                dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+                dot.addEventListener('click', () => this.goToSlide(i));
+                container.appendChild(dot);
+            }
+        }
+
+        updateNavDots() {
+            const dots = document.querySelectorAll('.nav-dot');
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === this.currentSlide);
+            });
+        }
+    }
+
+    /* === INLINE EDITING CONTROLLER === */
+    class InlineEditor {
+        constructor() {
+            this.isActive = false;
+            this.storageKey = 'ai-agent-best-practices-edits';
+            this.savedContent = this.loadContent();
+            this.init();
+        }
+
+        init() {
+            this.setupToggle();
+            this.setupHotzone();
+            this.setupKeyboard();
+            if (this.savedContent) this.restoreContent();
+        }
+
+        setupToggle() {
+            this.toggleBtn = document.getElementById('editToggle');
+            this.toggleBtn.addEventListener('click', () => this.toggleEditMode());
+        }
+
+        setupHotzone() {
+            const hotzone = document.getElementById('editHotzone');
+            const toggle = this.toggleBtn;
+            let hideTimeout = null;
+
+            hotzone.addEventListener('mouseenter', () => {
+                clearTimeout(hideTimeout);
+                toggle.classList.add('show');
+            });
+            hotzone.addEventListener('mouseleave', () => {
+                hideTimeout = setTimeout(() => {
+                    if (!this.isActive) toggle.classList.remove('show');
+                }, 400);
+            });
+            toggle.addEventListener('mouseenter', () => clearTimeout(hideTimeout));
+            toggle.addEventListener('mouseleave', () => {
+                hideTimeout = setTimeout(() => {
+                    if (!this.isActive) toggle.classList.remove('show');
+                }, 400);
+            });
+            hotzone.addEventListener('click', () => this.toggleEditMode());
+        }
+
+        setupKeyboard() {
+            document.addEventListener('keydown', (e) => {
+                if ((e.key === 'e' || e.key === 'E') && !e.target.getAttribute('contenteditable')) {
+                    this.toggleEditMode();
+                }
+                if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    this.saveContent();
+                }
+            });
+        }
+
+        toggleEditMode() {
+            this.isActive = !this.isActive;
+            this.toggleBtn.classList.toggle('active', this.isActive);
+
+            const editables = document.querySelectorAll('.slide h1, .slide h2, .slide h3, .slide p, .slide li, .slide .quote-text');
+            editables.forEach(el => {
+                el.contentEditable = this.isActive ? 'true' : 'false';
+            });
+        }
+
+        saveContent() {
+            const editables = document.querySelectorAll('.slide h1, .slide h2, .slide h3, .slide p, .slide li, .slide .quote-text');
+            const data = {};
+            editables.forEach((el, i) => { data['el_' + i] = el.innerHTML; });
+            localStorage.setItem(this.storageKey, JSON.stringify(data));
+            this.showSaveNotice();
+        }
+
+        loadContent() {
+            const stored = localStorage.getItem(this.storageKey);
+            return stored ? JSON.parse(stored) : null;
+        }
+
+        restoreContent() {
+            const editables = document.querySelectorAll('.slide h1, .slide h2, .slide h3, .slide p, .slide li, .slide .quote-text');
+            editables.forEach((el, i) => {
+                if (this.savedContent['el_' + i] !== undefined) {
+                    el.innerHTML = this.savedContent['el_' + i];
+                }
+            });
+        }
+
+        showSaveNotice() {
+            const notice = document.getElementById('editSaveNotice');
+            notice.classList.add('visible');
+            setTimeout(() => notice.classList.remove('visible'), 1500);
+        }
+    }
+
+    /* === INIT === */
+    new SlidePresentation();
+    new InlineEditor();
+    </script>
+</body>
+</html>
