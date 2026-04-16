@@ -1,0 +1,49 @@
+#!/bin/bash
+#
+# pre-commit: Auto-fix missing <meta name="date"> and <link rel="icon">
+# in staged HTML presentation files before commit.
+#
+
+TODAY=$(date +%Y-%m-%d)
+
+# Neutral default favicon: slate-600 rounded square with white asterisk
+DEFAULT_ICON="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23475569'/><text x='16' y='23' text-anchor='middle' font-size='18' font-weight='bold' fill='white' font-family='sans-serif'>*</text></svg>"
+
+# Get staged HTML files, excluding temporary directories
+FILES=$(git diff --cached --name-only --diff-filter=ACM \
+    | grep '\.html$' \
+    | grep -v '\.claude-design/' \
+    || true)
+
+if [ -z "$FILES" ]; then
+    exit 0
+fi
+
+FIXED=0
+
+for file in $FILES; do
+    [ -f "$file" ] || continue
+
+    HAS_DATE=$(grep -Eci '<meta[[:space:]]+name="date"' "$file" 2>/dev/null) || HAS_DATE=0
+    HAS_ICON=$(grep -Eci '<link[[:space:]]+rel="icon"' "$file" 2>/dev/null) || HAS_ICON=0
+
+    if [ "$HAS_DATE" -gt 0 ] && [ "$HAS_ICON" -gt 0 ]; then
+        continue
+    fi
+
+    INSERT=""
+    [ "$HAS_DATE" -eq 0 ] && INSERT="${INSERT}<meta name=\"date\" content=\"${TODAY}\">\n"
+    [ "$HAS_ICON" -eq 0 ] && INSERT="${INSERT}<link rel=\"icon\" href=\"${DEFAULT_ICON}\">\n"
+
+    perl -i -pe "s|(</title>)|\1\n${INSERT}|" "$file"
+
+    [ "$HAS_DATE" -eq 0 ] && echo "  pre-commit: added <meta name=\"date\" content=\"${TODAY}\"> to ${file}"
+    [ "$HAS_ICON" -eq 0 ] && echo "  pre-commit: added <link rel=\"icon\"> to ${file}"
+
+    git add "$file"
+    FIXED=$((FIXED + 1))
+done
+
+[ "$FIXED" -gt 0 ] && echo "  pre-commit: fixed ${FIXED} file(s), changes re-staged."
+
+exit 0
