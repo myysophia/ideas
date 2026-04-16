@@ -1,0 +1,1777 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chaterm 多云环境深度评估报告</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-light: #eef2ff;
+      --primary-dark: #3730a3;
+      --success: #10b981;
+      --success-light: #d1fae5;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --neutral: #6b7280;
+      --neutral-light: #f3f4f6;
+      --dark: #111827;
+      --card-shadow: 0 4px 24px rgba(79,70,229,0.08);
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: #f8f9ff;
+      color: #1e1b4b;
+      line-height: 1.7;
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #2563eb 100%);
+      color: white;
+      padding: 60px 40px 50px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+      top: -200px; right: -150px;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      width: 400px; height: 400px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.04);
+      bottom: -150px; left: -100px;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 30px;
+      padding: 4px 18px;
+      font-size: 13px;
+      margin-bottom: 18px;
+      backdrop-filter: blur(4px);
+    }
+    .hero h1 {
+      font-size: 42px;
+      font-weight: 800;
+      margin-bottom: 14px;
+      letter-spacing: -0.5px;
+    }
+    .hero h1 span { color: #a5f3fc; }
+    .hero-meta {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+    .hero-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      opacity: 0.85;
+    }
+    .hero-meta-item .dot {
+      width: 8px; height: 8px;
+      background: #a5f3fc;
+      border-radius: 50%;
+    }
+
+    /* ===== LAYOUT ===== */
+    .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+
+    /* ===== SCORE CARD ===== */
+    .score-section {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--card-shadow);
+      padding: 36px;
+      margin-bottom: 32px;
+    }
+    .score-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .score-title::before {
+      content: '';
+      display: block;
+      width: 4px; height: 22px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+    .scores-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 20px;
+    }
+    .score-item {
+      text-align: center;
+      padding: 24px 16px;
+      border-radius: 12px;
+      background: var(--neutral-light);
+      transition: transform .2s;
+    }
+    .score-item:hover { transform: translateY(-3px); }
+    .score-ring {
+      width: 80px; height: 80px;
+      margin: 0 auto 14px;
+      position: relative;
+    }
+    .score-ring svg { transform: rotate(-90deg); }
+    .score-ring .bg { fill: none; stroke: #e5e7eb; stroke-width: 8; }
+    .score-ring .fill { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s; }
+    .score-ring .label {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--dark);
+    }
+    .score-name { font-size: 13px; color: var(--neutral); font-weight: 600; }
+
+    /* ===== SECTION CARD ===== */
+    .section-card {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--card-shadow);
+      padding: 32px 36px;
+      margin-bottom: 28px;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--dark);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-success { background: var(--success-light); color: #065f46; }
+    .badge-warning { background: var(--warning-light); color: #92400e; }
+    .badge-danger  { background: var(--danger-light);  color: #991b1b; }
+    .badge-primary { background: var(--primary-light); color: var(--primary-dark); }
+    .badge-neutral { background: var(--neutral-light); color: #374151; }
+
+    /* ===== FEATURE GRID ===== */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .feature-item {
+      border: 1.5px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 18px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .feature-item:hover {
+      border-color: #c7d2fe;
+      box-shadow: 0 0 0 3px rgba(79,70,229,0.06);
+    }
+    .feature-item-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .feature-item-icon {
+      font-size: 20px;
+      width: 36px; height: 36px;
+      background: var(--primary-light);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .feature-item-name { font-weight: 600; font-size: 14px; color: var(--dark); }
+    .feature-item-desc { font-size: 13px; color: #6b7280; line-height: 1.6; }
+
+    /* ===== TABLE ===== */
+    .eval-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .eval-table th {
+      background: #f1f5f9;
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: #374151;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .eval-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #374151;
+      vertical-align: top;
+    }
+    .eval-table tr:last-child td { border-bottom: none; }
+    .eval-table tr:hover td { background: #fafafa; }
+
+    /* ===== PROGRESS BAR ===== */
+    .progress-list { display: flex; flex-direction: column; gap: 14px; }
+    .progress-item {}
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+    .progress-label { font-weight: 600; color: var(--dark); }
+    .progress-value { color: var(--neutral); }
+    .progress-bar {
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 1.2s ease;
+    }
+
+    /* ===== PRICING CARDS ===== */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+    .pricing-card {
+      border: 2px solid #e5e7eb;
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      position: relative;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .pricing-card.featured {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(79,70,229,0.1);
+    }
+    .pricing-featured-badge {
+      position: absolute;
+      top: -12px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--primary);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 14px;
+      border-radius: 12px;
+    }
+    .pricing-plan { font-size: 15px; font-weight: 700; color: var(--dark); margin-bottom: 6px; }
+    .pricing-price { font-size: 32px; font-weight: 800; color: var(--primary); }
+    .pricing-price span { font-size: 14px; font-weight: 400; color: var(--neutral); }
+    .pricing-cny { font-size: 13px; color: var(--neutral); margin-bottom: 16px; }
+    .pricing-features { list-style: none; }
+    .pricing-features li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      color: #374151;
+      padding: 5px 0;
+      border-bottom: 1px dashed #f1f5f9;
+    }
+    .pricing-features li:last-child { border-bottom: none; }
+    .pricing-features li .check { color: var(--success); font-weight: 700; flex-shrink: 0; }
+    .pricing-features li .cross { color: #d1d5db; font-weight: 700; flex-shrink: 0; }
+
+    /* ===== PROS CONS ===== */
+    .pros-cons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 600px) { .pros-cons-grid { grid-template-columns: 1fr; } }
+    .pros-panel, .cons-panel {
+      border-radius: 10px;
+      padding: 20px;
+    }
+    .pros-panel { background: #f0fdf4; border: 1.5px solid #86efac; }
+    .cons-panel { background: #fff7ed; border: 1.5px solid #fdba74; }
+    .pros-panel h4 { color: #166534; margin-bottom: 12px; font-size: 15px; }
+    .cons-panel h4 { color: #9a3412; margin-bottom: 12px; font-size: 15px; }
+    .pros-panel li, .cons-panel li {
+      font-size: 13px;
+      list-style: none;
+      padding: 5px 0;
+      border-bottom: 1px dashed rgba(0,0,0,0.06);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .pros-panel li:last-child, .cons-panel li:last-child { border-bottom: none; }
+    .pros-panel li::before { content: '✓'; color: var(--success); font-weight: 700; flex-shrink: 0; }
+    .cons-panel li::before { content: '△'; color: var(--warning); font-weight: 700; flex-shrink: 0; }
+
+    /* ===== VERDICT ===== */
+    .verdict-box {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      color: white;
+      border-radius: var(--radius);
+      padding: 36px;
+      margin-bottom: 28px;
+    }
+    .verdict-box h3 { font-size: 22px; font-weight: 800; margin-bottom: 16px; }
+    .verdict-box p { font-size: 15px; line-height: 1.8; opacity: 0.92; margin-bottom: 12px; }
+    .verdict-tags { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+    .verdict-tag {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 20px;
+      padding: 5px 16px;
+      font-size: 13px;
+    }
+
+    /* ===== COMPARISON TABLE ===== */
+    .compare-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    .compare-table th {
+      background: #4f46e5;
+      color: white;
+      padding: 12px 14px;
+      text-align: center;
+      font-weight: 600;
+    }
+    .compare-table th:first-child { text-align: left; border-radius: 8px 0 0 0; }
+    .compare-table th:last-child { border-radius: 0 8px 0 0; }
+    .compare-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      text-align: center;
+      color: #374151;
+    }
+    .compare-table td:first-child { text-align: left; font-weight: 500; }
+    .compare-table tr:nth-child(even) td { background: #fafbff; }
+    .compare-table .yes { color: var(--success); font-weight: 700; }
+    .compare-table .no  { color: #d1d5db; }
+    .compare-table .partial { color: var(--warning); font-weight: 600; }
+    .compare-table .highlight td { background: #eef2ff !important; font-weight: 600; }
+
+    /* ===== RISK TABLE ===== */
+    .risk-item {
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+      border-radius: 10px;
+      border: 1.5px solid #e5e7eb;
+      margin-bottom: 12px;
+      align-items: flex-start;
+    }
+    .risk-level {
+      flex-shrink: 0;
+      width: 54px;
+      text-align: center;
+      padding: 4px 0;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .risk-high    { background: var(--danger-light);  color: #991b1b; }
+    .risk-medium  { background: var(--warning-light); color: #92400e; }
+    .risk-low     { background: var(--success-light); color: #065f46; }
+    .risk-content h5 { font-size: 14px; font-weight: 600; margin-bottom: 4px; color: var(--dark); }
+    .risk-content p  { font-size: 13px; color: #6b7280; }
+
+    /* ===== RECOMMEND ===== */
+    .recommend-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .recommend-card {
+      border-radius: 10px;
+      padding: 20px;
+      border: 1.5px solid;
+    }
+    .recommend-yes  { background: #f0fdf4; border-color: #86efac; }
+    .recommend-no   { background: #fef2f2; border-color: #fca5a5; }
+    .recommend-maybe{ background: #fffbeb; border-color: #fcd34d; }
+    .recommend-card h5 { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+    .recommend-yes  h5 { color: #166534; }
+    .recommend-no   h5 { color: #991b1b; }
+    .recommend-maybe h5{ color: #92400e; }
+    .recommend-card p  { font-size: 12.5px; color: #4b5563; line-height: 1.6; }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      text-align: center;
+      padding: 30px 24px;
+      color: #9ca3af;
+      font-size: 13px;
+      border-top: 1px solid #e5e7eb;
+      margin-top: 20px;
+    }
+
+    /* ===== COMPETITOR CARDS ===== */
+    .competitor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+      margin: 24px 0;
+    }
+    .comp-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
+      border: 2px solid transparent;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .comp-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    }
+    .comp-chaterm { border-color: var(--primary); background: linear-gradient(135deg, #fefeff, #f5f3ff); }
+    .comp-warp { border-color: #f97316; }
+    .comp-ishell { border-color: #22c55e; }
+    .comp-xterm { border-color: #06b6d4; }
+    .comp-final { border-color: #8b5cf6; }
+    .comp-bastion { border-color: #64748b; }
+    .comp-badge {
+      position: absolute; top: -10px; right: 14px;
+      padding: 2px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; color: white;
+    }
+    .comp-chaterm-badge { background: var(--primary); }
+    .comp-warp-badge { background: #f97316; }
+    .comp-ishell-badge { background: #22c55e; }
+    .comp-other-badge { background: #6b7280; }
+    .comp-bastion-badge { background: #475569; }
+    .comp-name { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: var(--dark); }
+    .comp-desc { font-size: 13px; color: var(--neutral); margin-bottom: 12px; }
+    .comp-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+    .comp-tags span {
+      background: var(--neutral-light); color: var(--neutral);
+      padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;
+    }
+    .comp-price {
+      font-size: 13px; font-weight: 700; color: var(--primary);
+      background: var(--primary-light); padding: 6px 10px;
+      border-radius: 6px; text-align: center;
+    }
+
+    /* ===== COMPARISON TABLES ===== */
+    .subsection-title {
+      font-size: 16px; font-weight: 700; color: var(--dark);
+      margin: 30px 0 14px 0;
+      padding-left: 12px; border-left: 4px solid var(--primary);
+    }
+    .table-wrapper { overflow-x: auto; border-radius: 12px; box-shadow: var(--card-shadow); margin-bottom: 8px; }
+    .comp-table { width: 100%; border-collapse: collapse; background: white; font-size: 13px; }
+    .comp-table th {
+      background: var(--primary); color: white; padding: 12px 10px;
+      text-align: center; font-size: 12px; white-space: nowrap;
+    }
+    .comp-table td { padding: 10px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+    .comp-table tr:last-child td { border-bottom: none; }
+    .comp-table tr:hover td { background: #fafbff; }
+    .highlight-row td { background: #f0f0ff !important; }
+    .price-green { color: #16a34a; font-weight: 700; }
+    .price-yellow { color: #d97706; font-weight: 700; }
+    .price-red { color: #dc2626; font-weight: 700; }
+    .score-5 { color: #16a34a; font-weight: 700; }
+    .score-4 { color: #65a30d; font-weight: 700; }
+    .score-3 { color: #ca8a04; font-weight: 700; }
+    .score-2 { color: #d97706; }
+    .score-1 { color: #9ca3af; }
+    .score-0 { color: #d1d5db; font-size: 12px; }
+    .total-row td { background: #f3f4f6 !important; font-weight: 700; border-top: 2px solid #e5e7eb; }
+    .total-chaterm { color: var(--primary); }
+    .total-warp { color: #f97316; }
+    .total-ishell { color: #22c55e; }
+    .total-xterm { color: #06b6d4; }
+    .total-final { color: #8b5cf6; }
+    .total-bastion { color: #64748b; }
+    .table-note {
+      font-size: 12px; color: var(--neutral); margin-top: 6px; padding-left: 4px;
+    }
+
+    /* ===== DECISION SCENE GRID ===== */
+    .scene-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+      margin: 16px 0;
+    }
+    .scene-card {
+      background: white; border-radius: 12px; padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      border: 1px solid #f0f0f0;
+    }
+    .scene-icon { font-size: 28px; margin-bottom: 8px; }
+    .scene-title { font-size: 15px; font-weight: 700; color: var(--dark); margin-bottom: 12px; }
+    .scene-match { display: flex; flex-direction: column; gap: 8px; }
+    .match-item { font-size: 13px; color: var(--neutral); line-height: 1.5; }
+    .match-tag {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      font-size: 12px; font-weight: 700; margin-right: 6px;
+    }
+    .tag-recommend { background: var(--success-light); color: #16a34a; }
+    .tag-alternative { background: var(--warning-light); color: #d97706; }
+
+    /* ===== PROS/CONS ===== */
+    .pros-cons-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0;
+    }
+    @media (max-width: 768px) { .pros-cons-grid { grid-template-columns: 1fr; } }
+    .pros-card {
+      background: var(--success-light); border-radius: 12px; padding: 20px;
+      border: 1px solid #a7f3d0;
+    }
+    .cons-card {
+      background: var(--warning-light); border-radius: 12px; padding: 20px;
+      border: 1px solid #fde68a;
+    }
+    .pros-title, .cons-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+    .pros-card ul, .cons-card ul { padding-left: 20px; }
+    .pros-card li, .cons-card li { font-size: 13px; margin-bottom: 8px; line-height: 1.5; }
+
+    /* ===== COMPETITOR VERDICT ===== */
+    .comp-verdict {
+      display: flex; align-items: flex-start; gap: 16px;
+      background: linear-gradient(135deg, var(--primary-light), #f5f3ff);
+      border: 2px solid var(--primary); border-radius: 12px;
+      padding: 20px 24px; margin-top: 16px;
+    }
+    .comp-verdict-icon { font-size: 32px; flex-shrink: 0; }
+    .comp-verdict-text { font-size: 14px; color: var(--dark); line-height: 1.8; }
+    .comp-verdict-text strong { color: var(--primary); }
+
+    /* ===== NAV ===== */
+    .toc {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--card-shadow);
+      padding: 24px 28px;
+      margin-bottom: 28px;
+    }
+    .toc h3 { font-size: 15px; font-weight: 700; margin-bottom: 14px; color: var(--dark); }
+    .toc-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      list-style: none;
+    }
+    .toc-list a {
+      text-decoration: none;
+      font-size: 13px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-weight: 500;
+      transition: background .2s;
+    }
+    .toc-list a:hover { background: #c7d2fe; }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .section-card, .score-section, .verdict-box, .toc {
+      animation: fadeInUp .5s ease both;
+    }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">🔍 深度评估报告 · 多云环境专项</div>
+  <h1>Chaterm <span>深度评估</span></h1>
+  <p style="opacity:.85;font-size:16px;margin-top:8px;">AI 原生终端 · 多云环境适配性 · 企业级评估</p>
+  <div class="hero-meta">
+    <span class="hero-meta-item"><span class="dot"></span>评估版本：v0.10.1</span>
+    <span class="hero-meta-item"><span class="dot"></span>评估日期：2026年4月16日</span>
+    <span class="hero-meta-item"><span class="dot"></span>场景：多云运维管理</span>
+
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- TOC -->
+  <div class="toc">
+    <h3>📋 目录导航</h3>
+    <ul class="toc-list">
+      <li><a href="#overview">产品概览</a></li>
+      <li><a href="#scores">综合评分</a></li>
+      <li><a href="#competitors">📊 竞品对比</a></li>
+      <li><a href="#functions">功能评估</a></li>
+      <li><a href="#performance">性能评估</a></li>
+      <li><a href="#security">安全评估</a></li>
+      <li><a href="#multicloud">多云适配</a></li>
+      <li><a href="#cost">成本分析</a></li>
+      <li><a href="#comparison">竞品对比</a></li>
+      <li><a href="#risks">风险分析</a></li>
+      <li><a href="#verdict">综合建议</a></li>
+    </ul>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div class="section-card" id="overview">
+    <div class="section-header">
+      <div class="section-title">
+        <div class="section-icon" style="background:#eef2ff;">🖥️</div>
+        产品概览
+      </div>
+      <span class="badge badge-primary">开源 · MIT 协议</span>
+    </div>
+    <table class="eval-table">
+      <thead>
+        <tr><th>属性</th><th>内容</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>产品名称</td><td><strong>Chaterm</strong>（/tʃɑːtɜːm/）</td></tr>
+        <tr><td>产品定位</td><td>AI 原生终端 + SRE 副驾驶，专为基础设施和云资源管理而构建</td></tr>
+
+        <tr><td>开源状态</td><td>✅ 完全开源，MIT 协议，GitHub Stars 约 2,900，Forks 260+</td></tr>
+        <tr><td>最新版本</td><td>v0.10.1（2026年4月13日发布）</td></tr>
+        <tr><td>技术栈</td><td>TypeScript 73% + Vue 26%，基于 Electron 构建桌面客户端</td></tr>
+        <tr><td>支持平台</td><td>macOS / Windows / Linux / iOS / Android 全平台覆盖</td></tr>
+        <tr><td>核心差异化</td><td>AI Agent 自主规划执行 + 知识库 + 语音控制 + 操作审计可回滚</td></tr>
+        <tr><td>目标用户</td><td>DevOps / SRE / 云运维工程师 / 平台工程团队</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SCORES -->
+  <div class="score-section" id="scores">
+    <div class="score-title">综合评分概览</div>
+    <div class="scores-grid">
+      <!-- 功能完整度 -->
+      <div class="score-item">
+        <div class="score-ring">
+          <svg viewBox="0 0 80 80" width="80" height="80">
+            <circle class="bg" cx="40" cy="40" r="32"/>
+            <circle class="fill" cx="40" cy="40" r="32"
+              stroke="#4f46e5"
+              stroke-dasharray="201"
+              stroke-dashoffset="30"/>
+          </svg>
+          <span class="label">85</span>
+        </div>
+        <div class="score-name">功能完整度</div>
+      </div>
+      <!-- 多云适配 -->
+      <div class="score-item">
+        <div class="score-ring">
+          <svg viewBox="0 0 80 80" width="80" height="80">
+            <circle class="bg" cx="40" cy="40" r="32"/>
+            <circle class="fill" cx="40" cy="40" r="32"
+              stroke="#10b981"
+              stroke-dasharray="201"
+              stroke-dashoffset="50"/>
+          </svg>
+          <span class="label">75</span>
+        </div>
+        <div class="score-name">多云适配</div>
+      </div>
+      <!-- 安全性 -->
+      <div class="score-item">
+        <div class="score-ring">
+          <svg viewBox="0 0 80 80" width="80" height="80">
+            <circle class="bg" cx="40" cy="40" r="32"/>
+            <circle class="fill" cx="40" cy="40" r="32"
+              stroke="#7c3aed"
+              stroke-dasharray="201"
+              stroke-dashoffset="40"/>
+          </svg>
+          <span class="label">80</span>
+        </div>
+        <div class="score-name">安全性</div>
+      </div>
+      <!-- 成本价值 -->
+      <div class="score-item">
+        <div class="score-ring">
+          <svg viewBox="0 0 80 80" width="80" height="80">
+            <circle class="bg" cx="40" cy="40" r="32"/>
+            <circle class="fill" cx="40" cy="40" r="32"
+              stroke="#f59e0b"
+              stroke-dasharray="201"
+              stroke-dashoffset="22"/>
+          </svg>
+          <span class="label">89</span>
+        </div>
+        <div class="score-name">成本价值</div>
+      </div>
+      <!-- 性能体验 -->
+      <div class="score-item">
+        <div class="score-ring">
+          <svg viewBox="0 0 80 80" width="80" height="80">
+            <circle class="bg" cx="40" cy="40" r="32"/>
+            <circle class="fill" cx="40" cy="40" r="32"
+              stroke="#ef4444"
+              stroke-dasharray="201"
+              stroke-dashoffset="60"/>
+          </svg>
+          <span class="label">70</span>
+        </div>
+        <div class="score-name">性能体验</div>
+      </div>
+      <!-- 综合推荐 -->
+      <div class="score-item" style="background:#eef2ff;">
+        <div class="score-ring">
+          <svg viewBox="0 0 80 80" width="80" height="80">
+            <circle class="bg" cx="40" cy="40" r="32"/>
+            <circle class="fill" cx="40" cy="40" r="32"
+              stroke="#4f46e5"
+              stroke-dasharray="201"
+              stroke-dashoffset="25"/>
+          </svg>
+          <span class="label" style="color:#4f46e5;">80</span>
+        </div>
+        <div class="score-name" style="color:#4f46e5;font-weight:700;">综合推荐</div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:#9ca3af;margin-top:20px;text-align:center;">* 评分基于公开文档、社区反馈及同类产品横向对比，满分100分</p>
+  </div>
+
+  <!-- FUNCTIONS -->
+  <div class="section-card" id="functions">
+    <div class="section-header">
+      <div class="section-title">
+        <div class="section-icon" style="background:#e0e7ff;">⚙️</div>
+        核心功能评估
+      </div>
+      <span class="badge badge-success">功能丰富</span>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <div class="feature-item-header">
+          <div class="feature-item-icon">🤖</div>
+          <span class="feature-item-name">AI Agent 自主执行</span>
+        </div>
+        <div class="feature-item-desc">理解目标后自主规划并跨多主机执行复杂任务，支持代码部署、故障排查、自动回滚，每步操作可审计。</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-item-header">
+          <div class="feature-item-icon">💡</div>
+          <span class="feature-item-name">智能命令补全</span>
+        </div>
+        <div class="feature-item-desc">结合用户习惯、本地记忆和服务器上下文推荐命令，跨设备会话同步，支持语音输入，降低操作成本。</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-item-header">
+          <div class="feature-item-icon">📚</div>
+          <span class="feature-item-name">个人/团队知识库</span>
+        </div>
+        <div class="feature-item-desc">导入技术手册、内部文档、脚本，构建专属知识体系；AI 可检索知识库辅助决策，团队版支持知识共享。</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-item-header">
+          <div class="feature-item-icon">⚡</div>
+          <span class="feature-item-name">Agent Skill 封装</span>
+        </div>
+        <div class="feature-item-desc">将复杂运维流程封装为可复用 AI 技能，实现结构化自动化，沉淀团队运维经验，降低新人上手门槛。</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-item-header">
+          <div class="feature-item-icon">🔌</div>
+          <span class="feature-item-name">插件系统</span>
+        </div>
+        <div class="feature-item-desc">扩展对公有云服务器和 Kubernetes 的支持，提供统一认证、动态授权和安全加密连接，支持集中化管理。</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-item-header">
+          <div class="feature-item-icon">🎤</div>
+          <span class="feature-item-name">语音控制</span>
+        </div>
+        <div class="feature-item-desc">高精度语音识别结合知识库，无需键盘即可下达运维指令，特别适合移动端或 on-call 场景。</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-item-header">
+          <div class="feature-item-icon">🪟</div>
+          <span class="feature-item-name">多会话分屏管理</span>
+        </div>
+        <div class="feature-item-desc">支持分屏、会话标签页和终端工作流，可同时管理多台服务器会话，提升并行处理效率。</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-item-header">
+          <div class="feature-item-icon">🔗</div>
+          <span class="feature-item-name">MCP 协议集成</span>
+        </div>
+        <div class="feature-item-desc">支持 MCP 服务器扩展上下文，可与 Notion、GitHub 等外部工具集成，构建更强上下文感知能力。</div>
+      </div>
+    </div>
+
+    <!-- 功能进度条 -->
+    <div style="margin-top:28px;">
+      <h4 style="font-size:15px;font-weight:700;margin-bottom:16px;color:var(--dark);">功能成熟度评估</h4>
+      <div class="progress-list">
+        <div class="progress-item">
+          <div class="progress-header"><span class="progress-label">AI Agent 智能规划</span><span class="progress-value">90/100</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:90%;background:linear-gradient(90deg,#4f46e5,#7c3aed)"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-header"><span class="progress-label">多主机批量管理</span><span class="progress-value">85/100</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:85%;background:linear-gradient(90deg,#10b981,#059669)"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-header"><span class="progress-label">Kubernetes 集成</span><span class="progress-value">75/100</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:75%;background:linear-gradient(90deg,#7c3aed,#6d28d9)"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-header"><span class="progress-label">移动端体验</span><span class="progress-value">72/100</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:72%;background:linear-gradient(90deg,#f59e0b,#d97706)"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-header"><span class="progress-label">知识库 RAG 检索</span><span class="progress-value">82/100</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:82%;background:linear-gradient(90deg,#06b6d4,#0284c7)"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-header"><span class="progress-label">操作审计与回滚</span><span class="progress-value">88/100</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:88%;background:linear-gradient(90deg,#ec4899,#db2777)"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PERFORMANCE -->
+  <div class="section-card" id="performance">
+    <div class="section-header">
+      <div class="section-title">
+        <div class="section-icon" style="background:#fef3c7;">⚡</div>
+        性能评估
+      </div>
+      <span class="badge badge-warning">需关注</span>
+    </div>
+    <table class="eval-table">
+      <thead>
+        <tr><th>性能维度</th><th>评估结论</th><th>评分</th><th>备注</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>启动速度</strong></td>
+          <td>基于 Electron 框架，初次启动较传统终端慢</td>
+          <td><span class="badge badge-warning">中</span></td>
+          <td>Electron 应用通病，冷启动约 2-5s</td>
+        </tr>
+        <tr>
+          <td><strong>SSH 连接响应</strong></td>
+          <td>SSH 协议本身延迟取决于网络，Chaterm 额外开销极小</td>
+          <td><span class="badge badge-success">良好</span></td>
+          <td>SSH 通道与原生无明显差异</td>
+        </tr>
+        <tr>
+          <td><strong>AI 响应延迟</strong></td>
+          <td>依赖所配置的 LLM API（OpenAI/本地模型），P50 约 1-3s</td>
+          <td><span class="badge badge-warning">中</span></td>
+          <td>网络与 LLM 选择直接影响体验</td>
+        </tr>
+        <tr>
+          <td><strong>内存占用</strong></td>
+          <td>Electron 架构下空载约 200-400MB RAM</td>
+          <td><span class="badge badge-warning">中</span></td>
+          <td>多会话时内存需求显著增加</td>
+        </tr>
+        <tr>
+          <td><strong>大规模集群</strong></td>
+          <td>官方宣称支持数千台主机批量管理，但实测数据较少</td>
+          <td><span class="badge badge-warning">待验证</span></td>
+          <td>建议在大规模场景下进行 POC 验证</td>
+        </tr>
+        <tr>
+          <td><strong>渲染流畅度</strong></td>
+          <td>终端渲染流畅，分屏操作体验良好</td>
+          <td><span class="badge badge-success">良好</span></td>
+          <td>Electron + GPU 加速，日志滚动无明显卡顿</td>
+        </tr>
+        <tr>
+          <td><strong>离线能力</strong></td>
+          <td>SSH 连接可离线使用，AI 功能需联网</td>
+          <td><span class="badge badge-neutral">有限</span></td>
+          <td>配置本地 LLM 可突破此限制</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:24px;padding:16px;background:#fffbeb;border-radius:10px;border:1.5px solid #fcd34d;">
+      <p style="font-size:13px;color:#92400e;"><strong>⚠️ 性能注意事项：</strong>Chaterm 是 AI 增强型终端而非纯性能终端。若团队对终端渲染性能要求极致（如高频交易日志实时分析），建议搭配 WindTerm 等轻量工具使用，Chaterm 更适合做运维决策和自动化的"大脑"层。</p>
+    </div>
+  </div>
+
+  <!-- SECURITY -->
+  <div class="section-card" id="security">
+    <div class="section-header">
+      <div class="section-title">
+        <div class="section-icon" style="background:#d1fae5;">🛡️</div>
+        安全评估
+      </div>
+      <span class="badge badge-success">企业级</span>
+    </div>
+    <div class="feature-grid" style="margin-bottom:24px;">
+      <div class="feature-item" style="border-color:#86efac;">
+        <div class="feature-item-header">
+          <div class="feature-item-icon" style="background:#d1fae5;">🔐</div>
+          <span class="feature-item-name">零信任认证</span>
+        </div>
+        <div class="feature-item-desc">无需定期更新密码，无需担心密钥丢失，每次访问都经过严格身份验证，从根本上消除传统 SSH 密钥管理隐患。</div>
+      </div>
+      <div class="feature-item" style="border-color:#86efac;">
+        <div class="feature-item-header">
+          <div class="feature-item-icon" style="background:#d1fae5;">👥</div>
+          <span class="feature-item-name">IAM + RBAC 权限控制</span>
+        </div>
+        <div class="feature-item-desc">统一身份凭据管理，基于角色的细粒度访问控制，工作空间隔离不同部门的 IT 资产，防止权限越界。</div>
+      </div>
+      <div class="feature-item" style="border-color:#86efac;">
+        <div class="feature-item-header">
+          <div class="feature-item-icon" style="background:#d1fae5;">🔎</div>
+          <span class="feature-item-name">全局行为审计</span>
+        </div>
+        <div class="feature-item-desc">所有操作行为完整记录，自动识别异常行为，满足企业安全合规要求，AI 每步操作均可追溯与回滚。</div>
+      </div>
+      <div class="feature-item" style="border-color:#86efac;">
+        <div class="feature-item-header">
+          <div class="feature-item-icon" style="background:#d1fae5;">🔏</div>
+          <span class="feature-item-name">数据隐私保护</span>
+        </div>
+        <div class="feature-item-desc">隐私水印防截图泄露，剪贴板控制限制数据复制，屏幕录制全程留存，数据传输进出管控。</div>
+      </div>
+      <div class="feature-item" style="border-color:#86efac;">
+        <div class="feature-item-header">
+          <div class="feature-item-icon" style="background:#d1fae5;">🌐</div>
+          <span class="feature-item-name">智能安全路由</span>
+        </div>
+        <div class="feature-item-desc">多云架构下基于 IP/Host 分组/标签的动态安全路由，实现 AWS、Azure、阿里云等多云 VPC 内网统一安全管理。</div>
+      </div>
+      <div class="feature-item" style="border-color:#86efac;">
+        <div class="feature-item-header">
+          <div class="feature-item-icon" style="background:#d1fae5;">🔒</div>
+          <span class="feature-item-name">端到端加密</span>
+        </div>
+        <div class="feature-item-desc">传输和存储均采用端到端加密，企业版支持 SSO 登录，可信设备验证，符合企业级数据安全要求。</div>
+      </div>
+    </div>
+
+    <table class="eval-table">
+      <thead>
+        <tr><th>安全层级</th><th>功能模块</th><th>成熟度</th><th>多云场景适配</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>身份层</td><td>零信任认证、SSO、可信设备验证</td><td><span class="badge badge-success">成熟</span></td><td>✅ 统一身份跨云管理</td></tr>
+        <tr><td>权限层</td><td>IAM + RBAC + 工作空间隔离</td><td><span class="badge badge-success">成熟</span></td><td>✅ 多云资产权限分级</td></tr>
+        <tr><td>数据层</td><td>水印/剪贴板/传输控制</td><td><span class="badge badge-success">成熟</span></td><td>✅ 防数据跨云泄露</td></tr>
+        <tr><td>审计层</td><td>全局日志审计 + 异常检测</td><td><span class="badge badge-success">成熟</span></td><td>✅ 多云操作统一审计</td></tr>
+        <tr><td>网络层</td><td>智能安全路由 + VPC 管理</td><td><span class="badge badge-warning">进化中</span></td><td>⚠️ 需配合各云厂商配置</td></tr>
+        <tr><td>合规层</td><td>企业 SLA + 安全合规支撑</td><td><span class="badge badge-warning">企业版专属</span></td><td>⚠️ 需升级企业版</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MULTI-CLOUD -->
+  <div class="section-card" id="multicloud">
+    <div class="section-header">
+      <div class="section-title">
+        <div class="section-icon" style="background:#e0f2fe;">☁️</div>
+        多云环境适配性分析
+      </div>
+      <span class="badge badge-warning">需要配置</span>
+    </div>
+
+    <p style="font-size:14px;color:#374151;margin-bottom:20px;line-height:1.7;">
+      Chaterm 并非专门的多云管理平台（CMP），而是从<strong>终端操作层</strong>切入，通过插件系统和智能安全路由实现多云环境的统一 SSH 接入管理。以下是各主流云平台的适配评估：
+    </p>
+
+    <table class="eval-table" style="margin-bottom:24px;">
+      <thead>
+        <tr><th>云平台</th><th>适配方式</th><th>认证支持</th><th>K8s 支持</th><th>评估</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>🟠 阿里云</td>
+          <td>SSH/堡垒机插件接入，支持 ECS 实例管理</td>
+          <td>SSH Key / 密码</td>
+          <td>✅ ACK 集群</td>
+          <td><span class="badge badge-success">良好</span></td>
+        </tr>
+        <tr>
+          <td>🔵 腾讯云</td>
+          <td>SSH 直连 + 堡垒机插件</td>
+          <td>SSH Key / 密码</td>
+          <td>✅ TKE 集群</td>
+          <td><span class="badge badge-success">良好</span></td>
+        </tr>
+        <tr>
+          <td>🟡 AWS</td>
+          <td>EC2 SSH + SSM 通道（需配置）</td>
+          <td>PEM Key / IAM Role</td>
+          <td>✅ EKS 集群</td>
+          <td><span class="badge badge-warning">中等</span></td>
+        </tr>
+        <tr>
+          <td>🔷 Azure</td>
+          <td>VM SSH 接入 + Azure Bastion</td>
+          <td>SSH Key / AAD</td>
+          <td>✅ AKS 集群</td>
+          <td><span class="badge badge-warning">中等</span></td>
+        </tr>
+        <tr>
+          <td>🔴 GCP</td>
+          <td>GCE SSH + Cloud IAP（需配置）</td>
+          <td>GCloud Key</td>
+          <td>✅ GKE 集群</td>
+          <td><span class="badge badge-warning">中等</span></td>
+        </tr>
+        <tr>
+          <td>🏠 私有云/IDC</td>
+          <td>原生 SSH，无需插件，开箱即用</td>
+          <td>SSH Key / 密码</td>
+          <td>✅ 自托管 K8s</td>
+          <td><span class="badge badge-success">最佳</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:18px;">
+        <h5 style="color:#166534;margin-bottom:10px;font-size:14px;">✅ 多云场景优势</h5>
+        <ul style="font-size:13px;color:#374151;list-style:none;">
+          <li style="padding:4px 0;border-bottom:1px dashed #dcfce7;">• 统一入口管理跨云服务器，告别多工具切换</li>
+          <li style="padding:4px 0;border-bottom:1px dashed #dcfce7;">• 智能安全路由支持基于标签的多云 VPC 访问</li>
+          <li style="padding:4px 0;border-bottom:1px dashed #dcfce7;">• AI Agent 可跨多台云主机执行批量任务</li>
+          <li style="padding:4px 0;border-bottom:1px dashed #dcfce7;">• 统一审计日志，多云操作合规留存</li>
+          <li style="padding:4px 0;">• RBAC 控制不同人员对不同云环境的访问权限</li>
+        </ul>
+      </div>
+      <div style="background:#fff7ed;border:1.5px solid #fdba74;border-radius:10px;padding:18px;">
+        <h5 style="color:#9a3412;margin-bottom:10px;font-size:14px;">⚠️ 多云场景局限</h5>
+        <ul style="font-size:13px;color:#374151;list-style:none;">
+          <li style="padding:4px 0;border-bottom:1px dashed #ffedd5;">• 不是 CMP，不提供云资源生命周期管理（扩缩容等）</li>
+          <li style="padding:4px 0;border-bottom:1px dashed #ffedd5;">• AWS SSM / Azure Bastion 集成需要额外手动配置</li>
+          <li style="padding:4px 0;border-bottom:1px dashed #ffedd5;">• 无原生云账单、成本监控功能</li>
+          <li style="padding:4px 0;border-bottom:1px dashed #ffedd5;">• 云原生 IAM（如 AWS IAM Role）需配合 SSH 密钥桥接</li>
+          <li style="padding:4px 0;">• 企业大规模集群的实测数据较少，POC 风险存在</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- COST -->
+  <div class="section-card" id="cost">
+    <div class="section-header">
+      <div class="section-title">
+        <div class="section-icon" style="background:#fef9c3;">💰</div>
+        成本分析
+      </div>
+      <span class="badge badge-success">高性价比</span>
+    </div>
+
+    <div class="pricing-grid" style="margin-bottom:24px;">
+      <!-- Community -->
+      <div class="pricing-card">
+        <div class="pricing-plan">🆓 Community</div>
+        <div class="pricing-price">$0 <span>/永久免费</span></div>
+        <div class="pricing-cny">适合个人开发者和小团队试用</div>
+        <ul class="pricing-features">
+          <li><span class="check">✓</span>智能命令补全</li>
+          <li><span class="check">✓</span>SSH 多会话管理</li>
+          <li><span class="check">✓</span>云同步</li>
+          <li><span class="check">✓</span>有限插件</li>
+          <li><span class="check">✓</span>1GB 知识库</li>
+          <li><span class="cross">✗</span>语音输入</li>
+          <li><span class="cross">✗</span>团队功能</li>
+          <li><span class="cross">✗</span>零信任/SSO</li>
+        </ul>
+      </div>
+      <!-- Professional -->
+      <div class="pricing-card featured">
+        <div class="pricing-featured-badge">推荐团队</div>
+        <div class="pricing-plan">👨‍💻 Professional</div>
+        <div class="pricing-price">$99 <span>/人/年</span></div>
+        <div class="pricing-cny">约 ¥720/人/年（约 ¥60/人/月）</div>
+        <ul class="pricing-features">
+          <li><span class="check">✓</span>全功能插件</li>
+          <li><span class="check">✓</span>语音输入</li>
+          <li><span class="check">✓</span>50GB 知识库</li>
+          <li><span class="check">✓</span>10× Agent 请求</li>
+          <li><span class="check">✓</span>自动上下文</li>
+          <li><span class="check">✓</span>跨设备会话同步</li>
+          <li><span class="cross">✗</span>团队知识共享</li>
+          <li><span class="cross">✗</span>企业 SSO</li>
+        </ul>
+      </div>
+      <!-- Enterprise -->
+      <div class="pricing-card">
+        <div class="pricing-plan">🏢 Enterprise</div>
+        <div class="pricing-price">$299 <span>/人/年</span></div>
+        <div class="pricing-cny">约 ¥2,170/人/年（约 ¥181/人/月）</div>
+        <ul class="pricing-features">
+          <li><span class="check">✓</span>50× Agent 请求</li>
+          <li><span class="check">✓</span>团队知识共享</li>
+          <li><span class="check">✓</span>企业 SSO 登录</li>
+          <li><span class="check">✓</span>零信任+可信设备</li>
+          <li><span class="check">✓</span>企业级审计管理</li>
+          <li><span class="check">✓</span>堡垒机支持</li>
+          <li><span class="check">✓</span>企业 SLA 保障</li>
+          <li><span class="check">✓</span>优先技术支持</li>
+        </ul>
+      </div>
+    </div>
+
+    <table class="eval-table">
+      <thead>
+        <tr><th>成本维度</th><th>分析</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>直接成本</strong></td>
+          <td>社区版免费；Professional $99/人/年；Enterprise $299/人/年。相比 JumpServer 商业版、堡垒机硬件成本，整体显著更低。</td>
+        </tr>
+        <tr>
+          <td><strong>LLM 调用成本</strong></td>
+          <td>AI Agent 功能需要额外支付 LLM API 费用（如 OpenAI GPT-4o 约 $5-15/1M tokens），可接入自建/开源模型以控制成本。</td>
+        </tr>
+        <tr>
+          <td><strong>效率收益</strong></td>
+          <td>自然语言替代复杂命令查找，Agent 自动化减少手动操作，据社区反馈可节省 30-60% 的运维时间，人力成本价值显著。</td>
+        </tr>
+        <tr>
+          <td><strong>替代成本对比</strong></td>
+          <td>XShell 企业版约 ¥1,500/人/年；商业堡垒机 ¥5,000-50,000+。Chaterm Enterprise（¥2,170/人/年）含 AI 能力，性价比突出。</td>
+        </tr>
+        <tr>
+          <td><strong>隐性风险</strong></td>
+          <td>LLM 厂商价格波动、开源版本依赖社区维护、产品仍在快速迭代中（当前 v0.10.x），稳定性有一定不确定性。</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- COMPARISON -->
+  <div class="section-card" id="comparison">
+    <div class="section-header">
+      <div class="section-title">
+        <div class="section-icon" style="background:#f5f3ff;">📊</div>
+        竞品横向对比
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th style="min-width:140px">功能维度</th>
+            <th>Chaterm</th>
+            <th>JumpServer</th>
+            <th>WindTerm</th>
+            <th>iTerm2</th>
+            <th>MobaXterm</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="highlight">
+            <td>AI Agent 自主执行</td>
+            <td class="yes">✓ 核心能力</td>
+            <td class="no">✗</td>
+            <td class="no">✗</td>
+            <td class="no">✗</td>
+            <td class="no">✗</td>
+          </tr>
+          <tr>
+            <td>自然语言交互</td>
+            <td class="yes">✓</td>
+            <td class="no">✗</td>
+            <td class="no">✗</td>
+            <td class="no">✗</td>
+            <td class="no">✗</td>
+          </tr>
+          <tr>
+            <td>多主机批量管理</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+            <td class="partial">△ 有限</td>
+            <td class="no">✗</td>
+            <td class="partial">△ 有限</td>
+          </tr>
+          <tr>
+            <td>知识库 / RAG</td>
+            <td class="yes">✓</td>
+            <td class="no">✗</td>
+            <td class="no">✗</td>
+            <td class="no">✗</td>
+            <td class="no">✗</td>
+          </tr>
+          <tr>
+            <td>操作审计</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓ 完善</td>
+            <td class="no">✗</td>
+            <td class="no">✗</td>
+            <td class="partial">△ 有限</td>
+          </tr>
+          <tr>
+            <td>RBAC 权限管理</td>
+            <td class="yes">✓ 企业版</td>
+            <td class="yes">✓ 完善</td>
+            <td class="no">✗</td>
+            <td class="no">✗</td>
+            <td class="no">✗</td>
+          </tr>
+          <tr>
+            <td>零信任认证</td>
+            <td class="yes">✓</td>
+            <td class="partial">△ 部分</td>
+            <td class="no">✗</td>
+            <td class="no">✗</td>
+            <td class="no">✗</td>
+          </tr>
+          <tr>
+            <td>Kubernetes 集成</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+            <td class="no">✗</td>
+            <td class="no">✗</td>
+            <td class="no">✗</td>
+          </tr>
+          <tr>
+            <td>跨平台（含移动端）</td>
+            <td class="yes">✓ 全平台</td>
+            <td class="partial">△ Web端</td>
+            <td class="partial">△ 桌面</td>
+            <td class="partial">△ macOS</td>
+            <td class="partial">△ Windows</td>
+          </tr>
+          <tr>
+            <td>终端渲染性能</td>
+            <td class="partial">△ 中等</td>
+            <td class="partial">△ 中等</td>
+            <td class="yes">✓ 极快</td>
+            <td class="yes">✓ 快</td>
+            <td class="yes">✓ 快</td>
+          </tr>
+          <tr>
+            <td>开源免费</td>
+            <td class="yes">✓ MIT</td>
+            <td class="yes">✓ GPL</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+            <td class="partial">△ 有限免费</td>
+          </tr>
+          <tr>
+            <td>MCP 协议集成</td>
+            <td class="yes">✓</td>
+            <td class="no">✗</td>
+            <td class="no">✗</td>
+            <td class="no">✗</td>
+            <td class="no">✗</td>
+          </tr>
+          <tr>
+            <td>企业版价格</td>
+            <td>$299/人/年</td>
+            <td>商业版询价</td>
+            <td>免费</td>
+            <td>免费</td>
+            <td>€49/人</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:12px;color:#9ca3af;margin-top:12px;">* JumpServer 对比基于其商业版功能；竞品功能以公开文档为准，不同版本可能有差异</p>
+  </div>
+
+  <!-- RISKS -->
+  <div class="section-card" id="risks">
+    <div class="section-header">
+      <div class="section-title">
+        <div class="section-icon" style="background:#fee2e2;">⚠️</div>
+        风险分析
+      </div>
+    </div>
+    <div class="risk-item">
+      <div class="risk-level risk-high">高风险</div>
+      <div class="risk-content">
+        <h5>AI 指令误操作风险</h5>
+        <p>AI Agent 自主执行命令若理解偏差可能造成生产故障。需严格配置"操作前确认"机制和权限沙箱，避免 AI 在高危操作（删除数据、变更网络配置）上自动执行。</p>
+      </div>
+    </div>
+    <div class="risk-item">
+      <div class="risk-level risk-high">高风险</div>
+      <div class="risk-content">
+        <h5>LLM 数据隐私泄露风险</h5>
+        <p>若使用云端 LLM API（如 OpenAI），命令上下文、日志内容可能被发送至第三方。建议企业评估是否接入本地部署模型（如 Ollama + LLaMA），敏感生产环境必须使用私有 LLM。</p>
+      </div>
+    </div>
+    <div class="risk-item">
+      <div class="risk-level risk-medium">中风险</div>
+      <div class="risk-content">
+        <h5>产品成熟度风险</h5>
+        <p>当前版本为 v0.10.x，仍处于快速迭代阶段，部分功能存在 Breaking Change 可能。建议将 Chaterm 纳入评估期观察，关键生产环境保留传统工具作为 Fallback。</p>
+      </div>
+    </div>
+    <div class="risk-item">
+      <div class="risk-level risk-medium">中风险</div>
+      <div class="risk-content">
+        <h5>Electron 架构性能瓶颈</h5>
+        <p>在低配置机器或超大规模日志场景下，Electron 的内存和 CPU 占用可能影响体验。需评估团队设备配置，建议 8GB+ RAM 环境使用。</p>
+      </div>
+    </div>
+    <div class="risk-item">
+      <div class="risk-level risk-medium">中风险</div>
+      <div class="risk-content">
+        <h5>供应商绑定风险</h5>
+        <p>开源核心功能使用 MIT 协议，但企业级功能（零信任、SSO、团队知识库）依赖 Chaterm SaaS 服务。若产品方向调整，需评估迁移成本，建议定期导出知识库和配置。</p>
+      </div>
+    </div>
+    <div class="risk-item">
+      <div class="risk-level risk-low">低风险</div>
+      <div class="risk-content">
+        <h5>合规认证缺失</h5>
+        <p>目前未查询到明确的 ISO 27001、SOC2、等保三级认证，金融、医疗等强监管行业使用前需额外评估合规合法性，建议联系官方确认。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROS CONS -->
+  <div class="section-card">
+    <div class="section-header">
+      <div class="section-title">
+        <div class="section-icon" style="background:#f0f9ff;">⚖️</div>
+        综合优劣势
+      </div>
+    </div>
+    <div class="pros-cons-grid">
+      <div class="pros-panel">
+        <h4>✅ 核心优势</h4>
+        <ul>
+          <li>业界领先的 AI Agent 自主运维能力，可显著降低运维门槛</li>
+          <li>开源 MIT 协议，社区活跃，GitHub 近 3K Stars 快速增长</li>
+          <li>企业级安全体系完整：零信任+RBAC+审计+数据保护</li>
+          <li>全平台覆盖包含移动端，随时随地运维</li>
+          <li>知识库+Agent Skill 形成团队运维知识资产积累</li>
+          <li>相比同类商业堡垒机，价格极具竞争力</li>
+          <li>MCP 协议支持，生态扩展性强</li>
+          <li>智能安全路由天然适配多云 VPC 环境</li>
+        </ul>
+      </div>
+      <div class="cons-panel">
+        <h4>⚠️ 需关注的不足</h4>
+        <ul>
+          <li>Electron 架构，启动慢、内存占用较高</li>
+          <li>AI 功能依赖外部 LLM，存在数据隐私隐患</li>
+          <li>产品仍处早期阶段（v0.10.x），稳定性需观察</li>
+          <li>非专业 CMP，不具备云资源生命周期管理能力</li>
+          <li>AWS / Azure / GCP 深度集成需要额外配置成本</li>
+          <li>超大规模集群（1000+ 主机）实测案例较少</li>
+          <li>缺乏主流行业合规认证（ISO 27001 / SOC2）</li>
+          <li>Enterprise 关键功能需 SaaS 服务，有绑定风险</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECOMMEND -->
+  <div class="section-card" id="verdict">
+    <div class="section-header">
+      <div class="section-title">
+        <div class="section-icon" style="background:#faf5ff;">🎯</div>
+        适用场景推荐
+      </div>
+    </div>
+    <div class="recommend-grid">
+      <div class="recommend-card recommend-yes">
+        <h5>✅ 强烈推荐引入</h5>
+        <p>中小型 DevOps/SRE 团队，服务器规模 10-500 台，追求 AI 效率提升，多云环境以 SSH 管理为主，对成本敏感。</p>
+      </div>
+      <div class="recommend-card recommend-yes">
+        <h5>✅ 推荐配合使用</h5>
+        <p>已有传统堡垒机的企业，引入 Chaterm 作为"AI 智能层"叠加使用，不替换现有安全基础设施，渐进式引入 AI 能力。</p>
+      </div>
+      <div class="recommend-card recommend-maybe">
+        <h5>⚠️ 谨慎评估引入</h5>
+        <p>500+ 台主机的大规模集群，或金融/医疗等强监管行业，建议先做充分 POC（试点验证），并明确 LLM 私有化方案后再决策。</p>
+      </div>
+      <div class="recommend-card recommend-no">
+        <h5>❌ 暂不推荐单独使用</h5>
+        <p>对终端渲染性能要求极致的场景（如实时日志分析）、需要完整云资源生命周期管理（扩缩容、账单、监控告警）的场景，Chaterm 无法覆盖。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- VERDICT BOX -->
+  <div class="verdict-box">
+    <h3>🏆 综合评估结论</h3>
+    <p>
+      Chaterm 是目前市面上 <strong>AI 能力最强的开源终端工具之一</strong>，在多云 SSH 接入管理、AI 自主运维、安全审计方面表现突出，并以极具竞争力的价格提供企业级功能。对于正在构建多云运维体系的团队，Chaterm 值得重点关注和引入评估。
+    </p>
+    <p>
+      核心建议：<strong>以 Professional 版本（$99/人/年）启动试点</strong>，重点验证 AI Agent 在贵司多云环境的实际效率收益，同时明确 LLM 私有化部署方案以规避数据隐私风险。6 个月试点后根据反馈决定是否升级至 Enterprise 版本或规模化推广。
+    </p>
+    <div class="verdict-tags">
+      <span class="verdict-tag">综合评分 80/100</span>
+      <span class="verdict-tag">多云适配 75/100</span>
+      <span class="verdict-tag">安全性 80/100</span>
+      <span class="verdict-tag">成本价值 89/100</span>
+      <span class="verdict-tag">推荐：试点引入</span>
+    </div>
+  </div>
+
+  <!-- COMPETITORS -->
+  <div class="section">
+    <div class="section-header">
+      <h2 id="competitors">📊 竞品全景对比</h2>
+      <p>当前 AI 原生 SSH 终端赛道仍处于快速演进期，Chaterm 面临多类竞争对手的差异化竞争。以下从定位、定价、功能矩阵、多云能力四个维度展开横向对比。</p>
+    </div>
+
+    <!-- Competitor Overview Cards -->
+    <div class="competitor-grid">
+      <div class="comp-card comp-chaterm">
+        <div class="comp-badge comp-chaterm-badge">被评估</div>
+        <div class="comp-name">Chaterm</div>
+        <div class="comp-desc">AI Agent 跨平台云资源智能管理终端</div>
+        <div class="comp-tags">
+          <span>开源</span><span>SSH/RDP/VNC</span><span>AI Agent</span><span>知识库</span>
+        </div>
+        <div class="comp-price">社区免费 · Pro ¥298/年 · 商业 ¥998/人/年</div>
+      </div>
+      <div class="comp-card comp-warp">
+        <div class="comp-badge comp-warp-badge">核心竞品</div>
+        <div class="comp-name">Warp</div>
+        <div class="comp-desc">AI-First 现代化终端，Block 命令 + Agent 自动化</div>
+        <div class="comp-tags">
+          <span>闭源</span><span>macOS/Linux/Win</span><span>Agent</span><span>SOC 2</span>
+        </div>
+        <div class="comp-price">Free · Build $18/月 · Business $45/用户/月</div>
+      </div>
+      <div class="comp-card comp-ishell">
+        <div class="comp-badge comp-ishell-badge">直接竞品</div>
+        <div class="comp-name">iShellPro</div>
+        <div class="comp-desc">全协议终端管理平台，六合一协议覆盖</div>
+        <div class="comp-tags">
+          <span>闭源</span><span>SSH/RDP/VNC/SFTP</span><span>AI 辅助</span><span>10万+用户</span>
+        </div>
+        <div class="comp-price">基础免费 · 年费 ¥99/年 · 终身 ¥258</div>
+      </div>
+      <div class="comp-card comp-xterm">
+        <div class="comp-badge comp-other-badge">轻量竞品</div>
+        <div class="comp-name">Xterminal</div>
+        <div class="comp-desc">跨平台 SSH 工具，轻量化 + AI 命令提示</div>
+        <div class="comp-tags">
+          <span>开源</span><span>SSH</span><span>AI 提示</span><span>云同步</span>
+        </div>
+        <div class="comp-price">基础免费 · Pro ¥59/年 · 永久 ¥220</div>
+      </div>
+      <div class="comp-card comp-final">
+        <div class="comp-badge comp-other-badge">传统替代</div>
+        <div class="comp-name">FinalShell</div>
+        <div class="comp-desc">国产 SSH 工具，功能全面，资源监控内置</div>
+        <div class="comp-tags">
+          <span>免费</span><span>SSH/RDP</span><span>资源监控</span><span>文件管理</span>
+        </div>
+        <div class="comp-price">免费（含高级版功能）</div>
+      </div>
+      <div class="comp-card comp-bastion">
+        <div class="comp-badge comp-bastion-badge">替代方案</div>
+        <div class="comp-name">阿里云堡垒机</div>
+        <div class="comp-desc">企业级运维安全管控，权限 + 审计 + 合规</div>
+        <div class="comp-tags">
+          <span>闭源</span><span>SSH/RDP/VNC</span><span>RBAC</span><span>等保合规</span>
+        </div>
+        <div class="comp-price">开发者版 ¥360/年 · 轻量 ¥8,400/年 · 企业 ¥31,200/年</div>
+      </div>
+    </div>
+
+    <!-- Pricing Comparison Table -->
+    <div class="subsection-title">💰 定价横向对比（以 10 人团队/年计算）</div>
+    <div class="table-wrapper">
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th>产品</th>
+            <th>免费门槛</th>
+            <th>团队版定价</th>
+            <th>10人/年总费用</th>
+            <th>费用类型</th>
+            <th>AI 功能</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="highlight-row">
+            <td><strong>Chaterm</strong></td>
+            <td>社区版功能完整</td>
+            <td>¥998/人/年</td>
+            <td class="price-green"><strong>¥9,980/年</strong></td>
+            <td>按人头订阅</td>
+            <td>✅ Agent + 知识库</td>
+          </tr>
+          <tr>
+            <td>Warp Business</td>
+            <td>有限 AI 积分</td>
+            <td>$45/用户/月</td>
+            <td class="price-yellow">~$5,130/年</td>
+            <td>按人头订阅</td>
+            <td>✅ Agent + 前沿模型</td>
+          </tr>
+          <tr>
+            <td>iShellPro</td>
+            <td>基础版永久免费</td>
+            <td>¥99/人/年</td>
+            <td class="price-green">¥990/年</td>
+            <td>按人头订阅</td>
+            <td>⚠️ AI 辅助（Tokens 限制）</td>
+          </tr>
+          <tr>
+            <td>Xterminal</td>
+            <td>基础版完全免费</td>
+            <td>¥59/人/年</td>
+            <td class="price-green">¥590/年</td>
+            <td>按人头订阅</td>
+            <td>⚠️ AI 命令提示（轻量）</td>
+          </tr>
+          <tr>
+            <td>FinalShell</td>
+            <td>完全免费</td>
+            <td>免费</td>
+            <td class="price-green">¥0/年</td>
+            <td>免费</td>
+            <td>❌ 无 AI 功能</td>
+          </tr>
+          <tr>
+            <td>阿里云堡垒机（轻量）</td>
+            <td>—</td>
+            <td>¥8,400/年</td>
+            <td class="price-yellow">¥8,400/年</td>
+            <td>实例制</td>
+            <td>❌ 无 AI 功能</td>
+          </tr>
+          <tr>
+            <td>阿里云堡垒机（基础）</td>
+            <td>—</td>
+            <td>¥18,240/年</td>
+            <td class="price-red">¥18,240/年</td>
+            <td>实例制</td>
+            <td>❌ 无 AI 功能</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-note">💡 Warp 按 $1=¥7.3 汇率换算；Chaterm 商业版 ¥998/人/年按 10 人起购计算；阿里云堡垒机按实例计费不按人头</div>
+
+    <!-- Multi-dimension Comparison -->
+    <div class="subsection-title">🎯 多维度决策矩阵（5分制）</div>
+    <div class="table-wrapper">
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th>评估维度</th>
+            <th>Chaterm</th>
+            <th>Warp</th>
+            <th>iShellPro</th>
+            <th>Xterminal</th>
+            <th>FinalShell</th>
+            <th>堡垒机</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>AI Agent 能力</td>
+            <td class="score-5">⭐ 5</td>
+            <td class="score-4">⭐ 4</td>
+            <td class="score-3">⭐ 3</td>
+            <td class="score-2">⭐ 2</td>
+            <td class="score-1">⭐ 1</td>
+            <td class="score-0">—</td>
+          </tr>
+          <tr>
+            <td>多云 SSH 统一管理</td>
+            <td class="score-5">⭐ 5</td>
+            <td class="score-3">⭐ 3</td>
+            <td class="score-4">⭐ 4</td>
+            <td class="score-3">⭐ 3</td>
+            <td class="score-4">⭐ 4</td>
+            <td class="score-4">⭐ 4</td>
+          </tr>
+          <tr>
+            <td>多协议支持</td>
+            <td class="score-4">⭐ 4</td>
+            <td class="score-2">⭐ 2</td>
+            <td class="score-5">⭐ 5</td>
+            <td class="score-2">⭐ 2</td>
+            <td class="score-4">⭐ 4</td>
+            <td class="score-5">⭐ 5</td>
+          </tr>
+          <tr>
+            <td>企业安全合规（RBAC/审计）</td>
+            <td class="score-4">⭐ 4</td>
+            <td class="score-3">⭐ 3</td>
+            <td class="score-3">⭐ 3</td>
+            <td class="score-2">⭐ 2</td>
+            <td class="score-2">⭐ 2</td>
+            <td class="score-5">⭐ 5</td>
+          </tr>
+          <tr>
+            <td>知识库 / 上下文管理</td>
+            <td class="score-5">⭐ 5</td>
+            <td class="score-3">⭐ 3</td>
+            <td class="score-2">⭐ 2</td>
+            <td class="score-1">⭐ 1</td>
+            <td class="score-0">—</td>
+            <td class="score-0">—</td>
+          </tr>
+          <tr>
+            <td>多云资源生命周期管理</td>
+            <td class="score-3">⭐ 3</td>
+            <td class="score-2">⭐ 2</td>
+            <td class="score-3">⭐ 3</td>
+            <td class="score-2">⭐ 2</td>
+            <td class="score-2">⭐ 2</td>
+            <td class="score-4">⭐ 4</td>
+          </tr>
+          <tr>
+            <td>本地部署 / 数据自主</td>
+            <td class="score-4">⭐ 4</td>
+            <td class="score-2">⭐ 2</td>
+            <td class="score-3">⭐ 3</td>
+            <td class="score-4">⭐ 4</td>
+            <td class="score-5">⭐ 5</td>
+            <td class="score-5">⭐ 5</td>
+          </tr>
+          <tr>
+            <td>价格性价比</td>
+            <td class="score-5">⭐ 5</td>
+            <td class="score-3">⭐ 3</td>
+            <td class="score-5">⭐ 5</td>
+            <td class="score-5">⭐ 5</td>
+            <td class="score-5">⭐ 5</td>
+            <td class="score-1">⭐ 1</td>
+          </tr>
+          <tr>
+            <td>产品成熟度</td>
+            <td class="score-3">⭐ 3</td>
+            <td class="score-4">⭐ 4</td>
+            <td class="score-4">⭐ 4</td>
+            <td class="score-3">⭐ 3</td>
+            <td class="score-4">⭐ 4</td>
+            <td class="score-5">⭐ 5</td>
+          </tr>
+          <tr class="total-row">
+            <td><strong>加权总分</strong></td>
+            <td class="total-chaterm"><strong>38/45</strong></td>
+            <td class="total-warp"><strong>26/45</strong></td>
+            <td class="total-ishell"><strong>30/45</strong></td>
+            <td class="total-xterm"><strong>24/45</strong></td>
+            <td class="total-final"><strong>28/45</strong></td>
+            <td class="total-bastion"><strong>29/45</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-note">注：5分制，— 表示该产品无此功能或该维度不适用；加权总分仅供参考，不同场景权重不同，实际决策需结合自身场景重新赋权</div>
+
+    <!-- Decision Matrix -->
+    <div class="subsection-title">🗺️ 决策场景对照表</div>
+    <div class="scene-grid">
+      <div class="scene-card">
+        <div class="scene-icon">🏢</div>
+        <div class="scene-title">10-50人 DevOps/SRE 团队</div>
+        <div class="scene-match">
+          <div class="match-item"><span class="match-tag tag-recommend">首选 Chaterm 商业版</span> 10人起购，¥9,980/年，均摊 ¥998/人，多云 SSH + AI Agent + 零信任一步到位</div>
+          <div class="match-item"><span class="match-tag tag-alternative">备选 iShellPro</span> ¥990/年，协议全但 AI 深度不足，适合预算优先场景</div>
+        </div>
+      </div>
+      <div class="scene-card">
+        <div class="scene-icon">👨‍💻</div>
+        <div class="scene-title">个人开发者 / 独立 SRE</div>
+        <div class="scene-match">
+          <div class="match-item"><span class="match-tag tag-recommend">首选 Chaterm 社区版</span> 完全免费，AI Agent + 知识库全部可用，满足个人多云管理需求</div>
+          <div class="match-item"><span class="match-tag tag-alternative">备选 Xterminal / FinalShell</span> 两者均免费，功能完整，无 AI 需求时性价比更高</div>
+        </div>
+      </div>
+      <div class="scene-card">
+        <div class="scene-icon">🏦</div>
+        <div class="scene-title">金融 / 医疗强合规行业</div>
+        <div class="scene-match">
+          <div class="match-item"><span class="match-tag tag-recommend">首选堡垒机 + Chaterm 组合</span> 堡垒机负责合规审计（¥18,240+/年），Chaterm 负责 AI 提效，数据不外流</div>
+          <div class="match-item"><span class="match-tag tag-alternative">Chaterm Enterprise</span> ¥998/人/年，含本地 LLM 支持，需自建基础设施</div>
+        </div>
+      </div>
+      <div class="scene-card">
+        <div class="scene-icon">🚀</div>
+        <div class="scene-title">初创公司 / 快速扩张期</div>
+        <div class="scene-match">
+          <div class="match-item"><span class="match-tag tag-recommend">首选 Chaterm Pro（¥298/年）</span> 单人成本最低，AI Agent 能力最强，快速验证多云运维提效价值</div>
+          <div class="match-item"><span class="match-tag tag-alternative">后期升级商业版</span> 团队扩张至10人后平滑升级，无需换工具</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pros/Cons Summary -->
+    <div class="subsection-title">⚖️ Chaterm vs 各竞品优劣速览</div>
+    <div class="pros-cons-grid">
+      <div class="pros-card">
+        <div class="pros-title">✅ Chaterm 优势</div>
+        <ul>
+          <li><strong>AI Agent 最强</strong>：多轮对话 + 自动执行 + 知识库引用，综合 AI 能力领先所有竞品</li>
+          <li><strong>多云 SSH 统一入口</strong>：跨 AWS/Azure/阿里云/腾讯云统一管理，堡垒机无法做到</li>
+          <li><strong>价格性价比突出</strong>：¥998/人/年含企业安全，远低于商业堡垒机 ¥18,240+/年</li>
+          <li><strong>开源可控</strong>：代码透明，数据流向可审计，支持本地 LLM 部署</li>
+          <li><strong>知识库差异化</strong>：运维 SOP、系统架构文档内置，Agent 上下文理解能力独树一帜</li>
+        </ul>
+      </div>
+      <div class="cons-card">
+        <div class="cons-title">⚠️ Chaterm 劣势 / 注意事项</div>
+        <ul>
+          <li><strong>产品成熟度不足</strong>：v0.10.x，仍在快速迭代，生产环境需保留传统工具作 Fallback</li>
+          <li><strong>非 CMP 定位</strong>：无法管理云资源生命周期（扩缩容/账单/监控告警），与堡垒机不重叠</li>
+          <li><strong>Electron 性能瓶颈</strong>：启动速度和内存占用不及 FinalShell/Warp 原生应用</li>
+          <li><strong>LLM 数据隐私</strong>：云端 LLM 使用时命令上下文可能上传，需评估私有化方案</li>
+          <li><strong>多协议弱于 iShellPro</strong>：不含 RDP/VNC 原生支持，混合协议场景需搭配其他工具</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Final Comparison Verdict -->
+    <div class="comp-verdict">
+      <div class="comp-verdict-icon">🏆</div>
+      <div class="comp-verdict-text">
+        <strong>竞品格局总结：</strong>在 AI 原生 SSH 终端赛道中，Chaterm 以<strong>最强的 AI Agent 能力 + 最低的多云接入门槛</strong>形成差异化突围。
+        对比纯工具类产品（FinalShell/Xterminal）多了 AI 智能，对比堡垒机多了 AI 提效且成本更低，对比 Warp 则在多云管理场景上更为专注。
+        最适合<strong>多云环境的 DevOps/SRE 团队</strong>作为 AI 时代的运维入口工具。
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <p>📄 本报告基于 Chaterm 官方文档、GitHub 开源信息及社区评测整理 · 评估日期：2026年4月16日</p>
+  <p style="margin-top:4px;">报告仅供参考，建议结合实际业务场景进行 POC 验证 · 数据来源：chaterm.cn / chaterm.ai / github.com/chaterm/chaterm</p>
+</div>
+
+</body>
+</html>
