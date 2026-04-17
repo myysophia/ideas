@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paseo 工作原理 — 交互式课程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --color-bg: #FAF7F2; --color-bg-warm: #F5F0E8; --color-bg-code: #1E1E2E;
+  --color-text: #2C2A28; --color-text-secondary: #6B6560; --color-text-muted: #9E9790;
+  --color-border: #E5DFD6; --color-border-light: #EEEBE5; --color-surface: #FFFFFF; --color-surface-warm: #FDF9F3;
+  --color-accent: #D94F30; --color-accent-hover: #C4432A; --color-accent-light: #FDEEE9; --color-accent-muted: #E8836C;
+  --color-success: #2D8B55; --color-success-light: #E8F5EE;
+  --color-error: #C93B3B; --color-error-light: #FDE8E8;
+  --color-info: #2A7B9B; --color-info-light: #E4F2F7;
+  --color-actor-1: #D94F30; --color-actor-2: #2A7B9B; --color-actor-3: #7B6DAA; --color-actor-4: #D4A843; --color-actor-5: #2D8B55;
+  --font-display: 'Bricolage Grotesque', Georgia, serif;
+  --font-body: 'DM Sans', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --text-xs: .75rem; --text-sm: .875rem; --text-base: 1rem; --text-lg: 1.125rem; --text-xl: 1.25rem; --text-2xl: 1.5rem; --text-3xl: 1.875rem; --text-4xl: 2.25rem; --text-5xl: 3rem; --text-6xl: 3.75rem;
+  --leading-tight: 1.15; --leading-snug: 1.3; --leading-normal: 1.6; --leading-loose: 1.8;
+  --space-1: .25rem; --space-2: .5rem; --space-3: .75rem; --space-4: 1rem; --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem; --space-12: 3rem; --space-16: 4rem; --space-20: 5rem;
+  --content-width: 800px; --content-width-wide: 1000px; --nav-height: 50px;
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px rgba(44,42,40,.05); --shadow-md: 0 4px 12px rgba(44,42,40,.08); --shadow-lg: 0 8px 24px rgba(44,42,40,.1); --shadow-xl: 0 16px 48px rgba(44,42,40,.12);
+  --ease-out: cubic-bezier(.16,1,.3,1); --ease-in-out: cubic-bezier(.65,0,.35,1);
+  --duration-fast: 150ms; --duration-normal: 300ms; --duration-slow: 500ms; --stagger-delay: 120ms;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-snap-type:y proximity;scroll-behavior:smooth}
+body{background:var(--color-bg);background-image:radial-gradient(ellipse at 20% 50%,rgba(217,79,48,.03) 0%,transparent 50%);color:var(--color-text);font-family:var(--font-body);line-height:var(--leading-normal);-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--font-display);line-height:var(--leading-snug)}
+pre,code{white-space:pre-wrap;word-break:break-word;overflow-x:hidden}
+pre::-webkit-scrollbar,.translation-code::-webkit-scrollbar{display:none}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--color-border);border-radius:var(--radius-full)}
+
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;height:var(--nav-height);background:rgba(250,247,242,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--color-border-light)}
+.progress-bar{position:absolute;top:0;left:0;height:3px;background:var(--color-accent);transition:width .1s linear;width:0}
+.nav-inner{max-width:var(--content-width-wide);margin:0 auto;height:100%;display:flex;align-items:center;justify-content:space-between;padding:0 var(--space-6)}
+.nav-title{font-family:var(--font-display);font-weight:700;font-size:var(--text-sm);color:var(--color-accent)}
+.nav-dots{display:flex;gap:6px}
+.nav-dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--color-text-muted);background:transparent;cursor:pointer;transition:all var(--duration-normal);padding:0}
+.nav-dot:hover{border-color:var(--color-accent-muted)}
+.nav-dot.active{border-color:var(--color-accent);background:var(--color-accent);box-shadow:0 0 8px rgba(217,79,48,.3)}
+.nav-dot.visited{background:var(--color-accent);border-color:var(--color-accent)}
+
+/* MODULES */
+.module{min-height:100dvh;scroll-snap-align:start;padding:var(--space-16) var(--space-6);padding-top:calc(var(--nav-height) + var(--space-12))}
+.module-content{max-width:var(--content-width);margin:0 auto}
+.module-header{margin-bottom:var(--space-12)}
+.module-number{display:block;font-family:var(--font-display);font-size:var(--text-6xl);font-weight:800;color:var(--color-accent);opacity:.15;line-height:1;margin-bottom:var(--space-2)}
+.module-title{font-size:var(--text-4xl);font-weight:700;margin-bottom:var(--space-3)}
+.module-subtitle{font-size:var(--text-lg);color:var(--color-text-secondary)}
+.screen{margin-bottom:var(--space-12)}
+.screen-heading{font-size:var(--text-xl);font-weight:600;margin-bottom:var(--space-6)}
+.screen p{max-width:var(--content-width)}
+
+/* ANIMATIONS */
+.animate-in{opacity:0;transform:translateY(20px);transition:opacity var(--duration-slow) var(--ease-out),transform var(--duration-slow) var(--ease-out)}
+.animate-in.visible{opacity:1;transform:translateY(0)}
+.stagger-children>.animate-in{transition-delay:calc(var(--stagger-index,0)*var(--stagger-delay))}
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes typingBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+
+/* TRANSLATION BLOCK */
+.translation-block{display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-md);margin:var(--space-8) 0}
+.translation-code{background:var(--color-bg-code);color:#CDD6F4;padding:var(--space-6);font-family:var(--font-mono);font-size:var(--text-sm);line-height:1.7;position:relative;overflow-x:hidden}
+.translation-code pre,.translation-code code{white-space:pre-wrap;word-break:break-word;overflow-x:hidden}
+.translation-english{background:var(--color-surface-warm);padding:var(--space-6);font-size:var(--text-sm);line-height:1.7;border-left:3px solid var(--color-accent)}
+.translation-label{position:absolute;top:var(--space-2);right:var(--space-3);font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.1em;opacity:.5}
+.translation-english .translation-label{color:var(--color-text-muted);position:static;margin-bottom:var(--space-3)}
+.tl{margin-bottom:var(--space-2)}
+
+/* SYNTAX */
+.code-keyword{color:#CBA6F7}.code-string{color:#A6E3A1}.code-function{color:#89B4FA}.code-comment{color:#6C7086}.code-number{color:#FAB387}.code-property{color:#F9E2AF}.code-operator{color:#94E2D5}.code-tag{color:#F38BA8}
+
+/* PATTERN CARDS */
+.pattern-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-4)}
+.pattern-card{background:var(--color-surface);border-radius:var(--radius-md);padding:var(--space-6);box-shadow:var(--shadow-sm);transition:transform var(--duration-normal) var(--ease-out),box-shadow var(--duration-normal)}
+.pattern-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md)}
+.pattern-icon{width:44px;height:44px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:var(--space-3)}
+.pattern-title{font-family:var(--font-display);font-weight:600;font-size:var(--text-base);margin-bottom:var(--space-2)}
+.pattern-desc{color:var(--color-text-secondary);font-size:var(--text-sm);line-height:var(--leading-normal)}
+
+/* CALLOUT */
+.callout{display:flex;gap:var(--space-4);padding:var(--space-5) var(--space-6);border-radius:var(--radius-md);margin:var(--space-8) 0}
+.callout-accent{background:var(--color-accent-light);border-left:4px solid var(--color-accent)}
+.callout-info{background:var(--color-info-light);border-left:4px solid var(--color-info)}
+.callout-icon{font-size:1.5rem;flex-shrink:0}
+.callout-title{font-family:var(--font-display);font-weight:600;font-size:var(--text-base);margin-bottom:var(--space-1)}
+.callout-content p{font-size:var(--text-sm);color:var(--color-text-secondary)}
+
+/* CHAT */
+.chat-window{background:var(--color-surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);overflow:hidden;max-width:560px;margin:var(--space-8) 0}
+.chat-header{padding:var(--space-3) var(--space-5);background:var(--color-bg-code);color:#CDD6F4;font-family:var(--font-display);font-weight:600;font-size:var(--text-sm);text-align:center}
+.chat-messages{padding:var(--space-5);min-height:280px;display:flex;flex-direction:column;gap:var(--space-3)}
+.chat-message{display:none;align-items:flex-start;gap:var(--space-3);animation:fadeSlideUp .3s var(--ease-out)}
+.chat-avatar{width:36px;height:36px;border-radius:50%;color:white;font-family:var(--font-display);font-weight:700;font-size:var(--text-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chat-bubble{background:var(--color-bg-warm);border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);max-width:80%}
+.chat-sender{display:block;font-family:var(--font-display);font-weight:600;font-size:var(--text-xs);margin-bottom:2px}
+.chat-bubble p{font-size:var(--text-sm);line-height:var(--leading-normal)}
+.chat-typing{display:none;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-5)}
+.typing-dot{width:8px;height:8px;border-radius:50%;background:var(--color-text-muted);animation:typingBounce 1.4s infinite}
+.typing-dot:nth-child(2){animation-delay:.2s}.typing-dot:nth-child(3){animation-delay:.4s}
+.chat-controls{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-top:1px solid var(--color-border-light)}
+.chat-controls button{font-family:var(--font-body);font-size:var(--text-sm);padding:var(--space-2) var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface);cursor:pointer;transition:all var(--duration-fast)}
+.chat-controls button:hover{border-color:var(--color-accent);background:var(--color-accent-light)}
+.chat-progress{margin-left:auto;font-size:var(--text-xs);color:var(--color-text-muted)}
+
+/* FLOW ANIMATION */
+.flow-animation{background:var(--color-surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);padding:var(--space-8);margin:var(--space-8) 0;text-align:center}
+.flow-actors{display:flex;justify-content:center;align-items:center;gap:var(--space-6);margin-bottom:var(--space-8);flex-wrap:wrap}
+.flow-actor{display:flex;flex-direction:column;align-items:center;gap:var(--space-2);transition:all var(--duration-normal) var(--ease-out)}
+.flow-actor.active{transform:scale(1.08)}
+.flow-actor-icon{width:56px;height:56px;border-radius:50%;color:white;font-family:var(--font-display);font-weight:700;font-size:var(--text-xl);display:flex;align-items:center;justify-content:center;transition:box-shadow var(--duration-normal)}
+.flow-actor.active .flow-actor-icon{box-shadow:0 0 0 3px var(--color-accent),0 0 20px rgba(217,79,48,.2)}
+.flow-actor span{font-size:var(--text-sm);font-weight:500}
+.flow-arrow-char{font-size:var(--text-2xl);color:var(--color-text-muted)}
+.flow-step-label{min-height:48px;font-size:var(--text-base);color:var(--color-text-secondary);display:flex;align-items:center;justify-content:center;margin-bottom:var(--space-6)}
+.flow-controls{display:flex;align-items:center;justify-content:center;gap:var(--space-3)}
+.flow-controls button{font-family:var(--font-body);font-size:var(--text-sm);padding:var(--space-2) var(--space-5);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface);cursor:pointer;transition:all var(--duration-fast)}
+.flow-controls button:hover{border-color:var(--color-accent);background:var(--color-accent-light)}
+.flow-progress{font-size:var(--text-xs);color:var(--color-text-muted)}
+
+/* QUIZ */
+.quiz-container{margin:var(--space-8) 0}
+.quiz-question-block{margin-bottom:var(--space-6)}
+.quiz-question{font-family:var(--font-display);font-weight:600;font-size:var(--text-lg);margin-bottom:var(--space-4)}
+.quiz-options{display:flex;flex-direction:column;gap:var(--space-3)}
+.quiz-option{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border:2px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface);cursor:pointer;width:100%;transition:border-color var(--duration-fast),background var(--duration-fast);font-family:var(--font-body);font-size:var(--text-sm);text-align:left;color:var(--color-text)}
+.quiz-option:hover{border-color:var(--color-accent-muted)}
+.quiz-option.selected{border-color:var(--color-accent);background:var(--color-accent-light)}
+.quiz-option.correct{border-color:var(--color-success);background:var(--color-success-light)}
+.quiz-option.incorrect{border-color:var(--color-error);background:var(--color-error-light)}
+.quiz-option:disabled{cursor:default;opacity:.9}
+.quiz-option-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--color-border);transition:all var(--duration-fast);flex-shrink:0}
+.quiz-option.selected .quiz-option-radio{border-color:var(--color-accent);background:var(--color-accent);box-shadow:inset 0 0 0 3px white}
+.quiz-feedback{max-height:0;overflow:hidden;opacity:0;transition:max-height var(--duration-normal),opacity var(--duration-normal);font-size:var(--text-sm);border-radius:var(--radius-sm);margin-top:var(--space-2)}
+.quiz-feedback.show{max-height:200px;opacity:1;padding:var(--space-3)}
+.quiz-feedback.success{background:var(--color-success-light);color:var(--color-success)}
+.quiz-feedback.error{background:var(--color-error-light);color:var(--color-error)}
+.quiz-check-btn,.quiz-reset-btn{font-family:var(--font-body);font-size:var(--text-sm);padding:var(--space-2) var(--space-5);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface);cursor:pointer;transition:all var(--duration-fast);margin-right:var(--space-2)}
+.quiz-check-btn:hover,.quiz-reset-btn:hover{border-color:var(--color-accent);background:var(--color-accent-light)}
+
+/* FILE TREE */
+.file-tree{font-family:var(--font-mono);font-size:var(--text-sm);background:var(--color-surface);border-radius:var(--radius-md);padding:var(--space-5);box-shadow:var(--shadow-sm);margin:var(--space-8) 0}
+.ft-folder,.ft-file{padding:var(--space-2) var(--space-3);border-left:2px solid var(--color-border-light);margin-left:var(--space-4)}
+.ft-folder>.ft-name{color:var(--color-accent);font-weight:600}.ft-folder>.ft-name::before{content:'📁 '}
+.ft-file>.ft-name{color:var(--color-text-secondary)}.ft-file>.ft-name::before{content:'📄 '}
+.ft-desc{color:var(--color-text-secondary);font-family:var(--font-body);margin-left:var(--space-2);font-size:var(--text-xs)}
+.ft-children{margin-left:var(--space-4)}
+
+/* STEP CARDS */
+.step-cards{display:flex;flex-direction:column;gap:var(--space-3)}
+.step-card{display:flex;align-items:flex-start;gap:var(--space-4);padding:var(--space-4) var(--space-5);background:var(--color-surface);border-radius:var(--radius-md);border-left:3px solid var(--color-accent);box-shadow:var(--shadow-sm)}
+.step-num{width:32px;height:32px;border-radius:50%;background:var(--color-accent);color:white;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);flex-shrink:0}
+.step-body p{margin:var(--space-1) 0 0;color:var(--color-text-secondary);font-size:var(--text-sm)}
+
+/* ICON ROWS */
+.icon-rows{display:flex;flex-direction:column;gap:var(--space-4)}
+.icon-row{display:flex;align-items:center;gap:var(--space-4);padding:var(--space-4);background:var(--color-surface);border-radius:var(--radius-md);box-shadow:var(--shadow-sm)}
+.icon-row p{margin:0;color:var(--color-text-secondary);font-size:var(--text-sm)}
+.icon-circle{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0}
+
+/* GLOSSARY TOOLTIPS */
+.term{border-bottom:1.5px dashed var(--color-accent-muted);cursor:pointer;position:relative}
+.term:hover,.term.active{border-bottom-color:var(--color-accent);color:var(--color-accent)}
+.term-tooltip{position:fixed;background:var(--color-bg-code);color:#CDD6F4;padding:var(--space-3) var(--space-4);border-radius:var(--radius-sm);font-size:var(--text-sm);font-family:var(--font-body);line-height:var(--leading-normal);width:max(200px,min(320px,80vw));box-shadow:var(--shadow-lg);pointer-events:none;opacity:0;transition:opacity var(--duration-fast);z-index:10000}
+.term-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--color-bg-code)}
+.term-tooltip.visible{opacity:1}
+.term-tooltip.flip{top:auto}.term-tooltip.flip::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:var(--color-bg-code)}
+
+/* RESPONSIVE */
+@media(max-width:768px){:root{--text-4xl:1.875rem;--text-5xl:2.25rem;--text-6xl:3rem}.translation-block{grid-template-columns:1fr}.translation-english{border-left:none;border-top:3px solid var(--color-accent)}.pattern-cards{grid-template-columns:1fr 1fr}.flow-actors{gap:var(--space-4)}}
+@media(max-width:480px){:root{--text-4xl:1.5rem;--text-5xl:1.875rem;--text-6xl:2.25rem}.module{padding:var(--space-8) var(--space-4)}.pattern-cards{grid-template-columns:1fr}.flow-actors{flex-direction:column}.flow-arrow-char{transform:rotate(90deg)}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="progress-bar" id="progress-bar"></div>
+  <div class="nav-inner">
+    <span class="nav-title">Paseo 工作原理</span>
+    <div class="nav-dots" id="nav-dots">
+      <button class="nav-dot active" data-target="module-1" aria-label="Module 1"></button>
+      <button class="nav-dot" data-target="module-2" aria-label="Module 2"></button>
+      <button class="nav-dot" data-target="module-3" aria-label="Module 3"></button>
+      <button class="nav-dot" data-target="module-4" aria-label="Module 4"></button>
+      <button class="nav-dot" data-target="module-5" aria-label="Module 5"></button>
+      <button class="nav-dot" data-target="module-6" aria-label="Module 6"></button>
+    </div>
+  </div>
+</nav>
+
+<!-- ======================== MODULE 1: What is Paseo? ======================== -->
+<section class="module" id="module-1" style="background:var(--color-bg)">
+<div class="module-content">
+  <header class="module-header animate-in">
+    <span class="module-number">01</span>
+    <h1 class="module-title">Paseo 是什么？</h1>
+    <p class="module-subtitle">把开发环境装进口袋 — 点下"运行"后到底发生了什么</p>
+  </header>
+
+  <div class="module-body">
+    <section class="screen animate-in">
+      <h2 class="screen-heading">一句话介绍</h2>
+      <p>Paseo 让你从手机、终端或桌面监控和操控运行在机器上的 AI 编程助手。你的代码永远不会离开你的机器。它是<span class="term" data-definition="Local-first（本地优先）意味着软件完全运行在你自己的电脑上，而不是别人的服务器上。你的数据始终留在本地。">本地优先</span>的。</p>
+      <div class="pattern-cards stagger-children animate-in" style="margin-top:var(--space-8)">
+        <div class="pattern-card animate-in" style="border-top:3px solid var(--color-actor-1)">
+          <div class="pattern-icon" style="background:var(--color-actor-1)">📱</div>
+          <h4 class="pattern-title">移动端 App</h4>
+          <p class="pattern-desc">随时随地实时查看 Agent 运行状态 — 公交上、咖啡厅、沙发上。</p>
+        </div>
+        <div class="pattern-card animate-in" style="border-top:3px solid var(--color-actor-2)">
+          <div class="pattern-icon" style="background:var(--color-actor-2)">⌨️</div>
+          <h4 class="pattern-title">CLI</h4>
+          <p class="pattern-desc">类似 Docker 的终端命令，用于创建、列出和等待 Agent。</p>
+        </div>
+        <div class="pattern-card animate-in" style="border-top:3px solid var(--color-actor-3)">
+          <div class="pattern-icon" style="background:var(--color-actor-3)">🖥️</div>
+          <h4 class="pattern-title">桌面端</h4>
+          <p class="pattern-desc">Electron 封装，内置守护进程 — 一键启动。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen animate-in">
+      <h2 class="screen-heading">Agent 都是谁？</h2>
+      <p>Paseo 本身不运行 AI。它<span class="term" data-definition="管理（manage）在这里的意思是：控制、监控和协调。Paseo 不自己写代码或做决策，而是指挥其他 AI 工具干活。">管理</em></span>你已经使用的 AI 编程工具 — 把它想象成 AI Agent 的万能遥控器。</p>
+      <div class="icon-rows stagger-children" style="margin-top:var(--space-8)">
+        <div class="icon-row animate-in">
+          <div class="icon-circle" style="background:var(--color-actor-1)">C</div>
+          <div><strong>Claude Code</strong><p>Anthropic 的 Agent SDK — 调用 Claude 模型，在终端中运行</p></div>
+        </div>
+        <div class="icon-row animate-in">
+          <div class="icon-circle" style="background:var(--color-actor-2)">C</div>
+          <div><strong>Codex</strong><p>OpenAI 的编程 Agent — 作为独立的服务进程运行</p></div>
+        </div>
+        <div class="icon-row animate-in">
+          <div class="icon-circle" style="background:var(--color-actor-3)">O</div>
+          <div><strong>OpenCode</strong><p>开源 AI 编程 Agent — 轻量级、基于命令行</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen animate-in">
+      <h2 class="screen-heading">全局视野</h2>
+      <div class="callout callout-accent">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">为什么要关心这个？</strong>
+          <p>Paseo 是一个教科书级别的<span class="term" data-definition="客户端-服务器架构把工作分成两部分：'服务器'负责管理资源（像餐厅后厨），'客户端'负责展示结果给用户（像餐厅前厅）。后厨和前厅不需要在同一台机器上。">客户端-服务器系统</span>，具备实时流式传输。理解它的工作原理，你就学到了 Slack、Discord 以及每个实时更新仪表盘都在使用的架构模式。</p>
+        </div>
+      </div>
+      <div class="file-tree animate-in">
+        <div class="ft-folder open"><span class="ft-name">packages/</span><span class="ft-desc">整个系统，组织为 monorepo</span>
+          <div class="ft-children">
+            <div class="ft-folder"><span class="ft-name">server/</span><span class="ft-desc">守护进程 — 管理 Agent 进程，流式输出</span></div>
+            <div class="ft-folder"><span class="ft-name">app/</span><span class="ft-desc">移动端 + Web 客户端（Expo / React Native）</span></div>
+            <div class="ft-folder"><span class="ft-name">cli/</span><span class="ft-desc">类似 Docker 的终端命令</span></div>
+            <div class="ft-folder"><span class="ft-name">relay/</span><span class="ft-desc">加密隧道，用于远程访问</span></div>
+            <div class="ft-folder"><span class="ft-name">desktop/</span><span class="ft-desc">Electron 封装 — 内置守护进程</span></div>
+            <div class="ft-folder"><span class="ft-name">website/</span><span class="ft-desc">官网 paseo.sh</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUIZ 1 -->
+    <section class="screen animate-in" id="quiz-1">
+      <h2 class="screen-heading">快速测验</h2>
+      <div class="quiz-container">
+        <div class="quiz-question-block" data-question="q1" data-correct="option-b">
+          <h3 class="quiz-question">你在手机上想看 AI Agent 正在做什么。Paseo 的哪个包负责移动端 UI？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>packages/cli — 它负责所有用户界面</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>packages/app — 它是跨平台客户端（Expo）</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>packages/server — 守护进程提供移动端 UI</span></button>
+          </div>
+          <div class="quiz-feedback" id="q1-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-question="q2" data-correct="option-a">
+          <h3 class="quiz-question">朋友说："我想做一个 App，让用户从手机控制后台进程。"他应该研究 Paseo 的什么模式？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>客户端-服务器 + WebSocket 流式传输模式</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>monorepo 包组织模式</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Electron 子进程管理模式</span></button>
+          </div>
+          <div class="quiz-feedback" id="q2-feedback"></div>
+        </div>
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-1')">查看答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-1')">重试</button>
+      </div>
+    </section>
+  </div>
+</div>
+</section>
+
+<!-- ======================== MODULE 2: Meet the Cast ======================== -->
+<section class="module" id="module-2" style="background:var(--color-bg-warm)">
+<div class="module-content">
+  <header class="module-header animate-in">
+    <span class="module-number">02</span>
+    <h1 class="module-title">认识主角团</h1>
+    <p class="module-subtitle">六个包各自的角色 — 像一支劫案团队，各有专长</p>
+  </header>
+
+  <div class="module-body">
+    <section class="screen animate-in">
+      <h2 class="screen-heading">守护进程 (packages/server)</h2>
+      <p>守护进程是 Paseo 的大脑。把它想象成<span class="term" data-definition="守护进程（daemon，发音 DEE-muhn）是一个在后台持续运行的进程，就像一个永远不离开大楼的保安。在 Mac/Linux 上，守护进程由系统启动，即使你关闭了终端窗口也继续运行。">守护进程</span> — 它始终在线，监控着你的 Agent。它监听 <span class="term" data-definition="WebSocket 是两台电脑之间保持开放的通信通道，就像一个双方都不挂断的电话。与普通网页请求（像寄信等回复）不同，WebSocket 让任何一方都能随时发送消息。">WebSocket</span> 连接、生成 Agent 进程，并实时流式输出结果。</p>
+
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">CODE</span>
+          <pre><code><span class="code-keyword">const</span> beginShutdown = (<span class="code-property">signal</span>: <span class="code-keyword">string</span>) => {
+  <span class="code-keyword">if</span> (!shutdownPromise) {
+    logger.<span class="code-function">info</span>(<span class="code-string">`${signal} received, shutting down...`</span>);
+    shutdownPromise = (<span class="code-keyword">async</span> () => {
+      <span class="code-keyword">const</span> forceExit = <span class="code-function">setTimeout</span>(() => {
+        logger.<span class="code-function">warn</span>(<span class="code-string">"Forcing shutdown — didn't close in time"</span>);
+        process.<span class="code-function">exit</span>(<span class="code-number">1</span>);
+      }, <span class="code-number">10000</span>);
+      <span class="code-keyword">await</span> daemon.<span class="code-function">stop</span>();
+      <span class="code-function">clearTimeout</span>(forceExit);
+    })();
+  }
+};</code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">中文解释</span>
+          <div class="translation-lines">
+            <p class="tl">当操作系统发送"停止"信号（比如 Ctrl+C）时...</p>
+            <p class="tl">确保只处理一次关闭，即使收到多个信号也不重复...</p>
+            <p class="tl">设置 10 秒定时器 — 如果清理超时，强制退出...</p>
+            <p class="tl">优雅地停止守护进程，然后取消强制退出定时器。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-accent">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">强制退出模式</strong>
+          <p>"带超时的优雅关闭"模式在生产软件中无处不在。就像搬家合同："我给你 10 分钟打包，到时间卡车就开走。"这能防止进程永远挂着不退出。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen animate-in">
+      <h2 class="screen-heading">移动端 App (packages/app)</h2>
+      <p>移动端 App 使用 <span class="term" data-definition="Expo 是一个框架，可以用同一套代码库构建 iPhone、Android 和 Web 应用。底层使用 React Native —— 意味着你写 JavaScript/TypeScript，但获得原生移动端性能。">Expo</span>（<span class="term" data-definition="React Native 让你用 React（和网站相同的框架）来编写移动应用，但渲染的是真正的原生 iOS/Android 组件，而不是 HTML。一套代码，三个平台。">React Native</span>）。它通过 WebSocket 连接守护进程，使用 <span class="term" data-definition="xterm.js 是一个 Web 终端模拟器 —— 让网页看起来和行为像真正的终端。它驱动了 VS Code 浏览器版中的终端视图。">xterm.js</span> 渲染 Agent 输出。</p>
+
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">CODE</span>
+          <pre><code><span class="code-comment">// 直连 TCP</span>
+<span class="code-keyword">return new</span> <span class="code-function">DaemonClient</span>({
+  ...base,
+  url: <span class="code-function">buildDaemonWebSocketUrl</span>(connection.endpoint),
+});
+
+<span class="code-comment">// 中继连接（加密隧道）</span>
+<span class="code-keyword">return new</span> <span class="code-function">DaemonClient</span>({
+  ...base,
+  url: <span class="code-function">buildRelayWebSocketUrl</span>({
+    endpoint,
+    enabled: <span class="code-keyword">true</span>,
+    daemonPublicKeyB64: connection.daemonPublicKeyB64,
+  }),
+});</code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">中文解释</span>
+          <div class="translation-lines">
+            <p class="tl">在同一网络时，直连守护进程的 WebSocket 地址...</p>
+            <p class="tl">远程时，通过加密中继隧道连接...</p>
+            <p class="tl">无论哪种方式，App 获得的都是同一个 DaemonClient — 传输层可互换。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen animate-in">
+      <h2 class="screen-heading">其余成员</h2>
+      <div class="pattern-cards stagger-children animate-in">
+        <div class="pattern-card animate-in" style="border-top:3px solid var(--color-actor-4)">
+          <div class="pattern-icon" style="background:var(--color-actor-4)">⌨️</div>
+          <h4 class="pattern-title">CLI (packages/cli)</h4>
+          <p class="pattern-desc">Commander.js 命令：run、ls、logs、wait、daemon start/stop。与 App 使用相同的 WebSocket协议。</p>
+        </div>
+        <div class="pattern-card animate-in" style="border-top:3px solid var(--color-actor-5)">
+          <div class="pattern-icon" style="background:var(--color-actor-5)">🔐</div>
+          <h4 class="pattern-title">Relay (packages/relay)</h4>
+          <p class="pattern-desc">零知识加密桥梁。中继服务器只能看到加密后的字节流 — 无法读取你的数据。</p>
+        </div>
+        <div class="pattern-card animate-in" style="border-top:3px solid var(--color-actor-3)">
+          <div class="pattern-icon" style="background:var(--color-actor-3)">🖥️</div>
+          <h4 class="pattern-title">Desktop (packages/desktop)</h4>
+          <p class="pattern-desc">Electron 封装。将守护进程作为子进程启动，无需手动操作。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUIZ 2 -->
+    <section class="screen animate-in" id="quiz-2">
+      <h2 class="screen-heading">想一想</h2>
+      <div class="quiz-container">
+        <div class="quiz-question-block" data-question="q3" data-correct="option-c">
+          <h3 class="quiz-question">你想给 Paseo 加一个"深色模式"开关。需要修改哪个包？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>packages/server — 守护进程控制主题</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>packages/relay — 它远程提供 UI</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>packages/app — 它渲染用户看到的 UI</span></button>
+          </div>
+          <div class="quiz-feedback" id="q3-feedback"></div>
+        </div>
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-2')">查看答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-2')">重试</button>
+      </div>
+    </section>
+  </div>
+</div>
+</section>
+
+<!-- ======================== MODULE 3: Agent Lifecycle ======================== -->
+<section class="module" id="module-3" style="background:var(--color-bg)">
+<div class="module-content">
+  <header class="module-header animate-in">
+    <span class="module-number">03</span>
+    <h1 class="module-title">Agent 生命周期</h1>
+    <p class="module-subtitle">从"创建"到"空闲" — 管理 Agent 的状态机</p>
+  </header>
+
+  <div class="module-body">
+    <section class="screen animate-in">
+      <h2 class="screen-heading">四种状态</h2>
+      <p>Agent 就像一个可以在四种状态之间切换的工人。守护进程用<span class="term" data-definition="状态机是一种建模方式：某事物处于若干固定状态之一，并有明确的规则控制状态间的切换。就像红绿灯：绿 → 黄 → 红，永远不会直接从绿跳到红。">状态机</span>来追踪 — 这个概念从红绿灯到游戏角色无处不在。</p>
+      <div class="step-cards stagger-children animate-in">
+        <div class="step-card animate-in"><div class="step-num">1</div><div class="step-body"><strong>initializing（初始化）</strong><p>守护进程收到了你的请求，正在和 Provider 建立 Agent 会话。</p></div></div>
+        <div class="step-card animate-in"><div class="step-num">2</div><div class="step-body"><strong>idle（空闲）</strong><p>Agent 就绪，等待任务。就像出租车在站点等客。</p></div></div>
+        <div class="step-card animate-in"><div class="step-num">3</div><div class="step-body"><strong>running（运行中）</strong><p>Agent 正在工作 — 读取文件、编辑代码、运行命令。</p></div></div>
+        <div class="step-card animate-in"><div class="step-num">4</div><div class="step-body"><strong>error / closed（错误/关闭）</strong><p>出了问题，或者 Agent 完成任务后被关闭。</p></div></div>
+      </div>
+      <div class="callout callout-info">
+        <div class="callout-icon">🔄</div>
+        <div class="callout-content"><strong class="callout-title">循环</strong><p>运行结束后 → Agent 回到 idle（而不是关闭）。这就是循环：idle → running → idle。Agent 保持存活，等待你的下一条指令。就像私人助理完成一项任务后，等着下一项。</p></div>
+      </div>
+    </section>
+
+    <section class="screen animate-in">
+      <h2 class="screen-heading">创建 Agent — 代码解读</h2>
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">CODE</span>
+          <pre><code><span class="code-keyword">async</span> <span class="code-function">createAgent</span>(
+  config: AgentSessionConfig,
+  agentId?: <span class="code-keyword">string</span>,
+): Promise&lt;ManagedAgent&gt; {
+  <span class="code-keyword">const</span> injectedConfig = <span class="code-keyword">this</span>.mcpBaseUrl == <span class="code-keyword">null</span>
+    ? config
+    : {
+        ...config,
+        mcpServers: {
+          paseo: {
+            type: <span class="code-string">"http"</span> <span class="code-keyword">as const</span>,
+            url: <span class="code-string">`${<span class="code-keyword">this</span>.mcpBaseUrl}?callerAgentId=${resolvedAgentId}`</span>,
+          },
+          ...(config.mcpServers ?? {}),
+        },
+      };
+  <span class="code-keyword">const</span> session = <span class="code-keyword">await</span> client.<span class="code-function">createSession</span>(injectedConfig);
+  <span class="code-keyword">return</span> <span class="code-keyword">this</span>.<span class="code-function">registerSession</span>(session, injectedConfig, resolvedAgentId);
+}</code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">中文解释</span>
+          <div class="translation-lines">
+            <p class="tl">如果配置了 MCP 服务器，就把它注入 Agent 的配置中，让 Agent 能和其他 Agent 通信...</p>
+            <p class="tl">让 Provider（Claude、Codex 等）用这个配置创建一个新会话...</p>
+            <p class="tl">在我们的追踪器中注册这个会话，以便监控它、流式输出并管理生命周期。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GROUP CHAT: Agent Lifecycle -->
+    <section class="screen animate-in">
+      <h2 class="screen-heading">幕后发生了什么（组件对话）</h2>
+      <p>当你创建一个 Agent 时，这些组件在幕后互相通信：</p>
+      <div class="chat-window">
+        <div class="chat-header">Agent 创建 — 幕后揭秘</div>
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-message" data-msg="0" data-sender="user" style="display:none">
+            <div class="chat-avatar" style="background:var(--color-actor-4)">U</div>
+            <div class="chat-bubble"><span class="chat-sender" style="color:var(--color-actor-4)">你（手机 App）</span><p>"守护进程，帮我创建一个 Agent，指令：修复登录 Bug"</p></div>
+          </div>
+          <div class="chat-message" data-msg="1" data-sender="daemon" style="display:none">
+            <div class="chat-avatar" style="background:var(--color-actor-1)">D</div>
+            <div class="chat-bubble"><span class="chat-sender" style="color:var(--color-actor-1)">守护进程</span><p>"收到。AgentManager，用这个配置创建一个新的 Claude 会话。"</p></div>
+          </div>
+          <div class="chat-message" data-msg="2" data-sender="manager" style="display:none">
+            <div class="chat-avatar" style="background:var(--color-actor-2)">M</div>
+            <div class="chat-bubble"><span class="chat-sender" style="color:var(--color-actor-2)">AgentManager</span><p>"状态设为 'initializing'... 正在调用 Claude Agent SDK 启动进程。"</p></div>
+          </div>
+          <div class="chat-message" data-msg="3" data-sender="claude" style="display:none">
+            <div class="chat-avatar" style="background:var(--color-actor-3)">C</div>
+            <div class="chat-bubble"><span class="chat-sender" style="color:var(--color-actor-3)">Claude Agent</span><p>"我活了！状态：running。正在读取登录代码... 📖"</p></div>
+          </div>
+          <div class="chat-message" data-msg="4" data-sender="daemon" style="display:none">
+            <div class="chat-avatar" style="background:var(--color-actor-1)">D</div>
+            <div class="chat-bubble"><span class="chat-sender" style="color:var(--color-actor-1)">守护进程</span><p>"正在将 Claude 的输出流式推送给所有已连接的客户端（手机、桌面、CLI）..."</p></div>
+          </div>
+        </div>
+        <div class="chat-typing" id="chat-typing">
+          <div class="chat-avatar" id="typing-avatar">?</div>
+          <div class="chat-typing-dots"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>
+        </div>
+        <div class="chat-controls">
+          <button onclick="playChatNext()">下一条</button>
+          <button onclick="playChatAll()">播放全部</button>
+          <button onclick="resetChat()">重放</button>
+          <span class="chat-progress" id="chat-progress">0 / 5 条消息</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUIZ 3 -->
+    <section class="screen animate-in" id="quiz-3">
+      <h2 class="screen-heading">想一想</h2>
+      <div class="quiz-container">
+        <div class="quiz-question-block" data-question="q4" data-correct="option-b">
+          <h3 class="quiz-question">你的 Agent 状态是 "running" 但已经 10 分钟没有输出了。你应该先排查哪里？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>packages/relay — 加密隧道可能在阻塞消息</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Agent Provider（Claude/Codex）— 可能卡在长时间操作或触发了 API 限制</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>packages/website — 官网可能挂了</span></button>
+          </div>
+          <div class="quiz-feedback" id="q4-feedback"></div>
+        </div>
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-3')">查看答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-3')">重试</button>
+      </div>
+    </section>
+  </div>
+</div>
+</section>
+
+<!-- ======================== MODULE 4: WebSocket Protocol ======================== -->
+<section class="module" id="module-4" style="background:var(--color-bg-warm)">
+<div class="module-content">
+  <header class="module-header animate-in">
+    <span class="module-number">04</span>
+    <h1 class="module-title">万物如何通信</h1>
+    <p class="module-subtitle">WebSocket 协议 — 一种语言，三个客户端</p>
+  </header>
+
+  <div class="module-body">
+    <section class="screen animate-in">
+      <h2 class="screen-heading">握手</h2>
+      <p>在实际工作开始之前，客户端和守护进程会先进行一次"握手" — 就像两人见面先交换名片再开始交谈。</p>
+
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">CODE</span>
+          <pre><code><span class="code-keyword">if</span> (message.type === <span class="code-string">"hello"</span>) {
+  <span class="code-keyword">this</span>.<span class="code-function">handleHello</span>({
+    ws,
+    message,
+    pending: pendingConnection,
+  });
+  <span class="code-keyword">return</span>;
+}
+
+<span class="code-keyword">if</span> (message.type === <span class="code-string">"ping"</span>) {
+  <span class="code-keyword">this</span>.<span class="code-function">sendToClient</span>(ws, { type: <span class="code-string">"pong"</span> });
+  <span class="code-keyword">return</span>;
+}</code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">中文解释</span>
+          <div class="translation-lines">
+            <p class="tl">如果是 "hello" 消息（首次联系），执行握手逻辑 — 验证版本、创建会话、返回 "welcome"...</p>
+            <p class="tl">如果是 "ping"（心跳检测），立即回复 "pong" — 证明连接仍然存活。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-accent">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">Ping/Pong：心跳检测</strong>
+          <p>每个 WebSocket 连接都会定期发送 ping。如果对方停止回复，你就知道连接断开了 — 就像打电话没人接。这就是 Paseo 如何知道在手机上显示"重新连接中..."的原理。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen animate-in">
+      <h2 class="screen-heading">二进制多路复用</h2>
+      <p>Paseo 在同一个连接上发送两种数据：控制消息（JSON）和终端数据（原始字节）。就像电视频道同时传输视频信号和字幕 — 同一根线，不同内容。</p>
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">CODE</span>
+          <pre><code><span class="code-keyword">export function</span> <span class="code-function">encodeTerminalStreamFrame</span>(input: {
+  opcode: TerminalStreamOpcode;
+  slot: <span class="code-keyword">number</span>;
+  payload?: Uint8Array;
+}): Uint8Array {
+  <span class="code-keyword">const</span> payload = input.payload ?? <span class="code-keyword">new</span> <span class="code-function">Uint8Array</span>(<span class="code-number">0</span>);
+  <span class="code-keyword">const</span> bytes = <span class="code-keyword">new</span> <span class="code-function">Uint8Array</span>(<span class="code-number">2</span> + payload.byteLength);
+  bytes[<span class="code-number">0</span>] = input.opcode;  <span class="code-comment">// What kind of data?</span>
+  bytes[<span class="code-number">1</span>] = input.slot;     <span class="code-comment">// Which terminal?</span>
+  bytes.<span class="code-function">set</span>(payload, <span class="code-number">2</span>); <span class="code-comment">// The actual data</span>
+  <span class="code-keyword">return</span> bytes;
+}</code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">中文解释</span>
+          <div class="translation-lines">
+            <p class="tl">每个二进制帧以 2 个字节的头部开始...</p>
+            <p class="tl">第一个字节：这是什么类型的数据？（输入、输出、调整大小...）</p>
+            <p class="tl">第二个字节：属于哪个终端槽位？（你可能同时有多个 Agent）</p>
+            <p class="tl">之后的所有内容：原始终端字节 — 就是你终端窗口里看到的东西。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DATA FLOW ANIMATION -->
+    <section class="screen animate-in">
+      <h2 class="screen-heading">消息流：从 Agent 到手机</h2>
+      <p>点击步骤，看一条消息如何从 Claude 的"大脑"传到你的手机屏幕：</p>
+      <div class="flow-animation">
+        <div class="flow-actors">
+          <div class="flow-actor" id="flow-claude"><div class="flow-actor-icon" style="background:var(--color-actor-3)">C</div><span>Claude Agent</span></div>
+          <div class="flow-arrow-char">→</div>
+          <div class="flow-actor" id="flow-daemon"><div class="flow-actor-icon" style="background:var(--color-actor-1)">D</div><span>Daemon</span></div>
+          <div class="flow-arrow-char">→</div>
+          <div class="flow-actor" id="flow-phone"><div class="flow-actor-icon" style="background:var(--color-actor-2)">📱</div><span>你的手机</span></div>
+        </div>
+        <div class="flow-step-label" id="flow-label">点击"下一步"追踪消息路径</div>
+        <div class="flow-controls">
+          <button onclick="flowNext()">下一步</button>
+          <button onclick="flowReset()">重新开始</button>
+          <span class="flow-progress" id="flow-progress">步骤 0 / 5</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUIZ 4 -->
+    <section class="screen animate-in" id="quiz-4">
+      <h2 class="screen-heading">想一想</h2>
+      <div class="quiz-container">
+        <div class="quiz-question-block" data-question="q5" data-correct="option-a">
+          <h3 class="quiz-question">你在做一个聊天 App。Web、iOS 和 Android 用户都需要实时看到消息。该用什么？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>WebSocket — 保持持久连接，支持实时流式推送</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>REST API + 轮询 — 每 5 秒问服务器一次有没有新消息</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>邮件 — 每条消息发一封邮件</span></button>
+          </div>
+          <div class="quiz-feedback" id="q5-feedback"></div>
+        </div>
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-4')">查看答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-4')">重试</button>
+      </div>
+    </section>
+  </div>
+</div>
+</section>
+
+<!-- ======================== MODULE 5: Running an Agent ======================== -->
+<section class="module" id="module-5" style="background:var(--color-bg)">
+<div class="module-content">
+  <header class="module-header animate-in">
+    <span class="module-number">05</span>
+    <h1 class="module-title">运行 Agent</h1>
+    <p class="module-subtitle">完整旅程：从手机点击到代码写入你的机器</p>
+  </header>
+
+  <div class="module-body">
+    <section class="screen animate-in">
+      <h2 class="screen-heading">七个步骤</h2>
+      <div class="step-cards stagger-children animate-in">
+        <div class="step-card animate-in"><div class="step-num">1</div><div class="step-body"><strong>你发送请求</strong><p>"修复登录 Bug" — 从手机、CLI 或桌面端。</p></div></div>
+        <div class="step-card animate-in"><div class="step-num">2</div><div class="step-body"><strong>会话路由到 AgentManager</strong><p>守护进程解包你的消息，告诉管理器创建/启动 Agent。</p></div></div>
+        <div class="step-card animate-in"><div class="step-num">3</div><div class="step-body"><strong>Provider 生成 Agent 进程</strong><p>Claude/Codex/OpenCode 作为真正的进程在你的机器上运行。</p></div></div>
+        <div class="step-card animate-in"><div class="step-num">4</div><div class="step-body"><strong>事件实时流式传输</strong><p>每个操作（读取文件、编辑代码、Shell 命令）都变成时间线事件。</p></div></div>
+        <div class="step-card animate-in"><div class="step-num">5</div><div class="step-body"><strong>工具调用被标准化</strong><p>不同 Provider 格式不同 — Paseo 将它们统一映射到一种通用格式。</p></div></div>
+        <div class="step-card animate-in"><div class="step-num">6</div><div class="step-body"><strong>权限请求发送给你</strong><p>如果 Agent 想执行危险操作，你的手机会弹出确认提示。</p></div></div>
+        <div class="step-card animate-in"><div class="step-num">7</div><div class="step-body"><strong>结果广播给所有客户端</strong><p>手机、桌面、CLI — 所有设备同时看到相同输出。</p></div></div>
+      </div>
+    </section>
+
+    <section class="screen animate-in">
+      <h2 class="screen-heading">权限请求 — 安全网</h2>
+      <p>当 Claude 想做可能有风险的事情（删除文件、运行 Shell 命令）时，它会征求你的许可。Paseo 通过守护进程将请求路由到你正在使用的客户端。</p>
+
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">CODE</span>
+          <pre><code><span class="code-keyword">export function</span> <span class="code-function">computeShouldNotifyClient</span>({
+  clientState,
+  allClientStates,
+  agentId,
+}): <span class="code-keyword">boolean</span> {
+  <span class="code-keyword">if</span> (<span class="code-function">hasActiveClientOnAgent</span>(allClientStates, agentId)) {
+    <span class="code-keyword">return false</span>;
+  }
+  <span class="code-keyword">if</span> (!clientState.isStale && clientState.appVisible) {
+    <span class="code-keyword">return true</span>;
+  }
+  <span class="code-keyword">if</span> (clientState.deviceType === <span class="code-string">"mobile"</span>) {
+    <span class="code-keyword">return</span> !<span class="code-function">hasActiveWebClient</span>(allClientStates);
+  }
+  <span class="code-keyword">return true</span>;
+}</code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">中文解释</span>
+          <div class="translation-lines">
+            <p class="tl">如果有人已经在其他屏幕上查看这个 Agent，就不要重复通知...</p>
+            <p class="tl">如果这个客户端的 App 正在打开且可见，直接通知...</p>
+            <p class="tl">在移动端，只有当没有 Web 客户端活跃时才发送通知（避免重复提醒）...</p>
+            <p class="tl">拿不准就通知 — 权限请求宁可多提醒，不可漏掉。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-accent">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">智能通知逻辑</strong>
+          <p>这是一个真实的生产问题：如何通知用户又不刷屏？Paseo 会先检查是否有其他客户端正在显示该 Agent、App 是否可见、是移动端还是 Web — 然后才决定是否发送通知。这种"先检查再通知"的模式，避免了手机、桌面和 Web 同时弹出同一条提醒的烦人场景。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUIZ 5 -->
+    <section class="screen animate-in" id="quiz-5">
+      <h2 class="screen-heading">想一想</h2>
+      <div class="quiz-container">
+        <div class="quiz-question-block" data-question="q6" data-correct="option-c">
+          <h3 class="quiz-question">你在咖啡厅，Agent 需要权限删除一个文件。你同时在手机和笔记本上打开了 Paseo。应该发生什么？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>两台设备都显示权限提示</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>两台都不显示 — Agent 自动决定</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>只有活跃客户端显示提示，避免重复通知</span></button>
+          </div>
+          <div class="quiz-feedback" id="q6-feedback"></div>
+        </div>
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-5')">查看答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-5')">重试</button>
+      </div>
+    </section>
+  </div>
+</div>
+</section>
+
+<!-- ======================== MODULE 6: Remote Access & Encryption ======================== -->
+<section class="module" id="module-6" style="background:var(--color-bg-warm)">
+<div class="module-content">
+  <header class="module-header animate-in">
+    <span class="module-number">06</span>
+    <h1 class="module-title">远程访问与加密</h1>
+    <p class="module-subtitle">Paseo 如何让你从任何地方控制 Agent — 无需打开防火墙</p>
+  </header>
+
+  <div class="module-body">
+    <section class="screen animate-in">
+      <h2 class="screen-heading">中继难题</h2>
+      <p>你的守护进程运行在家里的电脑上。你的手机在咖啡厅。你家网络有防火墙。它们怎么通信？</p>
+      <p>答案：<span class="term" data-definition="中继服务器是一个中间人，负责在两个无法直接通信的双方之间转发消息。就像邮政转递服务 — 邮件先寄到中继地址，中继再转到你的真实地址。">中继服务器</span> — 一个你的守护进程和手机都能访问的公共中间人。但你怎么信任中继服务器不偷看你的数据？</p>
+      <p>你不需要信任它。这就是巧妙之处：<strong>端到端加密</strong>。中继只能看到乱码。</p>
+    </section>
+
+    <section class="screen animate-in">
+      <h2 class="screen-heading">加密之舞</h2>
+      <p>想象两个间谍在酒店大堂接头。他们素未谋面，但需要共享一个秘密。方法是 — 使用一种叫做<span class="term" data-definition="ECDH（椭圆曲线 Diffie-Hellman）是一个数学技巧，让两个人在不发送秘密本身的情况下达成一个共享密钥。就像调色：各选一个秘密颜色，公开混合后得到相同的混合色 — 但没人能从混合色猜出你的原始颜色。">ECDH 密钥交换</span>的技术。</p>
+
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">CODE</span>
+          <pre><code><span class="code-keyword">export function</span> <span class="code-function">encrypt</span>(
+  sharedKey: SharedKey,
+  data: <span class="code-keyword">string</span> | ArrayBuffer,
+): ArrayBuffer {
+  <span class="code-keyword">const</span> nonce = nacl.<span class="code-function">randomBytes</span>(NONCE_LENGTH);
+  <span class="code-keyword">const</span> plaintext = <span class="code-function">toUint8</span>(data);
+  <span class="code-keyword">const</span> ciphertext = nacl.box.<span class="code-function">after</span>(
+    plaintext, nonce, sharedKey
+  );
+  <span class="code-keyword">const</span> out = <span class="code-keyword">new</span> <span class="code-function">Uint8Array</span>(
+    nonce.byteLength + ciphertext.byteLength
+  );
+  out.<span class="code-function">set</span>(nonce, <span class="code-number">0</span>);
+  out.<span class="code-function">set</span>(ciphertext, nonce.byteLength);
+  <span class="code-keyword">return</span> <span class="code-function">toArrayBuffer</span>(out);
+}</code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">中文解释</span>
+          <div class="translation-lines">
+            <p class="tl">生成随机 "nonce" — 一个一次性随机数，防止重放攻击（就像每封信上的唯一时间戳）...</p>
+            <p class="tl">将数据转为原始字节...</p>
+            <p class="tl">用共享密钥和 nonce 加密 — 魔法就在这里。XSalsa20-Poly1305 是加密算法...</p>
+            <p class="tl">打包：[nonce（24 字节）] + [加密数据]。nonce 随消息一起发送，接收方用它解密。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen animate-in">
+      <h2 class="screen-heading">配对：扫码时刻</h2>
+      <p>加密最难的部分是：对方怎么拿到你的公钥？Paseo 用二维码解决这个问题。你扫描守护进程终端输出的二维码到手机上。</p>
+      <div class="callout callout-info">
+        <div class="callout-icon">🔐</div>
+        <div class="callout-content">
+          <strong class="callout-title">零知识中继</strong>
+          <p>中继服务器是<em>零知识</em>的。它在守护进程和手机之间转发加密字节，但无法解密。中继没有共享密钥 — 只有你的守护进程和手机有。即使中继服务器被攻破，你的数据也是安全的。Signal 和 WhatsApp 用的是同一个原理。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen animate-in">
+      <h2 class="screen-heading">握手过程</h2>
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">CODE</span>
+          <pre><code><span class="code-keyword">export async function</span> <span class="code-function">createClientChannel</span>(
+  transport: Transport,
+  daemonPublicKeyB64: <span class="code-keyword">string</span>,
+): Promise&lt;EncryptedChannel&gt; {
+  <span class="code-keyword">const</span> keyPair = <span class="code-function">generateKeyPair</span>();
+  <span class="code-keyword">const</span> daemonPubKey = <span class="code-function">importPublicKey</span>(daemonPublicKeyB64);
+  <span class="code-keyword">const</span> sharedKey = <span class="code-function">deriveSharedKey</span>(
+    keyPair.secretKey, daemonPubKey
+  );
+  <span class="code-keyword">const</span> channel = <span class="code-keyword">new</span> <span class="code-function">EncryptedChannel</span>(transport, sharedKey);
+  <span class="code-keyword">const</span> hello: E2EEHelloMessage = {
+    type: <span class="code-string">"e2ee_hello"</span>,
+    key: <span class="code-function">exportPublicKey</span>(keyPair.publicKey),
+  };
+  transport.<span class="code-function">send</span>(JSON.<span class="code-function">stringify</span>(hello));
+  <span class="code-keyword">return</span> channel;
+}</code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">中文解释</span>
+          <div class="translation-lines">
+            <p class="tl">为这次连接生成一个全新的密钥对...</p>
+            <p class="tl">加载守护进程的公钥（从二维码获取的）...</p>
+            <p class="tl">数学魔法：你的私钥 + 对方的公钥 → 只有你们俩知道的共享密钥...</p>
+            <p class="tl">用这个共享密钥创建加密通道...</p>
+            <p class="tl">把你的公钥发给守护进程，让它推导出相同的共享密钥...</p>
+            <p class="tl">完成！现在所有消息都加密了。中继无法读取。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUIZ 6 -->
+    <section class="screen animate-in" id="quiz-6">
+      <h2 class="screen-heading">想一想</h2>
+      <div class="quiz-container">
+        <div class="quiz-question-block" data-question="q7" data-correct="option-b">
+          <h3 class="quiz-question">有人入侵了 Paseo 中继服务器。他们能看到什么？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>所有内容 — Agent 输出、代码、命令都以明文呈现</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>只有加密字节 — 可以转发但无法读取</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>只有元数据（谁连上了、什么时候），看不到实际内容</span></button>
+          </div>
+          <div class="quiz-feedback" id="q7-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-question="q8" data-correct="option-a">
+          <h3 class="quiz-question">你在做一个即时通讯 App。安全专家说："用户应该能验证服务器无法读取他们的消息。"你应该推荐什么加密方案？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>端到端加密 — 只有发送方和接收方持有解密密钥</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>HTTPS 加密（TLS）— 客户端和服务器之间</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>在数据库中加密存储消息</span></button>
+          </div>
+          <div class="quiz-feedback" id="q8-feedback"></div>
+        </div>
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-6')">查看答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-6')">重试</button>
+      </div>
+    </section>
+
+    <section class="screen animate-in">
+      <h2 class="screen-heading">你学到了什么</h2>
+      <div class="callout callout-accent">
+        <div class="callout-icon">🎯</div>
+        <div class="callout-content">
+          <strong class="callout-title">核心收获</strong>
+          <p>Paseo 展示了几乎每个生产系统都会用到的六个模式：<br><br>
+          <strong>客户端-服务器架构</strong> — 中央管理器（守护进程）服务多个 UI<br>
+          <strong>WebSocket 流式传输</strong> — 实时数据推送给所有已连接的客户端<br>
+          <strong>状态机</strong> — 安全地管理生命周期转换<br>
+          <strong>二进制多路复用</strong> — 在一个连接上传输多种数据类型<br>
+          <strong>智能通知路由</strong> — 在多设备间避免重复通知<br>
+          <strong>端到端加密</strong> — 信任通道而不信任中间人</p>
+        </div>
+      </div>
+      <p style="margin-top:var(--space-8);color:var(--color-text-secondary);font-size:var(--text-sm)">现在你可以阅读 Paseo 的源代码，也有足够的词汇来指导 AI 编程工具构建类似的系统。当你说"用 WebSocket 做实时流式传输"或"加 ECDH 密钥交换实现端到端加密"时，你会清楚地知道自己要什么 — 以及在结果中应该检查什么。</p>
+    </section>
+  </div>
+</div>
+</section>
+
+<script>
+(function() {
+  // === SCROLL REVEAL ===
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { rootMargin: '0px 0px -10% 0px', threshold: 0.1 });
+  document.querySelectorAll('.animate-in').forEach(el => observer.observe(el));
+
+  // Stagger children
+  document.querySelectorAll('.stagger-children').forEach(parent => {
+    Array.from(parent.children).forEach((child, i) => {
+      child.style.setProperty('--stagger-index', i);
+    });
+  });
+
+  // === PROGRESS BAR ===
+  const progressBar = document.getElementById('progress-bar');
+  function updateProgressBar() {
+    const scrollTop = window.scrollY;
+    const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = (scrollTop / scrollHeight) * 100;
+    progressBar.style.width = progress + '%';
+  }
+  window.addEventListener('scroll', () => { requestAnimationFrame(updateProgressBar); }, { passive: true });
+
+  // === NAV DOTS ===
+  const modules = document.querySelectorAll('.module');
+  const dots = document.querySelectorAll('.nav-dot');
+  const moduleObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        dots.forEach(d => d.classList.remove('active'));
+        const dot = document.querySelector(`.nav-dot[data-target="${entry.target.id}"]`);
+        if (dot) dot.classList.add('active');
+        // Mark previous dots as visited
+        const allDots = Array.from(dots);
+        const idx = allDots.indexOf(dot);
+        allDots.forEach((d, i) => { if (i < idx) d.classList.add('visited'); });
+      }
+    });
+  }, { threshold: 0.3 });
+  modules.forEach(m => moduleObserver.observe(m));
+
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      const target = document.getElementById(dot.dataset.target);
+      if (target) target.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+
+  // === KEYBOARD NAV ===
+  document.addEventListener('keydown', (e) => {
+    if (['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
+    const currentDot = document.querySelector('.nav-dot.active');
+    const allDots = Array.from(dots);
+    const idx = allDots.indexOf(currentDot);
+    if ((e.key === 'ArrowDown' || e.key === 'ArrowRight') && idx < allDots.length - 1) {
+      allDots[idx + 1].click(); e.preventDefault();
+    }
+    if ((e.key === 'ArrowUp' || e.key === 'ArrowLeft') && idx > 0) {
+      allDots[idx - 1].click(); e.preventDefault();
+    }
+  });
+
+  // === QUIZ ===
+  const explanations = {
+    q1: { true: '没错！app 包包含跨平台 UI。CLI 和 server 负责的是其他事情。', false: 'CLI 是终端命令，server 是守护进程 — 它们都不渲染移动端 UI。' },
+    q2: { true: '说对了。客户端-服务器 + WebSocket 模式才是核心架构思想。monorepo 结构只是组织方式。', false: 'monorepo 确实有用，但真正可复用的模式是守护进程和客户端之间的通信方式。' },
+    q3: { true: '正确！深色模式是 UI 问题，所以在 packages/app 里实现。服务器不管主题。', false: '守护进程管理的是 Agent，不是外观。中继处理的是加密隧道。' },
+    q4: { true: '排查思路很好！Provider 才是真正运行 AI Agent 的 — 如果卡住了，先查它。', false: '中继只在远程访问时使用。如果你在本机，中继根本不参与。' },
+    q5: { true: '完全正确！WebSocket 保持持久连接，服务器可以即时推送新消息，无需客户端反复请求。', false: '轮询能用但慢且浪费。WebSocket 才是实时聊天的标准。' },
+    q6: { true: '答对了！Paseo 的智能通知逻辑避免了同一提示同时发到多个设备。', false: '重复通知会很烦人。Paseo 专门做了防重复处理。' },
+    q7: { true: '没错！这就是零知识中继的魔力 — 它只能转发字节，无法解密。', false: '中继设计上就是零知识的。它永远拿不到共享加密密钥。' },
+    q8: { true: '说对了！端到端加密意味着服务器（中间人）无法读取消息 — 只有两端能解密。', false: 'TLS 只加密客户端和服务器之间的通信。服务器仍然能读消息。端到端加密意味着连服务器都读不了。' },
+  };
+
+  window.selectOption = function(btn) {
+    const block = btn.closest('.quiz-question-block');
+    block.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+    btn.classList.add('selected');
+  };
+
+  window.checkQuiz = function(sectionId) {
+    const container = document.querySelector('#' + sectionId + ' .quiz-container');
+    const questions = container.querySelectorAll('.quiz-question-block');
+    questions.forEach(q => {
+      const selected = q.querySelector('.quiz-option.selected');
+      const feedback = q.querySelector('.quiz-feedback');
+      const correctValue = q.dataset.correct;
+      if (!selected) {
+        feedback.textContent = '先选一个答案！';
+        feedback.className = 'quiz-feedback show warning';
+        return;
+      }
+      const qId = q.dataset.question;
+      const isCorrect = selected.dataset.value === correctValue;
+      selected.classList.add(isCorrect ? 'correct' : 'incorrect');
+      if (!isCorrect) q.querySelector('[data-value="' + correctValue + '"]').classList.add('correct');
+      feedback.innerHTML = '<strong>' + (isCorrect ? '正确！' : '不太对。') + '</strong> ' + (explanations[qId]?.[isCorrect ? 'true' : 'false'] || '');
+      feedback.className = 'quiz-feedback show ' + (isCorrect ? 'success' : 'error');
+      q.querySelectorAll('.quiz-option').forEach(o => o.disabled = true);
+    });
+  };
+
+  window.resetQuiz = function(sectionId) {
+    const container = document.querySelector('#' + sectionId + ' .quiz-container');
+    container.querySelectorAll('.quiz-question-block').forEach(q => {
+      q.querySelectorAll('.quiz-option').forEach(o => { o.classList.remove('selected','correct','incorrect'); o.disabled = false; });
+      const feedback = q.querySelector('.quiz-feedback');
+      feedback.className = 'quiz-feedback';
+    });
+  };
+
+  // === CHAT ANIMATION ===
+  let chatIndex = 0;
+  const chatMessages = document.querySelectorAll('#chat-messages .chat-message');
+  const chatActors = { user: { initials: 'U', color: 'var(--color-actor-4)' }, daemon: { initials: 'D', color: 'var(--color-actor-1)' }, manager: { initials: 'M', color: 'var(--color-actor-2)' }, claude: { initials: 'C', color: 'var(--color-actor-3)' } };
+
+  window.playChatNext = function() {
+    if (chatIndex >= chatMessages.length) return;
+    const msg = chatMessages[chatIndex];
+    const sender = msg.dataset.sender;
+    const typing = document.getElementById('chat-typing');
+    const avatar = document.getElementById('typing-avatar');
+    avatar.textContent = chatActors[sender]?.initials || '?';
+    avatar.style.background = chatActors[sender]?.color || 'var(--color-text-muted)';
+    typing.style.display = 'flex';
+    setTimeout(() => {
+      typing.style.display = 'none';
+      msg.style.display = 'flex';
+      msg.style.animation = 'fadeSlideUp 0.3s var(--ease-out)';
+      chatIndex++;
+      document.getElementById('chat-progress').textContent = chatIndex + ' / ' + chatMessages.length + ' 条消息';
+    }, 800);
+  };
+
+  window.playChatAll = function() {
+    const interval = setInterval(() => { if (chatIndex >= chatMessages.length) { clearInterval(interval); return; } playChatNext(); }, 1200);
+  };
+
+  window.resetChat = function() {
+    chatIndex = 0;
+    chatMessages.forEach(m => m.style.display = 'none');
+    document.getElementById('chat-typing').style.display = 'none';
+    document.getElementById('chat-progress').textContent = '0 / ' + chatMessages.length + ' 条消息';
+  };
+
+  // === FLOW ANIMATION ===
+  const flowSteps = [
+    { highlight: 'claude', label: 'Claude 读取一个文件，并生成一条描述发现内容的时间线事件。' },
+    { highlight: 'daemon', label: 'AgentManager 收到事件，将其追加到 Agent 的时间线上。' },
+    { highlight: 'daemon', label: '守护进程将事件包装为 "session" WebSocket 消息并广播。' },
+    { highlight: 'phone', label: '你的手机收到消息，在 UI 中渲染文件读取结果。' },
+    { highlight: 'claude', label: '循环继续 — Claude 执行下一个操作，流程重复。' },
+  ];
+  let flowStep = 0;
+
+  window.flowNext = function() {
+    if (flowStep >= flowSteps.length) return;
+    const step = flowSteps[flowStep];
+    document.querySelectorAll('.flow-actor').forEach(a => a.classList.remove('active'));
+    document.getElementById('flow-' + step.highlight).classList.add('active');
+    document.getElementById('flow-label').textContent = step.label;
+    flowStep++;
+    document.getElementById('flow-progress').textContent = '步骤 ' + flowStep + ' / ' + flowSteps.length;
+  };
+
+  window.flowReset = function() {
+    flowStep = 0;
+    document.querySelectorAll('.flow-actor').forEach(a => a.classList.remove('active'));
+    document.getElementById('flow-label').textContent = '点击"下一步"追踪消息路径';
+    document.getElementById('flow-progress').textContent = '步骤 0 / ' + flowSteps.length;
+  };
+
+  // === GLOSSARY TOOLTIPS ===
+  let activeTooltip = null;
+  function positionTooltip(term, tip) {
+    const rect = term.getBoundingClientRect();
+    const tipWidth = 300;
+    let left = rect.left + rect.width / 2 - tipWidth / 2;
+    left = Math.max(8, Math.min(left, window.innerWidth - tipWidth - 8));
+    tip.style.left = left + 'px';
+    document.body.appendChild(tip);
+    const tipHeight = tip.offsetHeight;
+    if (rect.top - tipHeight - 8 < 0) {
+      tip.style.top = (rect.bottom + 8) + 'px';
+      tip.classList.add('flip');
+    } else {
+      tip.style.top = (rect.top - tipHeight - 8) + 'px';
+      tip.classList.remove('flip');
+    }
+  }
+  document.querySelectorAll('.term').forEach(term => {
+    const tip = document.createElement('span');
+    tip.className = 'term-tooltip';
+    tip.textContent = term.dataset.definition;
+    term.addEventListener('mouseenter', () => {
+      if (activeTooltip && activeTooltip !== tip) { activeTooltip.classList.remove('visible'); activeTooltip.remove(); }
+      positionTooltip(term, tip);
+      requestAnimationFrame(() => tip.classList.add('visible'));
+      activeTooltip = tip;
+    });
+    term.addEventListener('mouseleave', () => {
+      tip.classList.remove('visible');
+      setTimeout(() => { if (!tip.classList.contains('visible')) tip.remove(); }, 150);
+      activeTooltip = null;
+    });
+    term.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (activeTooltip && activeTooltip !== tip) { activeTooltip.classList.remove('visible'); activeTooltip.remove(); }
+      if (tip.classList.contains('visible')) { tip.classList.remove('visible'); tip.remove(); activeTooltip = null; }
+      else { positionTooltip(term, tip); requestAnimationFrame(() => tip.classList.add('visible')); activeTooltip = tip; }
+    });
+  });
+  document.addEventListener('click', () => {
+    if (activeTooltip) { activeTooltip.classList.remove('visible'); activeTooltip.remove(); activeTooltip = null; }
+  });
+})();
+</script>
+</body>
+</html>
