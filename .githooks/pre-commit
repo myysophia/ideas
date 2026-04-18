@@ -1,16 +1,14 @@
 #!/bin/bash
 #
 # pre-commit: Auto-fix missing <meta name="date"> and <link rel="icon">
-# in staged HTML presentation files before commit.
+# in staged HTML files before commit.
+#
+# Favicon is auto-generated from the file's <title> (first letter)
+# and accent color (--color-accent or --accent CSS variable).
 #
 
 TODAY=$(date +%Y-%m-%d)
 
-# Neutral default favicon: slate-600 rounded square with white asterisk
-DEFAULT_ICON="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23475569'/><text x='16' y='23' text-anchor='middle' font-size='18' font-weight='bold' fill='white' font-family='sans-serif'>*</text></svg>"
-
-# Get staged HTML files, excluding temporary directories
-# Use -z + tr to handle filenames with special characters (e.g. CJK)
 FILES=$(git diff --cached -z --name-only --diff-filter=ACM -- '*.html' \
     | tr '\0' '\n' \
     | grep -v '\.claude-design/' \
@@ -33,13 +31,53 @@ for file in $FILES; do
     fi
 
     INSERT=""
-    [ "$HAS_DATE" -eq 0 ] && INSERT="${INSERT}<meta name=\"date\" content=\"${TODAY}\">\n"
-    [ "$HAS_ICON" -eq 0 ] && INSERT="${INSERT}<link rel=\"icon\" href=\"${DEFAULT_ICON}\">\n"
+
+    # --- favicon ---
+    if [ "$HAS_ICON" -eq 0 ]; then
+        FAVICON=$(/usr/bin/python3 -c "
+import re
+with open('$file', encoding='utf-8') as f:
+    html = f.read()
+
+# Extract accent color
+m = re.search(r'--color-accent\s*:\s*(#[0-9a-fA-F]{3,8})', html) or \
+    re.search(r'--accent\s*:\s*(#[0-9a-fA-F]{3,8})', html)
+color = m.group(1) if m else ''
+
+# Fallback: directory-based color
+if not color:
+    import os
+    d = os.path.basename(os.path.dirname('$file'))
+    color = {'harness': '#2A7B9B', 'ping': '#2A7B9B', 'agent': '#c8430a'}.get(d, '#475569')
+
+# Extract first letter from title
+m = re.search(r'<title>(.*?)</title>', html)
+letter = ''
+if m:
+    t = m.group(1).strip()
+    if t:
+        letter = t[0]
+
+# Fallback: first letter of filename
+if not letter:
+    letter = os.path.splitext(os.path.basename('$file'))[0][0]
+
+color_enc = color.replace('#', '%23')
+print(f\"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='{color_enc}'/><text x='16' y='23' text-anchor='middle' font-size='18' font-weight='bold' fill='white' font-family='sans-serif'>{letter}</text></svg>\")
+" 2>/dev/null)
+
+        INSERT="${INSERT}<link rel=\"icon\" href=\"${FAVICON}\">\n"
+    fi
+
+    # --- date ---
+    if [ "$HAS_DATE" -eq 0 ]; then
+        INSERT="${INSERT}<meta name=\"date\" content=\"${TODAY}\">\n"
+    fi
 
     perl -i -pe "s|(</title>)|\1\n${INSERT}|" "$file"
 
-    [ "$HAS_DATE" -eq 0 ] && echo "  pre-commit: added <meta name=\"date\" content=\"${TODAY}\"> to ${file}"
     [ "$HAS_ICON" -eq 0 ] && echo "  pre-commit: added <link rel=\"icon\"> to ${file}"
+    [ "$HAS_DATE" -eq 0 ] && echo "  pre-commit: added <meta name=\"date\" content=\"${TODAY}\"> to ${file}"
 
     git add "$file"
     FIXED=$((FIXED + 1))
