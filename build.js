@@ -146,10 +146,16 @@ function processFile(filePath) {
         const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
         
         if (plaintext && plaintext.length > 0) {
-          document.getElementById('article-content').innerHTML = plaintext;
-          document.getElementById('article-content').style.display = 'block';
+          const container = document.getElementById('article-content');
+          container.innerHTML = plaintext;
+          container.style.display = 'block';
           document.getElementById('password-overlay').style.display = 'none';
           errorMsg.style.display = 'none';
+          container.querySelectorAll('script').forEach(function(s) {
+            var ns = document.createElement('script');
+            ns.textContent = s.textContent;
+            s.parentNode.replaceChild(ns, s);
+          });
         } else {
           errorMsg.style.display = 'block';
         }
@@ -157,7 +163,7 @@ function processFile(filePath) {
         errorMsg.style.display = 'block';
       }
     }
-    
+
     // 自动聚焦密码输入框
     document.getElementById('password-input').focus();
   </script>
