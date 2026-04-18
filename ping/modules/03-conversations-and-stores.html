@@ -1,0 +1,163 @@
+<section class="module" id="module-3">
+  <div class="module-content">
+    <header class="module-header">
+      <div class="module-number">03</div>
+      <h1 class="module-title">数据与 AWS 组件：为何不是一库到底</h1>
+      <p class="module-subtitle">这个平台选了 PostgreSQL、DynamoDB、Redis、S3、CloudFront、SQS 组合拳。看上去复杂，其实每一件都在解决一种不同的数据性格与流量压力。</p>
+    </header>
+
+    <div class="screen">
+      <h2 class="screen-heading">先别背服务名，先认数据性格</h2>
+      <p>最实用的架构眼光，不是记住 AWS 名词，而是先问：这份数据更像账本、流水、临时状态，还是大文件？问对这句，选型通常就八九不离十。</p>
+      <div class="pattern-cards animate-in">
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+          <div class="pattern-icon" style="background: var(--color-actor-1)">🧾</div>
+          <h4 class="pattern-title">Aurora PostgreSQL</h4>
+          <p class="pattern-desc">适合用户、租户、好友、群组、角色这类关系密、查询规则复杂、要事务一致的核心业务数据。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+          <div class="pattern-icon" style="background: var(--color-actor-2)">💬</div>
+          <h4 class="pattern-title"><span class="term" data-definition="DynamoDB 是 AWS 的托管 NoSQL 数据库，长于按键高速读写，尤其适合访问模式明确、吞吐量高的场景。">DynamoDB</span></h4>
+          <p class="pattern-desc">扛聊天正文这类高写入、按会话和时间翻页读取的数据，避免主库被海量消息拖慢。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-5)">
+          <div class="pattern-icon" style="background: var(--color-actor-5)">⚡</div>
+          <h4 class="pattern-title"><span class="term" data-definition="Redis 是以内存为主的高速键值存储，常用来做缓存、计数器、会话与在线状态。">Redis</span></h4>
+          <p class="pattern-desc">拿来装未读数、在线状态、缓存等“要快、可重算、可失效”的状态值。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-4)">
+          <div class="pattern-icon" style="background: var(--color-actor-4)">📦</div>
+          <h4 class="pattern-title">S3 + CloudFront</h4>
+          <p class="pattern-desc">文件不经业务服务中转，而是直传对象存储，再通过 <span class="term" data-definition="CloudFront 是 AWS 的 CDN，可分发公开内容，也能通过签名链接保护私有内容。">CloudFront</span> 或签名 URL 做下载与加速。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+          <div class="pattern-icon" style="background: var(--color-actor-3)">📮</div>
+          <h4 class="pattern-title"><span class="term" data-definition="SQS 是 AWS 的消息队列服务。它让“先接住请求”和“稍后慢慢处理”可以拆开。">SQS</span></h4>
+          <p class="pattern-desc">把异步任务从主请求链摘出来，用来削峰、解耦、重试与后台补账。</p>
+        </div>
+      </div>
+      <div class="callout callout-accent animate-in">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">选型不是“哪个更高级”，而是“哪种压力更适合谁”</strong>
+          <p>行业里常见的好架构，几乎都不是单库万能，而是把一致性、吞吐、延迟、成本分给不同组件去扛。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">真实代码：下载链路区分公开 URL 与签名 URL</h2>
+      <p>这段来自 `cloudfront-client.js`。它说明文件访问不是一刀切，而是按场景决定“直接公开”还是“临时签名后访问”。</p>
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">代码</span>
+          <pre><code>
+<span class="code-line"><span class="code-keyword">const</span> cloudfrontClient = isLocal</span>
+<span class="code-line">  ? {</span>
+<span class="code-line">      getSignedUrl: <span class="code-keyword">async</span> (objectKey, options = {}) =&gt; {</span>
+<span class="code-line">        <span class="code-keyword">return</span> <span class="code-keyword">await</span> s3Client.getPresignedUrl(</span>
+<span class="code-line">          process.env.S3_PRIVATE_BUCKET,</span>
+<span class="code-line">          objectKey,</span>
+<span class="code-line">          options</span>
+<span class="code-line">        );</span>
+<span class="code-line">      },</span>
+<span class="code-line">      getPublicUrl: (objectKey) =&gt; {</span>
+<span class="code-line">        <span class="code-keyword">const</span> endpoint = process.env.S3_ENDPOINT || <span class="code-string">"http://localhost:4566"</span>;</span>
+<span class="code-line">        <span class="code-keyword">const</span> bucket = process.env.S3_PUBLIC_BUCKET;</span>
+<span class="code-line">        <span class="code-keyword">return</span> <span class="code-string">`${endpoint}/${bucket}/assets/${objectKey}`</span>;</span>
+<span class="code-line">      },</span>
+<span class="code-line">    }</span>
+<span class="code-line">  : <span class="code-keyword">new</span> CloudFrontClientWrapper({</span>
+<span class="code-line">      region: process.env.AWS_REGION,</span>
+<span class="code-line">      distributionDomain: process.env.CLOUDFRONT_DOMAIN,</span>
+<span class="code-line">      keyPairId: process.env.CLOUDFRONT_KEY_PAIR_ID,</span>
+<span class="code-line">      privateKeyPath: process.env.CLOUDFRONT_PRIVATE_KEY_PATH,</span>
+<span class="code-line">    });</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">白话</span>
+          <div class="translation-lines">
+            <p class="tl">本地环境先走简化模式：私有文件直接生成预签名 S3 地址，公开文件拼一个公开 URL。</p>
+            <p class="tl">真正线上环境则交给 `CloudFrontClientWrapper`，说明文件访问已被当成正式能力来治理。</p>
+            <p class="tl">它要求区域、分发域名、密钥对 ID 与私钥路径，表示私有内容访问是带签名校验的。</p>
+            <p class="tl">这比“把所有文件都挂成公网地址”更稳，也比“每次都让业务服务器自己转发文件”更省资源。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">拖一拖：把数据交给更像它的服务</h2>
+      <p>这不是考试，而是训练你的架构直觉。以后你跟 AI 说“这块应该放哪”，说的就是这一层判断。</p>
+      <div class="dnd-container animate-in" id="dnd-module3">
+        <div class="dnd-chips">
+          <div class="dnd-chip" draggable="true" data-answer="pg">租户配置与角色权限</div>
+          <div class="dnd-chip" draggable="true" data-answer="ddb">聊天消息正文</div>
+          <div class="dnd-chip" draggable="true" data-answer="redis">在线状态与未读角标</div>
+          <div class="dnd-chip" draggable="true" data-answer="s3">图片、视频、附件原文件</div>
+          <div class="dnd-chip" draggable="true" data-answer="sqs">补发通知、异步修正、后台派生任务</div>
+        </div>
+        <div class="dnd-zones">
+          <div class="dnd-zone" data-correct="pg">
+            <p class="dnd-zone-label">结构稳定、关系复杂、需要事务一致</p>
+            <div class="dnd-zone-target">Drop here</div>
+          </div>
+          <div class="dnd-zone" data-correct="ddb">
+            <p class="dnd-zone-label">吞吐高、访问模式偏按键与时序</p>
+            <div class="dnd-zone-target">Drop here</div>
+          </div>
+          <div class="dnd-zone" data-correct="redis">
+            <p class="dnd-zone-label">极快读取、可重算、适合短期状态</p>
+            <div class="dnd-zone-target">Drop here</div>
+          </div>
+          <div class="dnd-zone" data-correct="s3">
+            <p class="dnd-zone-label">大对象、媒体文件、要和 CDN 配合</p>
+            <div class="dnd-zone-target">Drop here</div>
+          </div>
+          <div class="dnd-zone" data-correct="sqs">
+            <p class="dnd-zone-label">先接住事件，后续慢慢处理和重试</p>
+            <div class="dnd-zone-target">Drop here</div>
+          </div>
+        </div>
+        <button class="btn" onclick="checkDnD('dnd-module3')">检查匹配</button>
+        <button class="btn" onclick="resetDnD('dnd-module3')">重置</button>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">小测：你会怎样做 AWS 侧取舍</h2>
+      <div class="quiz-container" id="quiz-module3">
+        <div class="quiz-question-block" data-correct="option-b" data-explanation-right="对。对象文件直传存储层，再交 CDN 分发，是业界极常见的降压做法。" data-explanation-wrong="把大文件都经业务服务转发，最容易先把应用进程和带宽打满。">
+          <h3 class="quiz-question">如果用户大量上传视频，哪种做法更像这套架构的思路？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>让 Koa 把所有视频流完整中转，再落盘</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>业务服务签发临时上传凭证，客户端直传对象存储</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>把视频正文直接塞进 PostgreSQL 表字段</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-correct="option-c" data-explanation-right="正解。高频、可重算、极求速度的状态，更该走缓存层而不是主业务账本。" data-explanation-wrong="如果把这类值强行放主库，写放大和查询竞争会更明显。">
+          <h3 class="quiz-question">为什么“未读数”这类状态更适合 Redis，而不是只靠 PostgreSQL 现算？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为 Redis 会自动生成 ALB 路由</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为 Redis 能替代所有持久化数据库</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为它更适合极快读取与频繁变化的短期状态</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-correct="option-a" data-explanation-right="是的。SQS 的价值常在削峰解耦，让主链路先轻，再让后台补账。" data-explanation-wrong="如果主请求同步做尽所有收尾，一遇到高峰就更容易拖慢用户感知。">
+          <h3 class="quiz-question">系统为何把部分任务丢给 SQS，而不是每次请求同步做完所有收尾？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>为了把主请求链变轻，并让后台任务可重试、可削峰</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为 SQS 能自动生成聊天 UI</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为 PostgreSQL 不支持异步</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module3')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module3')">重做</button>
+      </div>
+    </div>
+  </div>
+</section>

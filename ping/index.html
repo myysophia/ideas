@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>拆开一套 IM 平台：App、Admin 与 AWS 架构交互课</title>
+<meta name="date" content="2026-04-18">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23475569'/><text x='16' y='23' text-anchor='middle' font-size='18' font-weight='bold' fill='white' font-family='sans-serif'>*</text></svg>">
+
+
+  <!-- Google Fonts: Bricolage Grotesque · DM Sans · JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+
+  <!--
+    CUSTOMIZE PER COURSE — change only the three accent variables below.
+    Options:
+      vermillion  #D94F30 / #C4432A / #FDEEE9 / #E8836C  (default)
+      coral       #E06B56 / #C85A47 / #FDECEA / #E89585
+      teal        #2A7B9B / #1F6280 / #E4F2F7 / #5A9DB8
+      amber       #D4A843 / #BF9530 / #FDF5E0 / #E0C070
+      forest      #2D8B55 / #226B41 / #E8F5EE / #5AAD7A
+  -->
+  <style>
+    :root {
+      --color-accent:       #2A7B9B;
+      --color-accent-hover: #1F6280;
+      --color-accent-light: #E4F2F7;
+      --color-accent-muted: #5A9DB8;
+    }
+  </style>
+
+  <script src="main.js" defer></script>
+</head>
+<body>
+
+  <nav class="nav" id="nav">
+    <div class="progress-bar" id="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    <div class="nav-inner">
+      <span class="nav-title">拆开一套 IM 平台：App、Admin 与 AWS 架构交互课</span>
+      <div class="nav-dots" id="nav-dots" role="tablist">
+        <!--
+          One <button> per module. Replace MODULE_N_NAME with the actual module title.
+
+          <button class="nav-dot" data-target="module-1" data-tooltip="MODULE_1_NAME" role="tab" aria-label="Module 1: MODULE_1_NAME"></button>
+          <button class="nav-dot" data-target="module-2" data-tooltip="MODULE_2_NAME" role="tab" aria-label="Module 2: MODULE_2_NAME"></button>
+          ...
+        -->
+        <button class="nav-dot" data-target="module-1" data-tooltip="平台全景" role="tab" aria-label="模块 1：平台全景"></button>
+        <button class="nav-dot" data-target="module-2" data-tooltip="门禁与租户" role="tab" aria-label="模块 2：门禁与租户"></button>
+        <button class="nav-dot" data-target="module-3" data-tooltip="数据与 AWS" role="tab" aria-label="模块 3：数据与 AWS"></button>
+        <button class="nav-dot" data-target="module-4" data-tooltip="实时与 Ably" role="tab" aria-label="模块 4：实时与 Ably"></button>
+        <button class="nav-dot" data-target="module-5" data-tooltip="Admin 服务" role="tab" aria-label="模块 5：Admin 服务"></button>
+        <button class="nav-dot" data-target="module-6" data-tooltip="部署与取舍" role="tab" aria-label="模块 6：部署与取舍"></button>
+      </div>
+    </div>
+  </nav>
+
+  <main id="main">
+    <!-- modules/*.html content is assembled here by build.sh -->
+<section class="module" id="module-1">
+  <div class="module-content">
+    <header class="module-header">
+      <div class="module-number">01</div>
+      <h1 class="module-title">先看全景：这不是一个服务，而是一套平台</h1>
+      <p class="module-subtitle">上一版课程偏重“发一条消息会经过什么”。这一版我们先把镜头拉远：`im-app-server`、`im-admin-server`、AWS 运行层与发布脚本，合起来才是你真正要指挥的 IM 平台。</p>
+    </header>
+
+    <div class="screen">
+      <h2 class="screen-heading">先认角色，再看细节</h2>
+      <p>你可把它想成一座商场。`im-app-server` 面向普通用户，像前台营业区；`im-admin-server` 面向租户管理员、开放平台和运营动作，像后场管理区；AWS 则是整栋楼的水电、仓储与安保系统。</p>
+      <div class="arch-diagram animate-in">
+        <div class="arch-zone arch-zone-browser">
+          <h4 class="arch-zone-label">入口层</h4>
+          <div class="arch-component" data-desc="用户和后台操作者都先进同一个公网入口，再被分发到不同服务。">
+            <div class="arch-icon">🌐</div>
+            <span>公网入口 / <span class="term" data-definition="ALB 是 Application Load Balancer。它像总前台，把外部请求按域名或路径分发到不同服务。">ALB</span></span>
+          </div>
+        </div>
+        <div class="arch-zone">
+          <h4 class="arch-zone-label">应用层</h4>
+          <div class="arch-component" data-desc="im-app-server 处理用户登录、聊天、群组、上传、实时消息与异步消费。">
+            <div class="arch-icon">💬</div>
+            <span>im-app-server</span>
+          </div>
+          <div class="arch-component" data-desc="im-admin-server 处理租户管理、后台运营、开放平台、翻译与分享等管理向能力。">
+            <div class="arch-icon">🛠️</div>
+            <span>im-admin-server</span>
+          </div>
+        </div>
+        <div class="arch-zone arch-zone-external">
+          <h4 class="arch-zone-label">基础设施层</h4>
+          <div class="arch-component" data-desc="应用运行在 AWS 容器服务上，并接 PostgreSQL、Redis、DynamoDB、S3、SQS 等组件。">
+            <div class="arch-icon">☁️</div>
+            <span><span class="term" data-definition="ECS 是 AWS 的容器编排服务，Fargate 是它的托管算力模式。你交付镜像，AWS 负责把容器跑起来。">ECS / Fargate</span> + 数据层</span>
+          </div>
+          <div class="arch-component" data-desc="发布脚本负责构建镜像、更新任务定义、迁移数据库与同步环境变量。">
+            <div class="arch-icon">🚀</div>
+            <span>spug/aws 脚本</span>
+          </div>
+        </div>
+        <div class="arch-description" id="arch-desc">逐个点卡片。先看平台分层，再回到代码，理解会快得多。</div>
+      </div>
+      <div class="callout callout-accent animate-in">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">为什么先看全景</strong>
+          <p>若你一开始只盯某个控制器，就容易误把“业务代码问题”当成“架构分工问题”。真正成熟的排障，先问哪一层，再问哪一行。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">三个目录，各管一摊</h2>
+      <p>把仓库拆成三块看，会比把几百个文件一把抓更容易。你以后让 AI 干活，也该先点名“去哪块地里挖”。</p>
+      <div class="file-tree animate-in">
+        <div class="ft-folder open">
+          <span class="ft-name">im-app-server/</span>
+          <span class="ft-desc">对终端用户开放的主业务后端：登录、消息、群组、上传、会话、消费者。</span>
+        </div>
+        <div class="ft-folder open">
+          <span class="ft-name">im-admin-server/</span>
+          <span class="ft-desc">租户后台与运营后端：管理员登录、租户配置、开放平台、翻译、聊天分享、共享会议。</span>
+        </div>
+        <div class="ft-folder open">
+          <span class="ft-name">spug/aws/</span>
+          <span class="ft-desc">部署与运行脚本：构建镜像、升级 ECS、跑 PG/DDB 迁移、同步配置与 Secret。</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">真实代码：Admin 服务先放公开接口，再进后台授权区</h2>
+      <p>这段入口代码很能说明 `im-admin-server` 的定位。它不是一个静态后台页面接口，而是一套带公开分享口、开放平台口、再加后台受权区的独立服务。</p>
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">代码</span>
+          <pre><code>
+<span class="code-line">app.use(bodyParser());</span>
+<span class="code-line">app.use(SetRequest);</span>
+<span class="code-line">app.use(Access);</span>
+<span class="code-line">app.use(apiRoutes.base.router.routes());</span>
+<span class="code-line">app.use(apiRoutes.chatShare.publicRouter.routes());</span>
+<span class="code-line">app.use(apiRoutes.openPlatform.router.routes());</span>
+<span class="code-line">app.use(Authorize);</span>
+<span class="code-line">app.use(apiRoutes.admin.router.routes());</span>
+<span class="code-line">app.use(apiRoutes.tenant.router.routes());</span>
+<span class="code-line">app.use(apiRoutes.referral.router.routes());</span>
+<span class="code-line">app.use(apiRoutes.translation.router.routes());</span>
+<span class="code-line">app.use(apiRoutes.sharedMeeting.router.routes());</span>
+<span class="code-line">app.use(apiRoutes.externalData.router.routes());</span>
+<span class="code-line">app.use(apiRoutes.chatShare.router.routes());</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">白话</span>
+          <div class="translation-lines">
+            <p class="tl">先装请求体解析、上下文与基础访问控制，这是所有接口都要走的底层工序。</p>
+            <p class="tl">`base`、公开分享 `chatShare.publicRouter`、开放平台 `openPlatform` 被放在授权中间件之前，说明它们有独立认证方式或公开入口。</p>
+            <p class="tl">`Authorize` 从这里开始像一道闸门，后面的 `admin`、`tenant`、`translation`、`sharedMeeting` 等都属于后台受控区域。</p>
+            <p class="tl">所以 `im-admin-server` 是“多入口的后台服务”，不是单纯的管理页 BFF。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">小测：你已经分清平台边界了吗</h2>
+      <div class="quiz-container" id="quiz-module1">
+        <div class="quiz-question-block" data-correct="option-b" data-explanation-right="对。普通用户聊天、会话、上传、实时消息主要落在 im-app-server。" data-explanation-wrong="再看角色分工：面向终端用户的核心 IM 行为主要在 app 服务，不在 admin 服务。">
+          <h3 class="quiz-question">若需求是“普通用户发送一条群消息并更新未读数”，你首先应把 AI 引到哪块？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>`im-admin-server` 的 tenant service</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>`im-app-server` 的路由、控制器、消费者与实时链路</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>`spug/aws` 的升级脚本</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-correct="option-c" data-explanation-right="正解。后台租户运营、开放平台与公开分享这种管理侧能力，拆服务更清晰，也更易控权。" data-explanation-wrong="如果把管理能力全塞进用户主服务，权限模型、发布节奏和攻击面都会更混乱。">
+          <h3 class="quiz-question">为什么这个仓库把 `im-admin-server` 单独拉出来，而不是全塞进 `im-app-server`？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为 Node.js 只能跑两个服务</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为这样图片才能走 CloudFront</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为用户流量与管理流量的认证、边界、变更频率都不同，拆开更稳</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-correct="option-a" data-explanation-right="正是如此。发布、迁移、环境变量与 ECS 升级这类动作，不在业务控制器里，而在部署脚本区。" data-explanation-wrong="业务仓库里固然有 Dockerfile，但真正的环境发布流程主要在 spug/aws。">
+          <h3 class="quiz-question">如果你要查“某次上线后为何版本没有切到新镜像”，最该优先看哪里？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>`spug/aws` 里的 release、upgrade、ECS 更新脚本</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>`conversation.controller.js`</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>`group.repo.js`</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module1')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module1')">重做</button>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="module" id="module-2">
+  <div class="module-content">
+    <header class="module-header">
+      <div class="module-number">02</div>
+      <h1 class="module-title">门禁、身份与租户</h1>
+      <p class="module-subtitle">无论请求最终去 `im-app-server` 还是 `im-admin-server`，都逃不过一条底线：先认人，再认租户，再决定你能看哪份数据。多租户系统最怕的不是慢，而是串线。</p>
+    </header>
+
+    <div class="screen">
+      <h2 class="screen-heading">同一套服务，为什么不会把甲公司的数据给乙公司</h2>
+      <p>秘密不在某个超复杂算法，而在一串 <span class="term" data-definition="中间件是请求经过控制器之前的一串处理站。它们能统一做认证、校验、限流、租户解析等共通工作。">中间件</span>。认证回答“你是谁”，租户中间件回答“你该看哪一摊数据”。这类规则一旦写错，比普通功能 bug 更危险。</p>
+      <div class="arch-diagram animate-in">
+        <div class="arch-zone arch-zone-browser">
+          <h4 class="arch-zone-label">请求入口</h4>
+          <div class="arch-component" data-desc="浏览器或 App 把请求发来，里面可能带 Authorization 与 X-Tenant-ID。">
+            <div class="arch-icon">📱</div>
+            <span>客户端请求</span>
+          </div>
+        </div>
+        <div class="arch-zone">
+          <h4 class="arch-zone-label">门禁链路</h4>
+          <div class="arch-component" data-desc="Authentication 先看你是不是合法用户，这是认人。">
+            <div class="arch-icon">🪪</div>
+            <span>Authentication</span>
+          </div>
+          <div class="arch-component" data-desc="resolveTenant 负责找出租户 ID，来源可能是 Header、JWT 或 Query。">
+            <div class="arch-icon">🏢</div>
+            <span>resolveTenant</span>
+          </div>
+          <div class="arch-component" data-desc="validateTenantAccess 再确认这个用户真属于该租户，并把角色与权限挂到上下文。">
+            <div class="arch-icon">✅</div>
+            <span>validateTenantAccess</span>
+          </div>
+        </div>
+        <div class="arch-zone arch-zone-external">
+          <h4 class="arch-zone-label">业务层</h4>
+          <div class="arch-component" data-desc="控制器与仓储层以后都能从上下文拿 tenantId，因此查询自然带范围。">
+            <div class="arch-icon">🗂️</div>
+            <span>Controller / Repo</span>
+          </div>
+        </div>
+        <div class="arch-description" id="arch-desc">点任一模块，看它在门禁链中的职责。</div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">看一场中间件群聊</h2>
+      <p>把请求当成一个访客，就容易理解这一串检查。谁先说话，谁后放行，顺序绝不能乱。</p>
+      <div class="chat-window animate-in" id="chat-module2">
+        <div class="chat-messages">
+          <div class="chat-message" data-msg="0" data-sender="request" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-4)">请</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-4)">请求</span>
+              <p>我带着 Authorization 和 X-Tenant-ID 来了，想进 `/api/v1/user/info`。</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="1" data-sender="auth" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-1)">认</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-1)">Authentication</span>
+              <p>先别急，我先核对你是不是合法用户。</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="2" data-sender="tenant" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-2)">租</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-2)">resolveTenant</span>
+              <p>我再看你属于哪个租户，先从 Header 找，找不到再看 <span class="term" data-definition="JWT 是一种会随请求携带的登录凭证格式。服务器解开它后，能知道这个用户是谁、可能还属于哪个租户。">JWT</span> 和 Query。</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="3" data-sender="access" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-5)">验</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-5)">validateTenantAccess</span>
+              <p>租户 ID 有了还不够，我要确认这名用户真在这个租户里。</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="4" data-sender="controller" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-3)">控</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-3)">Controller</span>
+              <p>好，现在我拿到 tenantId 和权限了，才敢去查用户资料。</p>
+            </div>
+          </div>
+        </div>
+        <div class="chat-typing" style="display:none">
+          <div class="chat-avatar" id="chat-module2-typing-avatar">?</div>
+          <div class="chat-typing-dots">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+          </div>
+        </div>
+        <div class="chat-controls">
+          <button class="btn chat-next-btn">下一句</button>
+          <button class="btn chat-all-btn">自动播放</button>
+          <button class="btn chat-reset-btn">重播</button>
+          <span class="chat-progress"></span>
+        </div>
+      </div>
+      <div class="callout callout-warning animate-in">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-content">
+          <strong class="callout-title">常见误判</strong>
+          <p>很多人把“401 未登录”和“400/404 租户问题”混成一团。这里其实是两层不同的门禁，修法完全不同。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">真实代码：租户 ID 是怎样找出来的</h2>
+      <p>下面这段是 `tenant.js` 的核心片段。顺序很关键，因为它定义了系统优先信谁，也决定了一个 <span class="term" data-definition="UUID 是一种很长、通常全局唯一的标识串。系统用它来避免两个租户或对象撞名。">UUID</span> 格式的租户 ID 从哪里来。</p>
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">代码</span>
+          <pre><code>
+<span class="code-line">    <span class="code-comment">// Priority 1: request header</span></span>
+<span class="code-line">    tenantId = ctx.headers[TenantConfig.HEADER_NAME.toLowerCase()];</span>
+<span class="code-line"></span>
+<span class="code-line">    <span class="code-comment">// Priority 2: tenant ID from JWT token</span></span>
+<span class="code-line">    <span class="code-keyword">if</span> (!tenantId &amp;&amp; ctx.state.user &amp;&amp; ctx.state.user.tenant_id) {</span>
+<span class="code-line">      tenantId = ctx.state.user.tenant_id;</span>
+<span class="code-line">    }</span>
+<span class="code-line"></span>
+<span class="code-line">    <span class="code-comment">// Priority 3: query parameter</span></span>
+<span class="code-line">    <span class="code-keyword">if</span> (!tenantId &amp;&amp; ctx.query[TenantConfig.QUERY_PARAM_NAME]) {</span>
+<span class="code-line">      tenantId = ctx.query[TenantConfig.QUERY_PARAM_NAME];</span>
+<span class="code-line">    }</span>
+<span class="code-line"></span>
+<span class="code-line">    <span class="code-comment">// Tenant ID must exist</span></span>
+<span class="code-line">    <span class="code-keyword">if</span> (!tenantId) {</span>
+<span class="code-line">      ctx.throw(<span class="code-number">400</span>, <span class="code-string">"Tenant ID is required"</span>);</span>
+<span class="code-line">    }</span>
+<span class="code-line"></span>
+<span class="code-line">    <span class="code-comment">// Validate tenant ID format</span></span>
+<span class="code-line">    <span class="code-keyword">if</span> (tenantId &amp;&amp; !<span class="code-function">isValidUUID</span>(tenantId)) {</span>
+<span class="code-line">      ctx.throw(<span class="code-number">400</span>, <span class="code-string">"Invalid tenant ID format"</span>);</span>
+<span class="code-line">    }</span>
+<span class="code-line"></span>
+<span class="code-line">    <span class="code-comment">// Persist tenant ID</span></span>
+<span class="code-line">    ctx.state.tenantId = tenantId;</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">白话</span>
+          <div class="translation-lines">
+            <p class="tl">先信请求头。这通常是客户端最明确地告诉服务器：我要进哪个租户。</p>
+            <p class="tl">如果头里没有，再看登录后的 JWT 数据。也就是“你上次登录时系统记住的租户”。</p>
+            <p class="tl">前两处都拿不到，才退而求其次去查 Query 参数。</p>
+            <p class="tl">如果三处都没有，系统直接打回，因为它根本不知道你该看哪份数据。</p>
+            <p class="tl">就算有值，也要校验 UUID 格式，避免拿一串乱值继续向后传染。</p>
+            <p class="tl">最后把结果挂进 `ctx.state`，这样后面的控制器和仓储层都能复用。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">小测：你能看出是哪道门没开吗</h2>
+      <div class="quiz-container" id="quiz-module2">
+        <div class="quiz-question-block" data-correct="option-b" data-explanation-right="对。缺少租户信息时，多半在 resolveTenant 阶段就被拦下。" data-explanation-wrong="再分清两件事：用户已登录，不代表系统知道他要访问哪家租户。">
+          <h3 class="quiz-question">用户明明带着有效登录态，却收到 `Tenant ID is required`。第一站该查哪里？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>群聊消息表是不是缺索引</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Header、JWT、Query 里有没有把 tenantId 传进来</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Ably 频道权限有没有更新</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-correct="option-c" data-explanation-right="是的。认证与租户拆开，才不会把“你是谁”和“你能看哪家数据”搅成一团。" data-explanation-wrong="若把两件事揉成一层，调试会非常混乱，也难以复用。">
+          <h3 class="quiz-question">为什么系统不把“认证”和“租户校验”写成一个大函数？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为 Node.js 不支持大函数</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为这样能省数据库空间</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为认人和定数据范围是两种不同职责，拆开更好查错</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-correct="option-a" data-explanation-right="正解。先看入口上下文有没有带 tenantId，再看仓储层是否真的用上它。" data-explanation-wrong="群名展示、前端样式都不是租户串线的第一现场。">
+          <h3 class="quiz-question">如果用户看到了别的租户的数据，你会先怀疑哪一层？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>tenant 中间件与仓储查询是否都正确携带 tenantId</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>推送角标是否累加过多</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>会议模块是否启用</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module2')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module2')">重做</button>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="module" id="module-3">
+  <div class="module-content">
+    <header class="module-header">
+      <div class="module-number">03</div>
+      <h1 class="module-title">数据与 AWS 组件：为何不是一库到底</h1>
+      <p class="module-subtitle">这个平台选了 PostgreSQL、DynamoDB、Redis、S3、CloudFront、SQS 组合拳。看上去复杂，其实每一件都在解决一种不同的数据性格与流量压力。</p>
+    </header>
+
+    <div class="screen">
+      <h2 class="screen-heading">先别背服务名，先认数据性格</h2>
+      <p>最实用的架构眼光，不是记住 AWS 名词，而是先问：这份数据更像账本、流水、临时状态，还是大文件？问对这句，选型通常就八九不离十。</p>
+      <div class="pattern-cards animate-in">
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+          <div class="pattern-icon" style="background: var(--color-actor-1)">🧾</div>
+          <h4 class="pattern-title">Aurora PostgreSQL</h4>
+          <p class="pattern-desc">适合用户、租户、好友、群组、角色这类关系密、查询规则复杂、要事务一致的核心业务数据。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+          <div class="pattern-icon" style="background: var(--color-actor-2)">💬</div>
+          <h4 class="pattern-title"><span class="term" data-definition="DynamoDB 是 AWS 的托管 NoSQL 数据库，长于按键高速读写，尤其适合访问模式明确、吞吐量高的场景。">DynamoDB</span></h4>
+          <p class="pattern-desc">扛聊天正文这类高写入、按会话和时间翻页读取的数据，避免主库被海量消息拖慢。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-5)">
+          <div class="pattern-icon" style="background: var(--color-actor-5)">⚡</div>
+          <h4 class="pattern-title"><span class="term" data-definition="Redis 是以内存为主的高速键值存储，常用来做缓存、计数器、会话与在线状态。">Redis</span></h4>
+          <p class="pattern-desc">拿来装未读数、在线状态、缓存等“要快、可重算、可失效”的状态值。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-4)">
+          <div class="pattern-icon" style="background: var(--color-actor-4)">📦</div>
+          <h4 class="pattern-title">S3 + CloudFront</h4>
+          <p class="pattern-desc">文件不经业务服务中转，而是直传对象存储，再通过 <span class="term" data-definition="CloudFront 是 AWS 的 CDN，可分发公开内容，也能通过签名链接保护私有内容。">CloudFront</span> 或签名 URL 做下载与加速。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+          <div class="pattern-icon" style="background: var(--color-actor-3)">📮</div>
+          <h4 class="pattern-title"><span class="term" data-definition="SQS 是 AWS 的消息队列服务。它让“先接住请求”和“稍后慢慢处理”可以拆开。">SQS</span></h4>
+          <p class="pattern-desc">把异步任务从主请求链摘出来，用来削峰、解耦、重试与后台补账。</p>
+        </div>
+      </div>
+      <div class="callout callout-accent animate-in">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">选型不是“哪个更高级”，而是“哪种压力更适合谁”</strong>
+          <p>行业里常见的好架构，几乎都不是单库万能，而是把一致性、吞吐、延迟、成本分给不同组件去扛。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">真实代码：下载链路区分公开 URL 与签名 URL</h2>
+      <p>这段来自 `cloudfront-client.js`。它说明文件访问不是一刀切，而是按场景决定“直接公开”还是“临时签名后访问”。</p>
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">代码</span>
+          <pre><code>
+<span class="code-line"><span class="code-keyword">const</span> cloudfrontClient = isLocal</span>
+<span class="code-line">  ? {</span>
+<span class="code-line">      getSignedUrl: <span class="code-keyword">async</span> (objectKey, options = {}) =&gt; {</span>
+<span class="code-line">        <span class="code-keyword">return</span> <span class="code-keyword">await</span> s3Client.getPresignedUrl(</span>
+<span class="code-line">          process.env.S3_PRIVATE_BUCKET,</span>
+<span class="code-line">          objectKey,</span>
+<span class="code-line">          options</span>
+<span class="code-line">        );</span>
+<span class="code-line">      },</span>
+<span class="code-line">      getPublicUrl: (objectKey) =&gt; {</span>
+<span class="code-line">        <span class="code-keyword">const</span> endpoint = process.env.S3_ENDPOINT || <span class="code-string">"http://localhost:4566"</span>;</span>
+<span class="code-line">        <span class="code-keyword">const</span> bucket = process.env.S3_PUBLIC_BUCKET;</span>
+<span class="code-line">        <span class="code-keyword">return</span> <span class="code-string">`${endpoint}/${bucket}/assets/${objectKey}`</span>;</span>
+<span class="code-line">      },</span>
+<span class="code-line">    }</span>
+<span class="code-line">  : <span class="code-keyword">new</span> CloudFrontClientWrapper({</span>
+<span class="code-line">      region: process.env.AWS_REGION,</span>
+<span class="code-line">      distributionDomain: process.env.CLOUDFRONT_DOMAIN,</span>
+<span class="code-line">      keyPairId: process.env.CLOUDFRONT_KEY_PAIR_ID,</span>
+<span class="code-line">      privateKeyPath: process.env.CLOUDFRONT_PRIVATE_KEY_PATH,</span>
+<span class="code-line">    });</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">白话</span>
+          <div class="translation-lines">
+            <p class="tl">本地环境先走简化模式：私有文件直接生成预签名 S3 地址，公开文件拼一个公开 URL。</p>
+            <p class="tl">真正线上环境则交给 `CloudFrontClientWrapper`，说明文件访问已被当成正式能力来治理。</p>
+            <p class="tl">它要求区域、分发域名、密钥对 ID 与私钥路径，表示私有内容访问是带签名校验的。</p>
+            <p class="tl">这比“把所有文件都挂成公网地址”更稳，也比“每次都让业务服务器自己转发文件”更省资源。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">拖一拖：把数据交给更像它的服务</h2>
+      <p>这不是考试，而是训练你的架构直觉。以后你跟 AI 说“这块应该放哪”，说的就是这一层判断。</p>
+      <div class="dnd-container animate-in" id="dnd-module3">
+        <div class="dnd-chips">
+          <div class="dnd-chip" draggable="true" data-answer="pg">租户配置与角色权限</div>
+          <div class="dnd-chip" draggable="true" data-answer="ddb">聊天消息正文</div>
+          <div class="dnd-chip" draggable="true" data-answer="redis">在线状态与未读角标</div>
+          <div class="dnd-chip" draggable="true" data-answer="s3">图片、视频、附件原文件</div>
+          <div class="dnd-chip" draggable="true" data-answer="sqs">补发通知、异步修正、后台派生任务</div>
+        </div>
+        <div class="dnd-zones">
+          <div class="dnd-zone" data-correct="pg">
+            <p class="dnd-zone-label">结构稳定、关系复杂、需要事务一致</p>
+            <div class="dnd-zone-target">Drop here</div>
+          </div>
+          <div class="dnd-zone" data-correct="ddb">
+            <p class="dnd-zone-label">吞吐高、访问模式偏按键与时序</p>
+            <div class="dnd-zone-target">Drop here</div>
+          </div>
+          <div class="dnd-zone" data-correct="redis">
+            <p class="dnd-zone-label">极快读取、可重算、适合短期状态</p>
+            <div class="dnd-zone-target">Drop here</div>
+          </div>
+          <div class="dnd-zone" data-correct="s3">
+            <p class="dnd-zone-label">大对象、媒体文件、要和 CDN 配合</p>
+            <div class="dnd-zone-target">Drop here</div>
+          </div>
+          <div class="dnd-zone" data-correct="sqs">
+            <p class="dnd-zone-label">先接住事件，后续慢慢处理和重试</p>
+            <div class="dnd-zone-target">Drop here</div>
+          </div>
+        </div>
+        <button class="btn" onclick="checkDnD('dnd-module3')">检查匹配</button>
+        <button class="btn" onclick="resetDnD('dnd-module3')">重置</button>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">小测：你会怎样做 AWS 侧取舍</h2>
+      <div class="quiz-container" id="quiz-module3">
+        <div class="quiz-question-block" data-correct="option-b" data-explanation-right="对。对象文件直传存储层，再交 CDN 分发，是业界极常见的降压做法。" data-explanation-wrong="把大文件都经业务服务转发，最容易先把应用进程和带宽打满。">
+          <h3 class="quiz-question">如果用户大量上传视频，哪种做法更像这套架构的思路？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>让 Koa 把所有视频流完整中转，再落盘</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>业务服务签发临时上传凭证，客户端直传对象存储</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>把视频正文直接塞进 PostgreSQL 表字段</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-correct="option-c" data-explanation-right="正解。高频、可重算、极求速度的状态，更该走缓存层而不是主业务账本。" data-explanation-wrong="如果把这类值强行放主库，写放大和查询竞争会更明显。">
+          <h3 class="quiz-question">为什么“未读数”这类状态更适合 Redis，而不是只靠 PostgreSQL 现算？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为 Redis 会自动生成 ALB 路由</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为 Redis 能替代所有持久化数据库</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为它更适合极快读取与频繁变化的短期状态</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-correct="option-a" data-explanation-right="是的。SQS 的价值常在削峰解耦，让主链路先轻，再让后台补账。" data-explanation-wrong="如果主请求同步做尽所有收尾，一遇到高峰就更容易拖慢用户感知。">
+          <h3 class="quiz-question">系统为何把部分任务丢给 SQS，而不是每次请求同步做完所有收尾？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>为了把主请求链变轻，并让后台任务可重试、可削峰</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为 SQS 能自动生成聊天 UI</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为 PostgreSQL 不支持异步</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module3')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module3')">重做</button>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="module" id="module-4">
+  <div class="module-content">
+    <header class="module-header">
+      <div class="module-number">04</div>
+      <h1 class="module-title">实时消息与 Ably：为何不自己扛全套 WebSocket</h1>
+      <p class="module-subtitle">这套平台没有把“实时连接管理、频道发布、在线状态、推送设备管理”全压在业务服务上，而是借 Ably 拿到一条更轻的主链。是否值得，取决于你的复杂度与团队成本。</p>
+    </header>
+
+    <div class="screen">
+      <h2 class="screen-heading">Ably 在这里，不只是“发消息 SDK”</h2>
+      <p>从代码看，它承担了 Token 授权、频道收发、批量发布、推送设备与在线态相关能力。换句话说，这里不是“业务服务顺手连了个推送工具”，而是把实时基础设施外包给了托管服务。</p>
+      <div class="pattern-cards animate-in">
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+          <div class="pattern-icon" style="background: var(--color-actor-1)">🎫</div>
+          <h4 class="pattern-title">Token 授权</h4>
+          <p class="pattern-desc">业务服务只签权限票据，不亲自维护所有实时连接，职责更清楚。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+          <div class="pattern-icon" style="background: var(--color-actor-2)">📡</div>
+          <h4 class="pattern-title">频道分发</h4>
+          <p class="pattern-desc">单聊 mailbox、群聊 channel、会议 signal 都走统一实时通道，路径短、感知快。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-5)">
+          <div class="pattern-icon" style="background: var(--color-actor-5)">🔔</div>
+          <h4 class="pattern-title">推送配套</h4>
+          <p class="pattern-desc">设备管理与批量推送能力已在同一服务栈里，减少自建消息网关成本。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-4)">
+          <div class="pattern-icon" style="background: var(--color-actor-4)">🧮</div>
+          <h4 class="pattern-title">业务服务减负</h4>
+          <p class="pattern-desc">App 服务不必自己扛海量长连接，更多精力放在鉴权、持久化、未读与业务规则。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">看数据怎么在实时层与后台层分流</h2>
+      <p>真正聪明的地方不只是“用了 Ably”，而是“用了 Ably 以后，业务服务没有被绑死”。消息先被实时送达，后面再用 SQS 和消费者做持久化与派生。</p>
+      <div class="flow-animation animate-in" data-steps='[
+        {"highlight":"flow-m4-actor-1","label":"客户端先向业务服务申请 Ably Token"},
+        {"highlight":"flow-m4-actor-2","label":"业务服务签发频道权限","packet":true,"from":"m4-actor-1","to":"m4-actor-2"},
+        {"highlight":"flow-m4-actor-3","label":"客户端拿着 Token 接入 Ably","packet":true,"from":"m4-actor-2","to":"m4-actor-3"},
+        {"highlight":"flow-m4-actor-3","label":"正文消息直接走 Ably 频道广播"},
+        {"highlight":"flow-m4-actor-4","label":"消息事件再进入 SQS 做异步持久化","packet":true,"from":"m4-actor-3","to":"m4-actor-4"},
+        {"highlight":"flow-m4-actor-5","label":"Consumer 更新 DynamoDB、Redis 与推送","packet":true,"from":"m4-actor-4","to":"m4-actor-5"}
+      ]'>
+        <div class="flow-actors">
+          <div class="flow-actor" id="flow-m4-actor-1">
+            <div class="flow-actor-icon">📱</div>
+            <span>客户端</span>
+          </div>
+          <div class="flow-actor" id="flow-m4-actor-2">
+            <div class="flow-actor-icon">🛂</div>
+            <span>im-app-server</span>
+          </div>
+          <div class="flow-actor" id="flow-m4-actor-3">
+            <div class="flow-actor-icon">⚡</div>
+            <span>Ably</span>
+          </div>
+          <div class="flow-actor" id="flow-m4-actor-4">
+            <div class="flow-actor-icon">📮</div>
+            <span>SQS</span>
+          </div>
+          <div class="flow-actor" id="flow-m4-actor-5">
+            <div class="flow-actor-icon">🧰</div>
+            <span>Consumer</span>
+          </div>
+        </div>
+        <div class="flow-packet" id="flow-packet"></div>
+        <div class="flow-step-label">点“下一步”看实时链与后台链怎样分开</div>
+        <div class="flow-controls">
+          <button class="btn flow-next-btn">下一步</button>
+          <button class="btn flow-reset-btn">重来</button>
+          <span class="flow-progress"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">真实代码：Token 能做什么，基本写死在这一处</h2>
+      <p>这段码是实时边界的钥匙孔。你要理解 Ably 在项目中的地位，看这一段就够了。</p>
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">代码</span>
+          <pre><code>
+<span class="code-line">    <span class="code-keyword">const</span> token = <span class="code-keyword">await</span> <span class="code-function">ablyservice.createTokenRequest</span>(userHandle, {</span>
+<span class="code-line">      capability: {</span>
+<span class="code-line">        <span class="code-string">"chat:mailbox:*"</span>: [</span>
+<span class="code-line">          <span class="code-string">"publish"</span>,</span>
+<span class="code-line">          <span class="code-string">"subscribe"</span>,</span>
+<span class="code-line">          <span class="code-string">"history"</span>,</span>
+<span class="code-line">          <span class="code-string">"presence"</span>,</span>
+<span class="code-line">          <span class="code-string">"push-subscribe"</span>,</span>
+<span class="code-line">        ],</span>
+<span class="code-line">        <span class="code-string">"chat:group:*"</span>: [</span>
+<span class="code-line">          <span class="code-string">"publish"</span>,</span>
+<span class="code-line">          <span class="code-string">"subscribe"</span>,</span>
+<span class="code-line">          <span class="code-string">"history"</span>,</span>
+<span class="code-line">          <span class="code-string">"presence"</span>,</span>
+<span class="code-line">          <span class="code-string">"push-subscribe"</span>,</span>
+<span class="code-line">        ],</span>
+<span class="code-line">        <span class="code-string">"chat:ack"</span>: [<span class="code-string">"publish"</span>],</span>
+<span class="code-line">      },</span>
+<span class="code-line">      ttl: <span class="code-number">60</span> * <span class="code-number">60</span> * <span class="code-number">1000</span>,</span>
+<span class="code-line">    });</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">白话</span>
+          <div class="translation-lines">
+            <p class="tl">业务服务不是直接替客户端开频道，而是签一张限权 Token。</p>
+            <p class="tl">mailbox、group、ack 被拆成不同频道类型，说明实时系统内部也在分职责。</p>
+            <p class="tl">这里不只有发和收，还有历史、在线态、推送订阅等能力位。</p>
+            <p class="tl">所以 Ably 在本架构中更像“托管式实时总线”，不是单点消息 SDK。</p>
+          </div>
+        </div>
+      </div>
+      <div class="callout callout-info animate-in">
+        <div class="callout-icon">🧭</div>
+        <div class="callout-content">
+          <strong class="callout-title">那有没有更好的选择</strong>
+          <p>没有绝对更好，只有更适合。若你要极快起量、又不想自养连接集群，Ably 很顺手；若你已深度押注 GraphQL，可考虑 AppSync；若需求更轻，Pusher 也常见；若规模巨大且团队强，自建 WebSocket 网关也并非不可。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">小测：什么时候该继续用 Ably，什么时候考虑换</h2>
+      <div class="quiz-container" id="quiz-module4">
+        <div class="quiz-question-block" data-correct="option-b" data-explanation-right="对。若团队不想自养大规模连接与推送配套，托管式实时服务能显著减轻基础设施负担。" data-explanation-wrong="若目标是快速稳定上线，不一定先自建连接集群；外包实时基础设施往往更省心。">
+          <h3 class="quiz-question">一个小团队要快速上线多端 IM，且不想先维护大规模长连接集群，哪种取舍最像当前架构？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>立刻自建完整 WebSocket 网关、推送层和在线态系统</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>把实时基础设施托管给 Ably，业务服务专注鉴权与持久化</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>只保留普通 HTTP 轮询，不做任何实时层</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-correct="option-c" data-explanation-right="正解。如果你的业务已经强绑定 GraphQL 订阅、权限与模式管理，AppSync 这类方案可能更贴合。" data-explanation-wrong="Pusher 更偏轻量频道，Kafka 更偏流处理；此题关键是 GraphQL 订阅的一体化诉求。">
+          <h3 class="quiz-question">什么时候你更可能认真评估 AppSync 一类替代，而不是继续沿 Ably 路线？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>当你需要更多图片上传</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>当你想把 PostgreSQL 改成 MySQL</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>当你的前后端已深度以 GraphQL 订阅为中心建模</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-correct="option-a" data-explanation-right="是的。若消息能实时送达，但历史、未读或推送不稳，通常意味着实时总线之后的异步链没跟上。" data-explanation-wrong="别把所有问题都归咎 Ably。很多“收到了但状态不对”的问题在消费与缓存链路。">
+          <h3 class="quiz-question">若用户说“对方已收到消息，但未读数和历史列表不同步”，你第一反应应是什么？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>实时层大概率没全坏，优先查 SQS、consumer、缓存与派生逻辑</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>立刻替换掉 Ably</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>立刻修改 Dockerfile</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module4')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module4')">重做</button>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="module" id="module-5">
+  <div class="module-content">
+    <header class="module-header">
+      <div class="module-number">05</div>
+      <h1 class="module-title">im-admin-server：后台、运营与开放平台的独立后场</h1>
+      <p class="module-subtitle">`im-admin-server` 不是“给管理页凑个接口”。它单独承接租户后台、聊天分享、共享会议、翻译中台与开放平台接口，所以值得被当作第二个核心服务看待。</p>
+    </header>
+
+    <div class="screen">
+      <h2 class="screen-heading">它到底管哪些事</h2>
+      <p>若 `im-app-server` 是面向终端用户的营业前台，`im-admin-server` 就像商场的运营后台。它关注租户配置、管理员身份、外部系统接入和运营动作，而不是普通用户每天点开的主聊天界面。</p>
+      <div class="step-cards animate-in">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>租户后台</strong>
+            <p>管理员登录、租户配置、用户查询、角色权限、标签、组织与群管理都在这里。</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>运营动作</strong>
+            <p>共享会议、邀请消息、聊天分享与报表类接口都偏运营流程，不宜混进用户主链。</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>开放平台</strong>
+            <p>创建开放应用、校验租户域名、拉会话记录、做翻译，这些都更像平台接口而非终端用户接口。</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <strong>翻译中台</strong>
+            <p>同一服务里统一编排 OpenAI、AWS Translate、Google Translate，不把多供应商逻辑散落到处都是。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">真实代码：它的开放平台已经是一套独立接口面</h2>
+      <p>下面这段路由定义很能说明问题。`im-admin-server` 不只给管理员页面用，它还对外提供应用管理、会话读取和翻译能力。</p>
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">代码</span>
+          <pre><code>
+<span class="code-line">router.post(</span>
+<span class="code-line">  <span class="code-string">"/api/v1/open-platform/apps"</span>,</span>
+<span class="code-line">  OpenPlatformManageAuthorize,</span>
+<span class="code-line">  CreateOpenApp,</span>
+<span class="code-line">);</span>
+<span class="code-line">router.get(</span>
+<span class="code-line">  <span class="code-string">"/api/v1/open-platform/session-records/conversations"</span>,</span>
+<span class="code-line">  OpenPlatformAuthorize,</span>
+<span class="code-line">  GetSessionConversations,</span>
+<span class="code-line">);</span>
+<span class="code-line">router.get(</span>
+<span class="code-line">  <span class="code-string">"/api/v1/open-platform/session-records/messages"</span>,</span>
+<span class="code-line">  OpenPlatformAuthorize,</span>
+<span class="code-line">  GetSessionMessages,</span>
+<span class="code-line">);</span>
+<span class="code-line">router.post(</span>
+<span class="code-line">  <span class="code-string">"/api/v1/open-platform/translation/translate"</span>,</span>
+<span class="code-line">  OpenPlatformAuthorize,</span>
+<span class="code-line">  TranslateText,</span>
+<span class="code-line">);</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">白话</span>
+          <div class="translation-lines">
+            <p class="tl">第一组接口是“管应用本身”，比如创建开放应用和管理密钥。</p>
+            <p class="tl">第二组接口开始直接开放会话记录与消息读取，说明后台服务已经深入到了审计、平台接入和运营场景。</p>
+            <p class="tl">再往后连翻译能力都被纳入开放平台接口，表明它不只是内部后台，而是一个平台能力出口。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">真实代码：翻译服务为何像个小型编排器</h2>
+      <p>这一段最像中台思路。它不把“翻译”绑定死在某一家供应商，而是统一封装 provider 选择、缓存和 fallback。</p>
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">代码</span>
+          <pre><code>
+<span class="code-line">    <span class="code-keyword">switch</span> (currentProvider) {</span>
+<span class="code-line">      <span class="code-keyword">case</span> <span class="code-string">"aws"</span>:</span>
+<span class="code-line">        <span class="code-keyword">return</span> <span class="code-keyword">this</span>.awsClient.translate(params);</span>
+<span class="code-line">      <span class="code-keyword">case</span> <span class="code-string">"openai"</span>:</span>
+<span class="code-line">        <span class="code-keyword">return</span> <span class="code-keyword">this</span>.openaiClient.translate(params);</span>
+<span class="code-line">      <span class="code-keyword">case</span> <span class="code-string">"google"</span>:</span>
+<span class="code-line">        <span class="code-keyword">return</span> <span class="code-keyword">this</span>.googleClient.translate(params);</span>
+<span class="code-line">      <span class="code-keyword">case</span> <span class="code-string">"google_llm"</span>:</span>
+<span class="code-line">        <span class="code-keyword">return</span> <span class="code-keyword">this</span>.googleClient.translateWithLLM(text, targetLang, sourceLang);</span>
+<span class="code-line">      <span class="code-keyword">default</span>:</span>
+<span class="code-line">        <span class="code-keyword">throw</span> <span class="code-keyword">new</span> BaseError(</span>
+<span class="code-line">          BizErrorCode.ParamsError.code,</span>
+<span class="code-line">          <span class="code-string">`Unsupported translation provider: ${currentProvider}`</span></span>
+<span class="code-line">        );</span>
+<span class="code-line">    }</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">白话</span>
+          <div class="translation-lines">
+            <p class="tl">同一业务入口背后，可以切 AWS、OpenAI、Google、Google LLM 四种翻译通道。</p>
+            <p class="tl">这样做的好处不是“炫技”，而是让成本、质量、可用性和区域可用性可以被运营化调度。</p>
+            <p class="tl">真正的平台型后端，常常不止做功能，还要做供应商编排与降级。</p>
+          </div>
+        </div>
+      </div>
+      <div class="callout callout-accent animate-in">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">为何把这类能力放 Admin 服务</strong>
+          <p>它们更偏租户运营、内容治理、开放能力和后台工作流，不该拖累普通用户聊天主链，也不该和用户权限混成一锅。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">小测：你会把需求放到正确服务吗</h2>
+      <div class="quiz-container" id="quiz-module5">
+        <div class="quiz-question-block" data-correct="option-b" data-explanation-right="对。租户后台、角色与配置明显属于 admin 服务的职责边界。" data-explanation-wrong="若需求是后台运营与租户管理，优先看 admin，而不是先扎进用户消息链。">
+          <h3 class="quiz-question">如果需求是“租户管理员批量调整某些用户的后台访问配置”，你更该先查哪个服务？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>`im-app-server` 的 conversation controller</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>`im-admin-server` 的 admin / tenant service</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>`spug/aws` 的迁移脚本</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-correct="option-c" data-explanation-right="正解。供应商编排与 fallback 更像平台能力，不宜让每个业务接口各自乱调第三方。" data-explanation-wrong="如果每个模块都直接连外部翻译供应商，后期很难统一缓存、降级和成本控制。">
+          <h3 class="quiz-question">为什么翻译能力更适合被封进统一服务，而不是每个接口自己去调 OpenAI 或 Google？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为这样页面会自动更好看</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为这样就不用做认证了</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为统一封装后更容易做缓存、降级、质量切换和成本治理</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-correct="option-a" data-explanation-right="没错。开放平台、共享会议、公开分享都说明这个服务已有独立平台面，不只是后台页面配套。" data-explanation-wrong="若只把它当 BFF，很容易低估它的安全边界与发布影响范围。">
+          <h3 class="quiz-question">哪个观察最能证明 `im-admin-server` 已经是独立平台服务，而非单纯后台页面接口？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>它有开放平台接口、公开分享路由、独立后台鉴权和运营能力编排</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>它的文件夹名字里有 admin</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>它也用了 Koa</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module5')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module5')">重做</button>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="module" id="module-6">
+  <div class="module-content">
+    <header class="module-header">
+      <div class="module-number">06</div>
+      <h1 class="module-title">部署链路、运行形态与行业取舍</h1>
+      <p class="module-subtitle">到最后一章，臣不想只告诉陛下“它现在怎么跑”，还要告诉陛下“为什么这么跑、何时该换、业界通常怎么选”。这才是架构视角真正有用的地方。</p>
+    </header>
+
+    <div class="screen">
+      <h2 class="screen-heading">从脚本看，这套平台上线不是一键黑箱</h2>
+      <p>`spug/aws` 目录把发布拆成了构建、升级、迁移、环境变量同步与版本校验几个环节。拆得越清楚，越容易审计，也越容易在某一步失败时止损。</p>
+      <div class="step-cards animate-in">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>构建镜像</strong>
+            <p>Git tag 触发构建，把 `im-app-server` 与 `im-admin-server` 分别打成 `.server` / `.admin` 两个镜像标签。</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>推送 ECR 与更新 ECS</strong>
+            <p>镜像先入 <span class="term" data-definition="ECR 是 AWS 的容器镜像仓库。它像镜像制品库，给 ECS 拉取部署用。">ECR</span>，再由升级脚本注册新任务定义并更新服务。</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>跑迁移</strong>
+            <p>PostgreSQL 与 DynamoDB 迁移被单独包装成 ECS 一次性任务，而不是混进应用启动里赌运气。</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <strong>同步环境与 Secret</strong>
+            <p>脚本会把配置中心数据同步进 ECS 与 <span class="term" data-definition="Secrets Manager 是 AWS 的密钥托管服务，用来存密码、Token、API Key 等敏感值，避免明文散落。">Secrets Manager</span>，并区分敏感项。</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <strong>验证版本与通知</strong>
+            <p>发布脚本还会检查版本接口、回报构建状态，并把关键信息发到飞书。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">真实代码：一条 Git tag 会产出两张镜像</h2>
+      <p>这段来自构建工作流。它清楚说明：虽然仓库是一个 monorepo，但运行产物是两套独立镜像。</p>
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">代码</span>
+          <pre><code>
+<span class="code-line">      - name: Build and push im-app-server image</span>
+<span class="code-line">        uses: docker/build-push-action@v5</span>
+<span class="code-line">        with:</span>
+<span class="code-line">          context: ./im-app-server</span>
+<span class="code-line">          file: ./im-app-server/Dockerfile</span>
+<span class="code-line">          push: true</span>
+<span class="code-line">          tags: |</span>
+<span class="code-line">            <span class="code-value">${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.metadata.outputs.TAG }}.server</span></span>
+<span class="code-line">            <span class="code-value">${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest.server</span></span>
+<span class="code-line"></span>
+<span class="code-line">      - name: Build and push im-admin-server image</span>
+<span class="code-line">        uses: docker/build-push-action@v5</span>
+<span class="code-line">        with:</span>
+<span class="code-line">          context: ./im-admin-server</span>
+<span class="code-line">          file: ./im-admin-server/Dockerfile</span>
+<span class="code-line">          push: true</span>
+<span class="code-line">          tags: |</span>
+<span class="code-line">            <span class="code-value">${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.metadata.outputs.TAG }}.admin</span></span>
+<span class="code-line">            <span class="code-value">${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest.admin</span></span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">白话</span>
+          <div class="translation-lines">
+            <p class="tl">同一个仓库里，`im-app-server` 和 `im-admin-server` 分别按自己的 Dockerfile 构建。</p>
+            <p class="tl">镜像标签也故意拆成 `.server` 和 `.admin`，避免发布时把两者混淆。</p>
+            <p class="tl">这意味着它们可以一起发版，也可以在部署脚本里选择只升级其中一个组件。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">那么，更好的选择有吗</h2>
+      <p>更好的意思，永远要补一句“对谁、更在哪”。下面这些是业界常见替代路径。没有一条是普世答案，但你至少该知道什么时候值得认真评估。</p>
+      <div class="pattern-cards animate-in">
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+          <div class="pattern-icon" style="background: var(--color-actor-1)">🚢</div>
+          <h4 class="pattern-title">ECS Fargate vs Kubernetes</h4>
+          <p class="pattern-desc">若团队更重交付速度与较低运维，Fargate 很合适；若你要跨云、复杂调度、统一平台团队，业界常转 EKS/Kubernetes。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+          <div class="pattern-icon" style="background: var(--color-actor-2)">📡</div>
+          <h4 class="pattern-title">Ably vs Pusher vs AppSync</h4>
+          <p class="pattern-desc">Ably 偏全能托管实时总线；Pusher 更轻；AppSync 更适合 GraphQL 订阅一体化。团队已有技术重心，常决定答案。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-5)">
+          <div class="pattern-icon" style="background: var(--color-actor-5)">🧵</div>
+          <h4 class="pattern-title">SQS vs Kafka / RabbitMQ</h4>
+          <p class="pattern-desc">SQS 简洁、云原生、够稳；若你要强回放、复杂流处理、长保留与多消费者分析，业界会考虑 Kafka。若你更重复杂路由，可看 RabbitMQ。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-4)">
+          <div class="pattern-icon" style="background: var(--color-actor-4)">🗄️</div>
+          <h4 class="pattern-title">Aurora + DynamoDB + Redis 是否过重</h4>
+          <p class="pattern-desc">对小团队或早期产品，也许偏重；但对多租户 IM 来说，这是一条很典型的“按数据性格拆层”的行业路线。</p>
+        </div>
+      </div>
+      <div class="callout callout-warning animate-in">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-content">
+          <strong class="callout-title">别把“能换”误听成“该换”</strong>
+          <p>大多数架构事故，不是因为没选最潮的技术，而是因为在没有足够收益前提下，过早改底座。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">小测：何时该守、何时该换</h2>
+      <div class="quiz-container" id="quiz-module6">
+        <div class="quiz-question-block" data-correct="option-b" data-explanation-right="对。若你现在更缺的是稳定交付与低运维，继续留在 ECS Fargate 往往比仓促上 Kubernetes 更务实。" data-explanation-wrong="Kubernetes 不是奖杯。没有明确收益时，贸然迁移常只会多出运维负担。">
+          <h3 class="quiz-question">团队只有少数后端，当前最痛的是发版稳不稳，不是跨云调度。此时对运行平台更务实的态度是什么？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>立刻上 Kubernetes，不然就不算现代架构</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>先把 ECS Fargate、部署脚本、回滚与观测打磨稳，再决定是否要迁平台</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>把所有服务合并成一台 EC2 上跑 PM2</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-correct="option-c" data-explanation-right="正解。若你要事件回放、长时间保留与更重流处理，Kafka 一类方案才更值得进入评估名单。" data-explanation-wrong="SQS 很适合简单稳妥的异步任务，但不是所有流处理场景的终局。">
+          <h3 class="quiz-question">什么时候你更可能认真评估 Kafka，而不是继续沿 SQS 路线加码？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>当你想给管理员页面换个颜色</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>当你想把群头像改成圆角</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>当你要做更强的事件回放、流分析、多消费者长保留处理</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-correct="option-a" data-explanation-right="是的。先把“为什么现在这样配”说清，再决定该不该推翻，才是真架构判断。" data-explanation-wrong="盲目求新，不如先验证现方案的瓶颈是否真的来自底层选型。">
+          <h3 class="quiz-question">若有人问“Ably、SQS、DynamoDB 会不会太多了”，最成熟的回答起点是什么？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>先对应到实时连接、异步解耦、海量消息存储这三种不同压力，再谈是否值得简化</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为大公司都这么配，所以不用解释</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>全部删掉，只留 PostgreSQL，最简单就一定最好</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module6')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module6')">重做</button>
+      </div>
+    </div>
+  </div>
+</section>
+  </main>
+
+</body>
+</html>

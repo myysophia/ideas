@@ -1,0 +1,142 @@
+<section class="module" id="module-1">
+  <div class="module-content">
+    <header class="module-header">
+      <div class="module-number">01</div>
+      <h1 class="module-title">先看全景：这不是一个服务，而是一套平台</h1>
+      <p class="module-subtitle">上一版课程偏重“发一条消息会经过什么”。这一版我们先把镜头拉远：`im-app-server`、`im-admin-server`、AWS 运行层与发布脚本，合起来才是你真正要指挥的 IM 平台。</p>
+    </header>
+
+    <div class="screen">
+      <h2 class="screen-heading">先认角色，再看细节</h2>
+      <p>你可把它想成一座商场。`im-app-server` 面向普通用户，像前台营业区；`im-admin-server` 面向租户管理员、开放平台和运营动作，像后场管理区；AWS 则是整栋楼的水电、仓储与安保系统。</p>
+      <div class="arch-diagram animate-in">
+        <div class="arch-zone arch-zone-browser">
+          <h4 class="arch-zone-label">入口层</h4>
+          <div class="arch-component" data-desc="用户和后台操作者都先进同一个公网入口，再被分发到不同服务。">
+            <div class="arch-icon">🌐</div>
+            <span>公网入口 / <span class="term" data-definition="ALB 是 Application Load Balancer。它像总前台，把外部请求按域名或路径分发到不同服务。">ALB</span></span>
+          </div>
+        </div>
+        <div class="arch-zone">
+          <h4 class="arch-zone-label">应用层</h4>
+          <div class="arch-component" data-desc="im-app-server 处理用户登录、聊天、群组、上传、实时消息与异步消费。">
+            <div class="arch-icon">💬</div>
+            <span>im-app-server</span>
+          </div>
+          <div class="arch-component" data-desc="im-admin-server 处理租户管理、后台运营、开放平台、翻译与分享等管理向能力。">
+            <div class="arch-icon">🛠️</div>
+            <span>im-admin-server</span>
+          </div>
+        </div>
+        <div class="arch-zone arch-zone-external">
+          <h4 class="arch-zone-label">基础设施层</h4>
+          <div class="arch-component" data-desc="应用运行在 AWS 容器服务上，并接 PostgreSQL、Redis、DynamoDB、S3、SQS 等组件。">
+            <div class="arch-icon">☁️</div>
+            <span><span class="term" data-definition="ECS 是 AWS 的容器编排服务，Fargate 是它的托管算力模式。你交付镜像，AWS 负责把容器跑起来。">ECS / Fargate</span> + 数据层</span>
+          </div>
+          <div class="arch-component" data-desc="发布脚本负责构建镜像、更新任务定义、迁移数据库与同步环境变量。">
+            <div class="arch-icon">🚀</div>
+            <span>spug/aws 脚本</span>
+          </div>
+        </div>
+        <div class="arch-description" id="arch-desc">逐个点卡片。先看平台分层，再回到代码，理解会快得多。</div>
+      </div>
+      <div class="callout callout-accent animate-in">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">为什么先看全景</strong>
+          <p>若你一开始只盯某个控制器，就容易误把“业务代码问题”当成“架构分工问题”。真正成熟的排障，先问哪一层，再问哪一行。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">三个目录，各管一摊</h2>
+      <p>把仓库拆成三块看，会比把几百个文件一把抓更容易。你以后让 AI 干活，也该先点名“去哪块地里挖”。</p>
+      <div class="file-tree animate-in">
+        <div class="ft-folder open">
+          <span class="ft-name">im-app-server/</span>
+          <span class="ft-desc">对终端用户开放的主业务后端：登录、消息、群组、上传、会话、消费者。</span>
+        </div>
+        <div class="ft-folder open">
+          <span class="ft-name">im-admin-server/</span>
+          <span class="ft-desc">租户后台与运营后端：管理员登录、租户配置、开放平台、翻译、聊天分享、共享会议。</span>
+        </div>
+        <div class="ft-folder open">
+          <span class="ft-name">spug/aws/</span>
+          <span class="ft-desc">部署与运行脚本：构建镜像、升级 ECS、跑 PG/DDB 迁移、同步配置与 Secret。</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">真实代码：Admin 服务先放公开接口，再进后台授权区</h2>
+      <p>这段入口代码很能说明 `im-admin-server` 的定位。它不是一个静态后台页面接口，而是一套带公开分享口、开放平台口、再加后台受权区的独立服务。</p>
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">代码</span>
+          <pre><code>
+<span class="code-line">app.use(bodyParser());</span>
+<span class="code-line">app.use(SetRequest);</span>
+<span class="code-line">app.use(Access);</span>
+<span class="code-line">app.use(apiRoutes.base.router.routes());</span>
+<span class="code-line">app.use(apiRoutes.chatShare.publicRouter.routes());</span>
+<span class="code-line">app.use(apiRoutes.openPlatform.router.routes());</span>
+<span class="code-line">app.use(Authorize);</span>
+<span class="code-line">app.use(apiRoutes.admin.router.routes());</span>
+<span class="code-line">app.use(apiRoutes.tenant.router.routes());</span>
+<span class="code-line">app.use(apiRoutes.referral.router.routes());</span>
+<span class="code-line">app.use(apiRoutes.translation.router.routes());</span>
+<span class="code-line">app.use(apiRoutes.sharedMeeting.router.routes());</span>
+<span class="code-line">app.use(apiRoutes.externalData.router.routes());</span>
+<span class="code-line">app.use(apiRoutes.chatShare.router.routes());</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">白话</span>
+          <div class="translation-lines">
+            <p class="tl">先装请求体解析、上下文与基础访问控制，这是所有接口都要走的底层工序。</p>
+            <p class="tl">`base`、公开分享 `chatShare.publicRouter`、开放平台 `openPlatform` 被放在授权中间件之前，说明它们有独立认证方式或公开入口。</p>
+            <p class="tl">`Authorize` 从这里开始像一道闸门，后面的 `admin`、`tenant`、`translation`、`sharedMeeting` 等都属于后台受控区域。</p>
+            <p class="tl">所以 `im-admin-server` 是“多入口的后台服务”，不是单纯的管理页 BFF。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">小测：你已经分清平台边界了吗</h2>
+      <div class="quiz-container" id="quiz-module1">
+        <div class="quiz-question-block" data-correct="option-b" data-explanation-right="对。普通用户聊天、会话、上传、实时消息主要落在 im-app-server。" data-explanation-wrong="再看角色分工：面向终端用户的核心 IM 行为主要在 app 服务，不在 admin 服务。">
+          <h3 class="quiz-question">若需求是“普通用户发送一条群消息并更新未读数”，你首先应把 AI 引到哪块？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>`im-admin-server` 的 tenant service</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>`im-app-server` 的路由、控制器、消费者与实时链路</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>`spug/aws` 的升级脚本</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-correct="option-c" data-explanation-right="正解。后台租户运营、开放平台与公开分享这种管理侧能力，拆服务更清晰，也更易控权。" data-explanation-wrong="如果把管理能力全塞进用户主服务，权限模型、发布节奏和攻击面都会更混乱。">
+          <h3 class="quiz-question">为什么这个仓库把 `im-admin-server` 单独拉出来，而不是全塞进 `im-app-server`？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为 Node.js 只能跑两个服务</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为这样图片才能走 CloudFront</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为用户流量与管理流量的认证、边界、变更频率都不同，拆开更稳</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-correct="option-a" data-explanation-right="正是如此。发布、迁移、环境变量与 ECS 升级这类动作，不在业务控制器里，而在部署脚本区。" data-explanation-wrong="业务仓库里固然有 Dockerfile，但真正的环境发布流程主要在 spug/aws。">
+          <h3 class="quiz-question">如果你要查“某次上线后为何版本没有切到新镜像”，最该优先看哪里？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>`spug/aws` 里的 release、upgrade、ECS 更新脚本</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>`conversation.controller.js`</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>`group.repo.js`</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module1')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module1')">重做</button>
+      </div>
+    </div>
+  </div>
+</section>

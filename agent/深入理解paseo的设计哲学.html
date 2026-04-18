@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Paseo 工作原理 — 交互式课程</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%230066ff'/><text x='16' y='23' text-anchor='middle' font-size='20' font-weight='bold' fill='%23d4ff00' font-family='monospace'>P</text></svg>">
-<meta name="date" content="2026-04-17">
+<meta name="date" content="2026-04-18">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23475569'/><text x='16' y='23' text-anchor='middle' font-size='18' font-weight='bold' fill='white' font-family='sans-serif'>*</text></svg>">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -176,9 +177,28 @@ pre::-webkit-scrollbar,.translation-code::-webkit-scrollbar{display:none}
 .term-tooltip.visible{opacity:1}
 .term-tooltip.flip{top:auto}.term-tooltip.flip::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:var(--color-bg-code)}
 
+/* TABLE OF CONTENTS */
+.toc-toggle{font-family:var(--font-display);font-size:var(--text-sm);font-weight:600;padding:var(--space-1) var(--space-3);border:1px solid var(--color-border);border-radius:var(--radius-full);background:var(--color-surface);cursor:pointer;transition:all var(--duration-fast);color:var(--color-text);display:flex;align-items:center;gap:var(--space-2)}
+.toc-toggle:hover{border-color:var(--color-accent);background:var(--color-accent-light);color:var(--color-accent)}
+.toc-toggle .toc-icon{font-size:var(--text-base);transition:transform var(--duration-normal)}
+.toc-toggle.open .toc-icon{transform:rotate(45deg)}
+.toc-panel{position:fixed;top:var(--nav-height);right:0;width:360px;max-height:calc(100dvh - var(--nav-height));background:var(--color-surface);border-left:1px solid var(--color-border-light);box-shadow:var(--shadow-xl);z-index:999;transform:translateX(100%);transition:transform var(--duration-normal) var(--ease-out);overflow-y:auto;padding:var(--space-6)}
+.toc-panel.open{transform:translateX(0)}
+.toc-panel-header{font-family:var(--font-display);font-weight:700;font-size:var(--text-lg);margin-bottom:var(--space-5);padding-bottom:var(--space-4);border-bottom:1px solid var(--color-border-light)}
+.toc-list{list-style:none;display:flex;flex-direction:column;gap:var(--space-1)}
+.toc-item{display:flex;gap:var(--space-3);align-items:flex-start;padding:var(--space-3) var(--space-4);border-radius:var(--radius-sm);cursor:pointer;transition:background var(--duration-fast);text-decoration:none;color:var(--color-text)}
+.toc-item:hover{background:var(--color-accent-light)}
+.toc-item.active{background:var(--color-accent-light);border-left:3px solid var(--color-accent)}
+.toc-num{font-family:var(--font-display);font-weight:800;font-size:var(--text-sm);color:var(--color-accent);flex-shrink:0;min-width:24px}
+.toc-item-text{display:flex;flex-direction:column;gap:2px}
+.toc-item-title{font-family:var(--font-display);font-weight:600;font-size:var(--text-sm)}
+.toc-item-desc{font-size:var(--text-xs);color:var(--color-text-secondary);line-height:var(--leading-snug)}
+.toc-overlay{position:fixed;inset:0;background:rgba(44,42,40,.15);z-index:998;opacity:0;pointer-events:none;transition:opacity var(--duration-normal)}
+.toc-overlay.open{opacity:1;pointer-events:auto}
+
 /* RESPONSIVE */
-@media(max-width:768px){:root{--text-4xl:1.875rem;--text-5xl:2.25rem;--text-6xl:3rem}.translation-block{grid-template-columns:1fr}.translation-english{border-left:none;border-top:3px solid var(--color-accent)}.pattern-cards{grid-template-columns:1fr 1fr}.flow-actors{gap:var(--space-4)}}
-@media(max-width:480px){:root{--text-4xl:1.5rem;--text-5xl:1.875rem;--text-6xl:2.25rem}.module{padding:var(--space-8) var(--space-4)}.pattern-cards{grid-template-columns:1fr}.flow-actors{flex-direction:column}.flow-arrow-char{transform:rotate(90deg)}}
+@media(max-width:768px){:root{--text-4xl:1.875rem;--text-5xl:2.25rem;--text-6xl:3rem}.translation-block{grid-template-columns:1fr}.translation-english{border-left:none;border-top:3px solid var(--color-accent)}.pattern-cards{grid-template-columns:1fr 1fr}.flow-actors{gap:var(--space-4)}.toc-panel{width:100%;max-width:360px;right:0}}
+@media(max-width:480px){:root{--text-4xl:1.5rem;--text-5xl:1.875rem;--text-6xl:2.25rem}.module{padding:var(--space-8) var(--space-4)}.pattern-cards{grid-template-columns:1fr}.flow-actors{flex-direction:column}.flow-arrow-char{transform:rotate(90deg)}.toc-panel{width:100%}}
 </style>
 </head>
 <body>
@@ -196,8 +216,62 @@ pre::-webkit-scrollbar,.translation-code::-webkit-scrollbar{display:none}
       <button class="nav-dot" data-target="module-5" aria-label="Module 5"></button>
       <button class="nav-dot" data-target="module-6" aria-label="Module 6"></button>
     </div>
+    <button class="toc-toggle" id="toc-toggle" aria-label="目录">
+      <span class="toc-icon">+</span>
+      <span>目录</span>
+    </button>
   </div>
 </nav>
+
+<!-- TABLE OF CONTENTS PANEL -->
+<div class="toc-overlay" id="toc-overlay"></div>
+<div class="toc-panel" id="toc-panel">
+  <div class="toc-panel-header">课程目录</div>
+  <ul class="toc-list">
+    <li><a class="toc-item" data-target="module-1">
+      <span class="toc-num">01</span>
+      <div class="toc-item-text">
+        <span class="toc-item-title">Paseo 是什么？</span>
+        <span class="toc-item-desc">把开发环境装进口袋 — 点下"运行"后到底发生了什么</span>
+      </div>
+    </a></li>
+    <li><a class="toc-item" data-target="module-2">
+      <span class="toc-num">02</span>
+      <div class="toc-item-text">
+        <span class="toc-item-title">认识主角团</span>
+        <span class="toc-item-desc">六个包各自的角色 — 像一支劫案团队，各有专长</span>
+      </div>
+    </a></li>
+    <li><a class="toc-item" data-target="module-3">
+      <span class="toc-num">03</span>
+      <div class="toc-item-text">
+        <span class="toc-item-title">Agent 生命周期</span>
+        <span class="toc-item-desc">从"创建"到"空闲" — 管理 Agent 的状态机</span>
+      </div>
+    </a></li>
+    <li><a class="toc-item" data-target="module-4">
+      <span class="toc-num">04</span>
+      <div class="toc-item-text">
+        <span class="toc-item-title">万物如何通信</span>
+        <span class="toc-item-desc">WebSocket 协议 — 一种语言，三个客户端</span>
+      </div>
+    </a></li>
+    <li><a class="toc-item" data-target="module-5">
+      <span class="toc-num">05</span>
+      <div class="toc-item-text">
+        <span class="toc-item-title">运行 Agent</span>
+        <span class="toc-item-desc">完整旅程 + Provider 接入方式与 ACP 协议</span>
+      </div>
+    </a></li>
+    <li><a class="toc-item" data-target="module-6">
+      <span class="toc-num">06</span>
+      <div class="toc-item-text">
+        <span class="toc-item-title">远程访问与加密</span>
+        <span class="toc-item-desc">Paseo 如何让你从任何地方控制 Agent — 无需打开防火墙</span>
+      </div>
+    </a></li>
+  </ul>
+</div>
 
 <!-- ======================== MODULE 1: What is Paseo? ======================== -->
 <section class="module" id="module-1" style="background:var(--color-bg)">
@@ -681,7 +755,7 @@ pre::-webkit-scrollbar,.translation-code::-webkit-scrollbar{display:none}
   <header class="module-header animate-in">
     <span class="module-number">05</span>
     <h1 class="module-title">运行 Agent</h1>
-    <p class="module-subtitle">完整旅程：从手机点击到代码写入你的机器</p>
+    <p class="module-subtitle">从手机点击到代码写入你的机器 — 以及 Provider 如何接入</p>
   </header>
 
   <div class="module-body">
@@ -742,6 +816,102 @@ pre::-webkit-scrollbar,.translation-code::-webkit-scrollbar{display:none}
       </div>
     </section>
 
+    <section class="screen animate-in">
+      <h2 class="screen-heading">Provider 怎么接入？</h2>
+      <p>Paseo 守护进程本身不包含 AI 模型。你要用哪个 Agent，就得在机器上装对应的二进制 — Paseo 只是一个调度器，负责启动和管理它们。</p>
+
+      <div class="pattern-cards stagger-children animate-in" style="margin-top:var(--space-8)">
+        <div class="pattern-card animate-in" style="border-top:3px solid var(--color-actor-1)">
+          <div class="pattern-icon" style="background:var(--color-actor-1)">C</div>
+          <h4 class="pattern-title">Claude Code</h4>
+          <p class="pattern-desc">需要安装 <code>claude</code> CLI。通过官方 SDK 启动，SDK 内部管理进程和通信。Paseo 只调 SDK 的 <code>query()</code>。</p>
+        </div>
+        <div class="pattern-card animate-in" style="border-top:3px solid var(--color-actor-2)">
+          <div class="pattern-icon" style="background:var(--color-actor-2)">C</div>
+          <h4 class="pattern-title">Codex</h4>
+          <p class="pattern-desc">需要安装 <code>codex</code> CLI。启动 <code>codex app-server</code> 子进程，通过 JSON-RPC over stdio 通信。</p>
+        </div>
+        <div class="pattern-card animate-in" style="border-top:3px solid var(--color-actor-3)">
+          <div class="pattern-icon" style="background:var(--color-actor-3)">O</div>
+          <h4 class="pattern-title">OpenCode</h4>
+          <p class="pattern-desc">需要安装 <code>opencode</code>。启动 <code>opencode serve --port</code> 作为 HTTP 服务器，Paseo 用 HTTP 客户端连接。</p>
+        </div>
+        <div class="pattern-card animate-in" style="border-top:3px solid var(--color-actor-4)">
+          <div class="pattern-icon" style="background:var(--color-actor-4)">A</div>
+          <h4 class="pattern-title">ACP 系列</h4>
+          <p class="pattern-desc">Copilot、Pi、Gemini 等通过 ACP 协议接入。启动 <code>xxx --acp</code>，通过标准化协议通信。一行配置即可接入新 Agent。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen animate-in">
+      <h2 class="screen-heading">ACP：Agent 的 USB 接口</h2>
+      <p><span class="term" data-definition="ACP（Agent Communication Protocol，Agent 通信协议）是一个开放标准，目标是统一 AI 编程工具与编辑器/IDE 之间的通信方式。就像 LSP（语言服务器协议）统一了代码补全和诊断一样，ACP 要统一 AI Agent 的接入方式。官网：agentclientprotocol.com。">ACP</span> 是一个开放标准 — 你可以把它理解为 "AI Agent 版的 LSP"。它的目标是统一所有 Agent 的通信方式，让任何实现了 ACP 的工具都能即插即用。</p>
+
+      <div class="callout callout-info">
+        <div class="callout-icon">🔄</div>
+        <div class="callout-content">
+          <strong class="callout-title">三种接入方式对比</strong>
+          <p><strong>Claude SDK（黑盒模式）</strong>：Paseo 调用 SDK 的 query()，SDK 内部管理一切。深度集成但完全依赖 SDK。<br>
+          <strong>Codex JSON-RPC（手写客户端）</strong>：Paseo 自己实现了完整的协议客户端和服务端。完全控制但要跟着 Codex 升级改代码。<br>
+          <strong>ACP（标准协议）</strong>：用统一的 SDK 通信，新 Agent 只需一行配置。Agent 代码 4000+ 行 vs ACP 适配器几乎零新增。</p>
+        </div>
+      </div>
+
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">CODE</span>
+          <pre><code><span class="code-comment">// 一行配置即可接入新的 ACP Agent</span>
+{
+  <span class="code-string">"agents"</span>: {
+    <span class="code-string">"providers"</span>: {
+      <span class="code-string">"gemini"</span>: {
+        <span class="code-string">"extends"</span>: <span class="code-string">"acp"</span>,
+        <span class="code-string">"label"</span>: <span class="code-string">"Gemini"</span>,
+        <span class="code-string">"command"</span>: {
+          <span class="code-string">"argv"</span>: [<span class="code-string">"gemini"</span>, <span class="code-string">"--acp"</span>]
+        }
+      }
+    }
+  }
+}
+
+<span class="code-comment">// ACP 连接建立过程（acp-agent.ts）</span>
+<span class="code-keyword">const</span> stream = <span class="code-function">ndJsonStream</span>(
+  Writable.<span class="code-function">toWeb</span>(child.stdin),
+  Readable.<span class="code-function">toWeb</span>(child.stdout)
+);
+<span class="code-keyword">const</span> connection = <span class="code-keyword">new</span> <span class="code-function">ClientSideConnection</span>(
+  () => <span class="code-keyword">this</span>, stream
+);
+<span class="code-keyword">await</span> connection.<span class="code-function">initialize</span>({
+  protocolVersion: PROTOCOL_VERSION,
+  clientCapabilities: { fs: { readTextFile: <span class="code-keyword">true</span>, writeTextFile: <span class="code-keyword">true</span> }, terminal: <span class="code-keyword">true</span> },
+  clientInfo: { name: <span class="code-string">"Paseo"</span>, version: <span class="code-string">"dev"</span> }
+});
+<span class="code-keyword">const</span> session = <span class="code-keyword">await</span> connection.<span class="code-function">newSession</span>({ cwd, mcpServers });</code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">中文解释</span>
+          <div class="translation-lines">
+            <p class="tl">config.json 中声明一个 ACP provider：指定 extends 为 "acp"，给出启动命令...</p>
+            <p class="tl">Paseo 启动子进程，将 stdin/stdout 包装为 NDJSON 流...</p>
+            <p class="tl">用 @agentclientprotocol/sdk 创建连接，声明 Paseo 的能力：能读/写文件、能创建终端...</p>
+            <p class="tl">协议握手：协商版本、交换能力声明 — 就像 USB 设备插上去的"识别"过程...</p>
+            <p class="tl">创建会话，开始工作。Agent 后续的文件操作、终端创建都通过协议请求 Paseo 代劳。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-accent">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">ACP 的核心设计：反转控制权</strong>
+          <p>Claude/Codex 模式下，Agent 自己管文件和终端 — Paseo 只是遥控器。ACP 模式下，Agent 是"来客"，通过协议向 Paseo 请求资源。读文件？请 Paseo 代读。创建终端？请 Paseo 代建。这样 Paseo 可以审计、拦截或拒绝任何操作 — <strong>更安全</strong>。这也是为什么未来如果 Claude 和 Codex 原生支持 ACP，Paseo 就能删掉 6000+ 行私有协议适配代码。</p>
+        </div>
+      </div>
+    </section>
+
     <!-- QUIZ 5 -->
     <section class="screen animate-in" id="quiz-5">
       <h2 class="screen-heading">想一想</h2>
@@ -754,6 +924,15 @@ pre::-webkit-scrollbar,.translation-code::-webkit-scrollbar{display:none}
             <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>只有活跃客户端显示提示，避免重复通知</span></button>
           </div>
           <div class="quiz-feedback" id="q6-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-question="q9" data-correct="option-b">
+          <h3 class="quiz-question">你想让 Paseo 支持一个新的 AI 编程工具 "SuperAgent"。最省事的方式是什么？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>在 packages/server 里写一个全新的 Provider 适配器（4000+ 行代码）</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>如果 SuperAgent 支持 ACP 协议，在 config.json 里加一行配置即可</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>修改 Paseo 的 WebSocket 协议来适配 SuperAgent</span></button>
+          </div>
+          <div class="quiz-feedback" id="q9-feedback"></div>
         </div>
         <button class="quiz-check-btn" onclick="checkQuiz('quiz-5')">查看答案</button>
         <button class="quiz-reset-btn" onclick="resetQuiz('quiz-5')">重试</button>
@@ -829,6 +1008,98 @@ pre::-webkit-scrollbar,.translation-code::-webkit-scrollbar{display:none}
     </section>
 
     <section class="screen animate-in">
+      <h2 class="screen-heading">中继跑在哪？— Cloudflare Workers</h2>
+      <p>Paseo 的中继没有用自己的服务器，而是部署在<span class="term" data-definition="Cloudflare Workers 是一个边缘计算平台：你的代码运行在全球 300+ 数据中心，自动选择离用户最近的节点执行。冷启动仅约 5ms，比传统 Serverless（如 AWS Lambda 的 200-500ms）快一个数量级。运行时是 V8 isolate，不是完整 Node.js。">Cloudflare Workers</span> 上 — 一个全球边缘计算平台。</p>
+
+      <div class="pattern-cards stagger-children animate-in" style="margin-top:var(--space-8)">
+        <div class="pattern-card animate-in" style="border-top:3px solid var(--color-actor-1)">
+          <div class="pattern-icon" style="background:var(--color-actor-1)">⚡</div>
+          <h4 class="pattern-title">边缘部署</h4>
+          <p class="pattern-desc">代码跑在全球 300+ 数据中心，用户请求自动路由到最近的节点。WebSocket 延迟极低。</p>
+        </div>
+        <div class="pattern-card animate-in" style="border-top:3px solid var(--color-actor-2)">
+          <div class="pattern-icon" style="background:var(--color-actor-2)">📦</div>
+          <h4 class="pattern-title">Durable Objects</h4>
+          <p class="pattern-desc">每个会话一个独立的有状态实例，管理该会话的所有 WebSocket 连接和消息转发。</p>
+        </div>
+        <div class="pattern-card animate-in" style="border-top:3px solid var(--color-actor-3)">
+          <div class="pattern-icon" style="background:var(--color-actor-3)">💤</div>
+          <h4 class="pattern-title">WebSocket 休眠</h4>
+          <p class="pattern-desc">Cloudflare 的 Hibernation API 让空闲连接不消耗 CPU 资源，只有收到消息时才唤醒 — 极其省钱。</p>
+        </div>
+        <div class="pattern-card animate-in" style="border-top:3px solid var(--color-actor-5)">
+          <div class="pattern-icon" style="background:var(--color-actor-5)">🔧</div>
+          <h4 class="pattern-title">Wrangler 部署</h4>
+          <p class="pattern-desc">一个配置文件（wrangler.toml）定义域名、Durable Object 绑定和迁移。一条命令部署到全球。</p>
+        </div>
+      </div>
+
+      <div class="callout callout-accent" style="margin-top:var(--space-8)">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">为什么选 Cloudflare 而不是自建服务器？</strong>
+          <p>三个原因：<strong>延迟</strong> — 边缘节点保证全球任何地方的 WebSocket 都低延迟；<strong>成本</strong> — Hibernation API 让空闲连接几乎免费，自建服务器需要 24 小时运行；<strong>运维</strong> — 不用管服务器、证书、扩容，Cloudflare 全包了。对 Paseo 这种"偶尔用、需要实时"的场景来说，是最优解。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen animate-in">
+      <h2 class="screen-heading">中继到底能看到什么？</h2>
+      <p>虽然中继无法解密你的数据，但它作为传输层，仍然能看到一些<span class="term" data-definition="元数据（metadata）是「关于数据的数据」。就像信封上的信息：寄件人地址、收件人地址、邮戳时间。邮局能看到信封，但打不开信。">元数据</span>。透明很重要 — 让我们看看代码里实际记录了什么：</p>
+
+      <div class="icon-rows stagger-children animate-in" style="margin-top:var(--space-8)">
+        <div class="icon-row animate-in">
+          <div class="icon-circle" style="background:var(--color-error)">👁️</div>
+          <div><strong>能看到（元数据）</strong><p>会话 ID（serverId）、连接角色（server/client）、连接/断开时间、消息大小和频率、你的 IP 地址</p></div>
+        </div>
+        <div class="icon-row animate-in">
+          <div class="icon-circle" style="background:var(--color-success)">🔒</div>
+          <div><strong>看不到（加密内容）</strong><p>Agent 的代码输出、文件内容、你的指令 prompt、权限请求的具体内容、工具调用参数</p></div>
+        </div>
+      </div>
+
+      <div class="translation-block animate-in" style="margin-top:var(--space-8)">
+        <div class="translation-code">
+          <span class="translation-label">CODE</span>
+          <pre><code><span class="code-keyword">interface</span> <span class="code-function">RelaySessionAttachment</span> {
+  serverId: <span class="code-keyword">string</span>;
+  role: <span class="code-string">"server"</span> | <span class="code-string">"client"</span>;
+  version?: <span class="code-string">"1"</span> | <span class="code-string">"2"</span>;
+  connectionId?: <span class="code-keyword">string</span> | <span class="code-keyword">null</span>;
+  createdAt: <span class="code-keyword">number</span>;
+}
+
+<span class="code-comment">// 中继的转发逻辑 — 只做一件事：</span>
+<span class="code-keyword">webSocketMessage</span>(ws, message) {
+  <span class="code-keyword">const</span> targetRole =
+    attachment.role === <span class="code-string">"server"</span>
+      ? <span class="code-string">"client"</span> : <span class="code-string">"server"</span>;
+  <span class="code-keyword">const</span> targets =
+    <span class="code-keyword">this</span>.state.<span class="code-function">getWebSockets</span>(targetRole);
+  <span class="code-keyword">for</span> (<span class="code-keyword">const</span> target <span class="code-keyword">of</span> targets) {
+    target.<span class="code-function">send</span>(message); <span class="code-comment">// 原样转发，不解密</span>
+  }
+}</code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">中文解释</span>
+          <div class="translation-lines">
+            <p class="tl">RelaySessionAttachment — 中继为每个连接记录的元数据。注意：没有任何与消息内容相关的字段。</p>
+            <p class="tl">转发逻辑的核心就一行：target.send(message)。没有任何 JSON.parse、没有解密 — 纯粹的字节搬运工。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-accent">
+        <div class="callout-icon">📧</div>
+        <div class="callout-content">
+          <strong class="callout-title">邮局类比</strong>
+          <p>中继就像邮局：能看到信封上的寄件人/收件人地址和邮票大小，但打不开信封。你的代码、指令、Agent 输出都在信封里面 — 用 ECDH + XSalsa20-Poly1305 锁得死死的。只有持有密钥的守护进程和你的手机能打开。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen animate-in">
       <h2 class="screen-heading">握手过程</h2>
       <div class="translation-block animate-in">
         <div class="translation-code">
@@ -869,12 +1140,12 @@ pre::-webkit-scrollbar,.translation-code::-webkit-scrollbar{display:none}
     <section class="screen animate-in" id="quiz-6">
       <h2 class="screen-heading">想一想</h2>
       <div class="quiz-container">
-        <div class="quiz-question-block" data-question="q7" data-correct="option-b">
+        <div class="quiz-question-block" data-question="q7" data-correct="option-c">
           <h3 class="quiz-question">有人入侵了 Paseo 中继服务器。他们能看到什么？</h3>
           <div class="quiz-options">
             <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>所有内容 — Agent 输出、代码、命令都以明文呈现</span></button>
-            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>只有加密字节 — 可以转发但无法读取</span></button>
-            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>只有元数据（谁连上了、什么时候），看不到实际内容</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>只有加密字节 — 完全看不到任何信息</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>元数据（谁连上了、什么时候、消息频率）+ 加密后的内容字节</span></button>
           </div>
           <div class="quiz-feedback" id="q7-feedback"></div>
         </div>
@@ -898,13 +1169,15 @@ pre::-webkit-scrollbar,.translation-code::-webkit-scrollbar{display:none}
         <div class="callout-icon">🎯</div>
         <div class="callout-content">
           <strong class="callout-title">核心收获</strong>
-          <p>Paseo 展示了几乎每个生产系统都会用到的六个模式：<br><br>
+          <p>Paseo 展示了几乎每个生产系统都会用到的八个模式：<br><br>
           <strong>客户端-服务器架构</strong> — 中央管理器（守护进程）服务多个 UI<br>
           <strong>WebSocket 流式传输</strong> — 实时数据推送给所有已连接的客户端<br>
           <strong>状态机</strong> — 安全地管理生命周期转换<br>
           <strong>二进制多路复用</strong> — 在一个连接上传输多种数据类型<br>
           <strong>智能通知路由</strong> — 在多设备间避免重复通知<br>
-          <strong>端到端加密</strong> — 信任通道而不信任中间人</p>
+          <strong>端到端加密</strong> — 信任通道而不信任中间人<br>
+          <strong>边缘计算</strong> — 用 Cloudflare Workers 部署中继，全球低延迟<br>
+          <strong>元数据透明</strong> — 诚实披露中继能看到什么和看不到什么</p>
         </div>
       </div>
       <p style="margin-top:var(--space-8);color:var(--color-text-secondary);font-size:var(--text-sm)">现在你可以阅读 Paseo 的源代码，也有足够的词汇来指导 AI 编程工具构建类似的系统。当你说"用 WebSocket 做实时流式传输"或"加 ECDH 密钥交换实现端到端加密"时，你会清楚地知道自己要什么 — 以及在结果中应该检查什么。</p>
@@ -956,6 +1229,10 @@ pre::-webkit-scrollbar,.translation-code::-webkit-scrollbar{display:none}
         const allDots = Array.from(dots);
         const idx = allDots.indexOf(dot);
         allDots.forEach((d, i) => { if (i < idx) d.classList.add('visited'); });
+        // Highlight active TOC item
+        document.querySelectorAll('.toc-item').forEach(item => item.classList.remove('active'));
+        const tocItem = document.querySelector(`.toc-item[data-target="${entry.target.id}"]`);
+        if (tocItem) tocItem.classList.add('active');
       }
     });
   }, { threshold: 0.3 });
@@ -965,6 +1242,21 @@ pre::-webkit-scrollbar,.translation-code::-webkit-scrollbar{display:none}
     dot.addEventListener('click', () => {
       const target = document.getElementById(dot.dataset.target);
       if (target) target.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+
+  // === TABLE OF CONTENTS ===
+  const tocToggle = document.getElementById('toc-toggle');
+  const tocPanel = document.getElementById('toc-panel');
+  const tocOverlay = document.getElementById('toc-overlay');
+  function openToc() { tocPanel.classList.add('open'); tocOverlay.classList.add('open'); tocToggle.classList.add('open'); }
+  function closeToc() { tocPanel.classList.remove('open'); tocOverlay.classList.remove('open'); tocToggle.classList.remove('open'); }
+  tocToggle.addEventListener('click', () => { tocPanel.classList.contains('open') ? closeToc() : openToc(); });
+  tocOverlay.addEventListener('click', closeToc);
+  document.querySelectorAll('.toc-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const target = document.getElementById(item.dataset.target);
+      if (target) { target.scrollIntoView({ behavior: 'smooth' }); closeToc(); }
     });
   });
 
@@ -990,8 +1282,9 @@ pre::-webkit-scrollbar,.translation-code::-webkit-scrollbar{display:none}
     q4: { true: '排查思路很好！Provider 才是真正运行 AI Agent 的 — 如果卡住了，先查它。', false: '中继只在远程访问时使用。如果你在本机，中继根本不参与。' },
     q5: { true: '完全正确！WebSocket 保持持久连接，服务器可以即时推送新消息，无需客户端反复请求。', false: '轮询能用但慢且浪费。WebSocket 才是实时聊天的标准。' },
     q6: { true: '答对了！Paseo 的智能通知逻辑避免了同一提示同时发到多个设备。', false: '重复通知会很烦人。Paseo 专门做了防重复处理。' },
-    q7: { true: '没错！这就是零知识中继的魔力 — 它只能转发字节，无法解密。', false: '中继设计上就是零知识的。它永远拿不到共享加密密钥。' },
+    q7: { true: '完全正确！中继能看到元数据（连接信息、时间、频率），但消息内容是加密的 — 它可以转发字节但无法解密读取。', false: '中继虽然看不到消息内容，但它确实能记录连接的元数据（谁连上了、什么时候、消息大小）。这不是完全的"零信息"，而是"零内容知识"。' },
     q8: { true: '说对了！端到端加密意味着服务器（中间人）无法读取消息 — 只有两端能解密。', false: 'TLS 只加密客户端和服务器之间的通信。服务器仍然能读消息。端到端加密意味着连服务器都读不了。' },
+    q9: { true: '完全正确！这就是 ACP 的价值 — 一个开放标准让新 Agent 的接入成本从"写几千行适配代码"降到"写一行 JSON 配置"。', false: '写全新适配器虽然可行，但成本极高。ACP 的目标就是消除这种重复劳动。WebSocket 协议是 Paseo 内部通信用的，和 Provider 无关。' },
   };
 
   window.selectOption = function(btn) {

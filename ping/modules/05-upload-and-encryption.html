@@ -1,0 +1,161 @@
+<section class="module" id="module-5">
+  <div class="module-content">
+    <header class="module-header">
+      <div class="module-number">05</div>
+      <h1 class="module-title">im-admin-server：后台、运营与开放平台的独立后场</h1>
+      <p class="module-subtitle">`im-admin-server` 不是“给管理页凑个接口”。它单独承接租户后台、聊天分享、共享会议、翻译中台与开放平台接口，所以值得被当作第二个核心服务看待。</p>
+    </header>
+
+    <div class="screen">
+      <h2 class="screen-heading">它到底管哪些事</h2>
+      <p>若 `im-app-server` 是面向终端用户的营业前台，`im-admin-server` 就像商场的运营后台。它关注租户配置、管理员身份、外部系统接入和运营动作，而不是普通用户每天点开的主聊天界面。</p>
+      <div class="step-cards animate-in">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>租户后台</strong>
+            <p>管理员登录、租户配置、用户查询、角色权限、标签、组织与群管理都在这里。</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>运营动作</strong>
+            <p>共享会议、邀请消息、聊天分享与报表类接口都偏运营流程，不宜混进用户主链。</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>开放平台</strong>
+            <p>创建开放应用、校验租户域名、拉会话记录、做翻译，这些都更像平台接口而非终端用户接口。</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <strong>翻译中台</strong>
+            <p>同一服务里统一编排 OpenAI、AWS Translate、Google Translate，不把多供应商逻辑散落到处都是。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">真实代码：它的开放平台已经是一套独立接口面</h2>
+      <p>下面这段路由定义很能说明问题。`im-admin-server` 不只给管理员页面用，它还对外提供应用管理、会话读取和翻译能力。</p>
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">代码</span>
+          <pre><code>
+<span class="code-line">router.post(</span>
+<span class="code-line">  <span class="code-string">"/api/v1/open-platform/apps"</span>,</span>
+<span class="code-line">  OpenPlatformManageAuthorize,</span>
+<span class="code-line">  CreateOpenApp,</span>
+<span class="code-line">);</span>
+<span class="code-line">router.get(</span>
+<span class="code-line">  <span class="code-string">"/api/v1/open-platform/session-records/conversations"</span>,</span>
+<span class="code-line">  OpenPlatformAuthorize,</span>
+<span class="code-line">  GetSessionConversations,</span>
+<span class="code-line">);</span>
+<span class="code-line">router.get(</span>
+<span class="code-line">  <span class="code-string">"/api/v1/open-platform/session-records/messages"</span>,</span>
+<span class="code-line">  OpenPlatformAuthorize,</span>
+<span class="code-line">  GetSessionMessages,</span>
+<span class="code-line">);</span>
+<span class="code-line">router.post(</span>
+<span class="code-line">  <span class="code-string">"/api/v1/open-platform/translation/translate"</span>,</span>
+<span class="code-line">  OpenPlatformAuthorize,</span>
+<span class="code-line">  TranslateText,</span>
+<span class="code-line">);</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">白话</span>
+          <div class="translation-lines">
+            <p class="tl">第一组接口是“管应用本身”，比如创建开放应用和管理密钥。</p>
+            <p class="tl">第二组接口开始直接开放会话记录与消息读取，说明后台服务已经深入到了审计、平台接入和运营场景。</p>
+            <p class="tl">再往后连翻译能力都被纳入开放平台接口，表明它不只是内部后台，而是一个平台能力出口。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">真实代码：翻译服务为何像个小型编排器</h2>
+      <p>这一段最像中台思路。它不把“翻译”绑定死在某一家供应商，而是统一封装 provider 选择、缓存和 fallback。</p>
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">代码</span>
+          <pre><code>
+<span class="code-line">    <span class="code-keyword">switch</span> (currentProvider) {</span>
+<span class="code-line">      <span class="code-keyword">case</span> <span class="code-string">"aws"</span>:</span>
+<span class="code-line">        <span class="code-keyword">return</span> <span class="code-keyword">this</span>.awsClient.translate(params);</span>
+<span class="code-line">      <span class="code-keyword">case</span> <span class="code-string">"openai"</span>:</span>
+<span class="code-line">        <span class="code-keyword">return</span> <span class="code-keyword">this</span>.openaiClient.translate(params);</span>
+<span class="code-line">      <span class="code-keyword">case</span> <span class="code-string">"google"</span>:</span>
+<span class="code-line">        <span class="code-keyword">return</span> <span class="code-keyword">this</span>.googleClient.translate(params);</span>
+<span class="code-line">      <span class="code-keyword">case</span> <span class="code-string">"google_llm"</span>:</span>
+<span class="code-line">        <span class="code-keyword">return</span> <span class="code-keyword">this</span>.googleClient.translateWithLLM(text, targetLang, sourceLang);</span>
+<span class="code-line">      <span class="code-keyword">default</span>:</span>
+<span class="code-line">        <span class="code-keyword">throw</span> <span class="code-keyword">new</span> BaseError(</span>
+<span class="code-line">          BizErrorCode.ParamsError.code,</span>
+<span class="code-line">          <span class="code-string">`Unsupported translation provider: ${currentProvider}`</span></span>
+<span class="code-line">        );</span>
+<span class="code-line">    }</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">白话</span>
+          <div class="translation-lines">
+            <p class="tl">同一业务入口背后，可以切 AWS、OpenAI、Google、Google LLM 四种翻译通道。</p>
+            <p class="tl">这样做的好处不是“炫技”，而是让成本、质量、可用性和区域可用性可以被运营化调度。</p>
+            <p class="tl">真正的平台型后端，常常不止做功能，还要做供应商编排与降级。</p>
+          </div>
+        </div>
+      </div>
+      <div class="callout callout-accent animate-in">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">为何把这类能力放 Admin 服务</strong>
+          <p>它们更偏租户运营、内容治理、开放能力和后台工作流，不该拖累普通用户聊天主链，也不该和用户权限混成一锅。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen">
+      <h2 class="screen-heading">小测：你会把需求放到正确服务吗</h2>
+      <div class="quiz-container" id="quiz-module5">
+        <div class="quiz-question-block" data-correct="option-b" data-explanation-right="对。租户后台、角色与配置明显属于 admin 服务的职责边界。" data-explanation-wrong="若需求是后台运营与租户管理，优先看 admin，而不是先扎进用户消息链。">
+          <h3 class="quiz-question">如果需求是“租户管理员批量调整某些用户的后台访问配置”，你更该先查哪个服务？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>`im-app-server` 的 conversation controller</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>`im-admin-server` 的 admin / tenant service</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>`spug/aws` 的迁移脚本</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-correct="option-c" data-explanation-right="正解。供应商编排与 fallback 更像平台能力，不宜让每个业务接口各自乱调第三方。" data-explanation-wrong="如果每个模块都直接连外部翻译供应商，后期很难统一缓存、降级和成本控制。">
+          <h3 class="quiz-question">为什么翻译能力更适合被封进统一服务，而不是每个接口自己去调 OpenAI 或 Google？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为这样页面会自动更好看</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为这样就不用做认证了</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为统一封装后更容易做缓存、降级、质量切换和成本治理</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <div class="quiz-question-block" data-correct="option-a" data-explanation-right="没错。开放平台、共享会议、公开分享都说明这个服务已有独立平台面，不只是后台页面配套。" data-explanation-wrong="若只把它当 BFF，很容易低估它的安全边界与发布影响范围。">
+          <h3 class="quiz-question">哪个观察最能证明 `im-admin-server` 已经是独立平台服务，而非单纯后台页面接口？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>它有开放平台接口、公开分享路由、独立后台鉴权和运营能力编排</span></button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>它的文件夹名字里有 admin</span></button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>它也用了 Koa</span></button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module5')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module5')">重做</button>
+      </div>
+    </div>
+  </div>
+</section>
