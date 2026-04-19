@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloudflare AI 产品矩阵 — 深度调研报告</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23475569'/><text x='16' y='23' text-anchor='middle' font-size='18' font-weight='bold' fill='white' font-family='sans-serif'>C</text></svg>">
+<meta name="date" content="2026-04-19">
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* === MANDATORY: Viewport Fitting Base === */
+html,body{height:100%;margin:0;overflow-x:hidden;background:#0f0f0f;font-family:'IBM Plex Sans',sans-serif}
+html{scroll-snap-type:y mandatory;scroll-behavior:smooth}
+
+/* === Responsive Breakpoints === */
+@media(max-height:700px){:root{--slide-pad:clamp(.75rem,3vw,2rem)}}
+@media(max-height:600px){.nav-dots{display:none}}
+@media(max-height:500px){}
+@media(max-width:600px){}
+
+/* === Reduced Motion === */
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.2s!important}html{scroll-behavior:auto}}
+
+/* === Shared Dark Sophisticate CSS === */
+:root {
+  --bg-primary: #0f0f0f;
+  --text-primary: #e8e4df;
+  --text-secondary: #9a9590;
+  --accent-warm: #d4a574;
+  --accent-pink: #e8b4b8;
+  --accent-gold: #c9b896;
+  --accent-orange: #F38020;
+}
+html,body{height:100%;margin:0;overflow-x:hidden;background:#0f0f0f;font-family:'IBM Plex Sans',sans-serif}
+.slide{width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative}
+.shape{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none}
+.s1{width:clamp(250px,40vw,500px);height:clamp(250px,40vw,500px);top:-8%;right:5%;background:rgba(243,128,32,.08)}
+.s2{width:clamp(200px,35vw,400px);height:clamp(200px,35vw,400px);bottom:-5%;left:10%;background:rgba(196,30,58,.06)}
+.s3{width:clamp(150px,25vw,300px);height:clamp(150px,25vw,300px);top:40%;left:-5%;background:rgba(201,184,150,.05)}
+.line{position:absolute;background:rgba(232,164,116,.12)}
+.line-v{width:1px;height:clamp(80px,15vh,160px);top:clamp(2rem,5vw,4rem);left:clamp(2rem,5vw,4rem)}
+.line-h{height:1px;width:clamp(60px,10vw,120px);top:clamp(2rem,5vw,4rem);left:calc(clamp(2rem,5vw,4rem) + 30px)}
+.content{text-align:center;position:relative;z-index:1;max-width:900px;padding:clamp(2rem,5vw,4rem)}
+.eyebrow{font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.65rem,1vw,.85rem);color:#d4a574;letter-spacing:.3em;text-transform:uppercase;margin-bottom:clamp(1rem,2.5vw,2rem);opacity:0;animation:reveal .8s .2s forwards}
+h1{font-family:'Cormorant',serif;font-weight:700;font-size:clamp(2.2rem,5.5vw,4rem);color:#e8e4df;line-height:1.15;margin:0 0 clamp(.6rem,1.5vw,1.2rem);opacity:0;animation:reveal .8s .4s forwards}
+.em{color:#d4a574;font-style:italic}
+.desc{font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.8rem,1.4vw,1.05rem);color:#9a9590;line-height:1.7;margin-bottom:clamp(1.5rem,3vw,2.5rem);opacity:0;animation:reveal .8s .6s forwards}
+.divider{width:clamp(40px,8vw,80px);height:1px;background:linear-gradient(90deg,transparent,#c9b896,transparent);margin:0 auto;opacity:0;animation:reveal .8s .8s forwards}
+.meta{margin-top:clamp(1rem,2vw,1.5rem);font-family:'IBM Plex Sans',sans-serif;font-weight:400;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.5);letter-spacing:.15em;opacity:0;animation:reveal .8s 1s forwards}
+
+/* Section divider */
+.section-divider{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.section-divider h1{font-size:clamp(2.5rem,6vw,5rem);margin-bottom:clamp(1rem,2vw,1.5rem)}
+.section-divider .line-decor{width:clamp(100px,15vw,200px);height:2px;background:linear-gradient(90deg,transparent,var(--accent-gold),transparent)}
+
+/* Content slides */
+.content-slide{display:flex;flex-direction:column;align-items:flex-start;padding:clamp(2rem,5vw,4rem);max-width:1000px}
+.slide-number{position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em}
+.tag{font-size:clamp(.6rem,.9vw,.75rem);color:var(--accent-orange);letter-spacing:.25em;text-transform:uppercase;margin-bottom:clamp(.8rem,2vw,1.2rem);opacity:0;animation:reveal .8s .3s forwards}
+h2{font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.6rem,3.5vw,2.8rem);color:var(--text-primary);line-height:1.2;margin:0 0 clamp(.5rem,1vw,.8rem);opacity:0;animation:reveal .8s .5s forwards}
+h2 .hl{color:var(--accent-orange)}
+h2 .hl-gold{color:var(--accent-gold)}
+h2 .hl-pink{color:var(--accent-pink)}
+h2 .hl-warm{color:var(--accent-warm)}
+.body{font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.75rem,1.2vw,.95rem);color:var(--text-secondary);line-height:1.6;max-width:700px;opacity:0;animation:reveal .8s .7s forwards}
+
+/* Lists */
+.list{margin:clamp(1rem,2vw,1.5rem) 0;padding:0;list-style:none;opacity:0;animation:reveal .8s .8s forwards}
+.list li{font-size:clamp(.7rem,1.1vw,.85rem);color:var(--text-secondary);margin-bottom:clamp(.4rem,.8vw,.6rem);position:relative;padding-left:clamp(1rem,1.5vw,1.2rem)}
+.list li::before{content:'';position:absolute;left:0;top:.5em;width:clamp(6px,8px,8px);height:1px;background:var(--accent-gold)}
+.list li strong{color:var(--text-primary);font-weight:400}
+
+/* Comparison table */
+.compare-table{width:100%;margin-top:clamp(1rem,2vw,1.5rem);opacity:0;animation:reveal .8s .9s forwards}
+.compare-table table{width:100%;border-collapse:collapse;font-size:clamp(.65rem,1vw,.8rem)}
+.compare-table th{font-weight:400;color:var(--accent-gold);text-align:left;padding:clamp(.5rem,1vw,.7rem);border-bottom:1px solid rgba(201,184,150,.2)}
+.compare-table td{color:var(--text-secondary);padding:clamp(.4rem,.8vw,.5rem);border-bottom:1px solid rgba(154,149,144,.1)}
+.compare-table td:first-child{color:var(--text-primary)}
+.compare-table .yes{color:var(--accent-orange)}
+.compare-table .custom{color:var(--accent-pink)}
+
+/* Product grid */
+.product-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(clamp(140px,18vw,200px),1fr));gap:clamp(.8rem,1.5vw,1.2rem);margin-top:clamp(1.5rem,3vw,2rem);opacity:0;animation:reveal .8s .9s forwards;width:100%}
+.product-card{padding:clamp(.6rem,1vw,.8rem);background:rgba(255,255,255,.02);border:1px solid rgba(201,184,150,.15);border-radius:4px}
+.product-card .name{font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.8rem,1.2vw,1rem);color:var(--text-primary);margin-bottom:clamp(.3rem,.5vw,.4rem)}
+.product-card .role{font-size:clamp(.6rem,.9vw,.7rem);color:var(--text-secondary)}
+.product-card.ai{border-color:rgba(243,128,32,.2)}
+.product-card.storage{border-color:rgba(201,184,150,.25)}
+.product-card.async{border-color:rgba(232,180,184,.15)}
+
+/* CSS Diagrams */
+.diagram{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:clamp(.3rem,.5vw,.4rem);margin-top:clamp(1.5rem,3vw,2rem);opacity:0;animation:reveal .8s 1s forwards}
+.diagram-box{padding:clamp(.4rem,.7vw,.6rem) clamp(.6rem,1vw,.8rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.7rem);color:var(--text-primary);border:1px solid rgba(201,184,150,.2);background:rgba(255,255,255,.03);font-weight:400;white-space:nowrap}
+.diagram-box.ai{border-color:var(--accent-orange);color:var(--accent-orange)}
+.diagram-box.storage{border-color:var(--accent-gold);color:var(--accent-gold)}
+.diagram-box.security{border-color:var(--accent-pink);color:var(--accent-pink)}
+.diagram-box.network{border-color:var(--accent-warm);color:var(--accent-warm)}
+.diagram-arrow{color:rgba(154,149,144,.4);font-size:clamp(.8rem,1vw,1rem)}
+
+/* Flow diagram */
+.flow-diagram{display:flex;align-items:center;flex-direction:column;gap:clamp(.5rem,1vw,.8rem);margin-top:clamp(1.5rem,3vw,2rem);opacity:0;animation:reveal .8s .9s forwards;width:100%}
+.flow-row{display:flex;align-items:center;gap:clamp(.4rem,.8vw,.6rem)}
+.flow-group{display:flex;flex-direction:column;gap:clamp(.3rem,.5vw,.4rem)}
+.flow-node{padding:clamp(.3rem,.5vw,.5rem) clamp(.5rem,.9vw,.7rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.7rem);color:var(--text-primary);border:1px solid rgba(201,184,150,.2);background:rgba(255,255,255,.03)}
+.flow-node.primary{border-color:var(--accent-gold);background:rgba(201,184,150,.08)}
+.flow-arrow{color:rgba(154,149,144,.5);font-size:1rem}
+
+/* Layered defense */
+.defense-layers{display:flex;flex-direction:column;gap:clamp(.6rem,1vw,.8rem);margin-top:clamp(1.5rem,3vw,2rem);opacity:0;animation:reveal .8s .9s forwards;width:100%;max-width:500px}
+.defense-layer{display:flex;align-items:center;gap:clamp(.5rem,1vw,.8rem);padding:clamp(.5rem,.9vw,.7rem);background:rgba(255,255,255,.02);border-left:2px solid var(--accent-pink)}
+.defense-layer .num{font-family:'IBM Plex Sans',sans-serif;font-weight:500;font-size:clamp(.7rem,1vw,.85rem);color:var(--accent-pink);width:clamp(1.5rem,2vw,2rem)}
+.defense-layer .name{font-size:clamp(.7rem,1.1vw,.85rem);color:var(--text-primary)}
+.defense-layer .desc{font-size:clamp(.55rem,.85vw,.7rem);color:var(--text-secondary)}
+
+/* Zero Trust diagram */
+.zt-diagram{display:grid;grid-template-columns:1fr 1fr;gap:clamp(1.5rem,3vw,2rem);margin-top:clamp(1.5rem,3vw,2rem);opacity:0;animation:reveal .8s .9s forwards;width:100%}
+.zt-box{padding:clamp(.8rem,1.5vw,1rem);background:rgba(255,255,255,.02);border:1px solid rgba(232,180,184,.2);border-radius:4px}
+.zt-box .title{font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.9rem,1.3vw,1.1rem);color:var(--accent-pink);margin-bottom:clamp(.4rem,.7vw,.5rem)}
+.zt-box .role{font-size:clamp(.6rem,.9vw,.7rem);color:var(--text-secondary)}
+.zt-box .arrow-label{font-size:clamp(.5rem,.75vw,.65rem);color:var(--accent-warm);margin-top:clamp(.3rem,.5vw,.4rem)}
+
+@keyframes reveal{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* Slide navigation hint */
+.slide-hint{position:absolute;bottom:clamp(1.5rem,4vw,3rem);right:clamp(1.5rem,4vw,3rem);font-size:clamp(.5rem,.75vw,.65rem);color:rgba(154,149,144,.3);letter-spacing:.1em}
+
+/* Progress bar */
+.progress-bar{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,#d4a574,#F38020);z-index:1000;transition:width .3s ease;width:0}
+
+/* Navigation dots */
+.nav-dots{position:fixed;right:clamp(1rem,2vw,2rem);top:50%;transform:translateY(-50%);z-index:999;display:flex;flex-direction:column;gap:clamp(.4rem,.6vw,.6rem)}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:rgba(154,149,144,.3);cursor:pointer;transition:all .3s ease;border:none;padding:0}
+.nav-dot.active{background:#d4a574;transform:scale(1.4)}
+.nav-dot:hover{background:rgba(212,165,116,.6)}
+
+/* Responsive: hide dots on small screens */
+@media(max-height:600px){.nav-dots{display:none}}
+@media(max-width:600px){.nav-dots{display:none}}
+
+/* Reduced motion */
+@media(prefers-reduced-motion:reduce){.progress-bar,.nav-dot{transition:none}}
+
+/* === TOC Sidebar === */
+.toc-btn{position:fixed;top:clamp(.8rem,1.5vw,1.2rem);left:clamp(.8rem,1.5vw,1.2rem);z-index:1001;width:clamp(32px,3vw,40px);height:clamp(32px,3vw,40px);background:rgba(15,15,15,.7);backdrop-filter:blur(12px);border:1px solid rgba(201,184,150,.15);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;padding:0;transition:all .3s ease;opacity:.5}
+.toc-btn:hover,.toc-btn.open{opacity:1;border-color:rgba(212,165,116,.4);background:rgba(15,15,15,.9)}
+.toc-btn span{display:block;width:clamp(14px,1.2vw,16px);height:1px;background:#c9b896;transition:all .3s ease}
+.toc-btn.open span:nth-child(1){transform:rotate(45deg) translate(2.5px,2.5px)}
+.toc-btn.open span:nth-child(2){opacity:0}
+.toc-btn.open span:nth-child(3){transform:rotate(-45deg) translate(2.5px,-2.5px)}
+.toc-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1002;opacity:0;pointer-events:none;transition:opacity .3s ease}
+.toc-backdrop.open{opacity:1;pointer-events:auto}
+.toc-sidebar{position:fixed;top:0;left:0;width:clamp(280px,30vw,380px);height:100%;background:rgba(15,15,15,.95);backdrop-filter:blur(20px);border-right:1px solid rgba(201,184,150,.1);z-index:1003;transform:translateX(-100%);transition:transform .35s cubic-bezier(.16,1,.3,1);overflow-y:auto;padding:clamp(2rem,4vw,3rem) clamp(1.5rem,3vw,2rem)}
+.toc-sidebar.open{transform:translateX(0)}
+.toc-sidebar::-webkit-scrollbar{width:3px}
+.toc-sidebar::-webkit-scrollbar-thumb{background:rgba(201,184,150,.2);border-radius:2px}
+.toc-header{font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.1rem,2vw,1.4rem);color:#e8e4df;margin-bottom:clamp(.3rem,.6vw,.5rem)}
+.toc-subtitle{font-size:clamp(.6rem,.9vw,.7rem);color:rgba(154,149,144,.5);letter-spacing:.15em;text-transform:uppercase;margin-bottom:clamp(1.5rem,3vw,2rem)}
+.toc-section{margin-bottom:clamp(1rem,2vw,1.5rem)}
+.toc-section-title{font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.75rem,1.1vw,.9rem);color:#d4a574;margin-bottom:clamp(.4rem,.8vw,.6rem);padding-bottom:clamp(.2rem,.4vw,.3rem);border-bottom:1px solid rgba(201,184,150,.1)}
+.toc-item{display:block;padding:clamp(.2rem,.4vw,.3rem) 0 0 clamp(.6rem,1vw,.8rem);font-size:clamp(.65rem,1vw,.78rem);color:#9a9590;text-decoration:none;cursor:pointer;transition:color .2s ease;line-height:1.5}
+.toc-item:hover{color:#e8e4df}
+.toc-item.active{color:#d4a574}
+.toc-item .num{display:inline-block;width:clamp(1.2rem,1.8vw,1.6rem);color:rgba(154,149,144,.35);font-size:clamp(.6rem,.85vw,.7rem)}
+@media(prefers-reduced-motion:reduce){.toc-btn,.toc-backdrop,.toc-sidebar{transition:none}}
+
+</style>
+</head>
+<body>
+
+<div class="progress-bar"></div>
+<nav class="nav-dots" aria-label="Slide navigation"></nav>
+
+<button class="toc-btn" id="tocBtn" aria-label="目录 (T)"><span></span><span></span><span></span></button>
+<div class="toc-backdrop" id="tocBackdrop"></div>
+<aside class="toc-sidebar" id="tocSidebar">
+  <div class="toc-header">目录</div>
+  <div class="toc-subtitle">Table of Contents</div>
+
+  <div class="toc-section">
+    <div class="toc-section-title">报告概览</div>
+    <a class="toc-item" data-slide="0"><span class="num">01</span>封面</a>
+    <a class="toc-item" data-slide="1"><span class="num">02</span>报告五大板块</a>
+    <a class="toc-item" data-slide="2"><span class="num">03</span>核心论点：可组合的平台</a>
+    <a class="toc-item" data-slide="3"><span class="num">04</span>边界：不是训练 GPU 云</a>
+    <a class="toc-item" data-slide="4"><span class="num">05</span>6 大场景 &times; 推荐组合</a>
+    <a class="toc-item" data-slide="5"><span class="num">06</span>30+ 产品 &times; 4 大分组</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-section-title">01 开发与 AI 平台</div>
+    <a class="toc-item" data-slide="6"><span class="num">07</span>Section Divider</a>
+    <a class="toc-item" data-slide="7"><span class="num">08</span>Workers — AI 总装层</a>
+    <a class="toc-item" data-slide="8"><span class="num">09</span>Workers 编排架构</a>
+    <a class="toc-item" data-slide="9"><span class="num">10</span>Workers AI — 推理层</a>
+    <a class="toc-item" data-slide="10"><span class="num">11</span>AI Gateway — 生产价值最高</a>
+    <a class="toc-item" data-slide="11"><span class="num">12</span>AI Gateway 请求架构</a>
+    <a class="toc-item" data-slide="12"><span class="num">13</span>Vectorize — 向量数据库</a>
+    <a class="toc-item" data-slide="13"><span class="num">14</span>AI Search — 托管检索</a>
+    <a class="toc-item" data-slide="14"><span class="num">15</span>AI Search vs Vectorize</a>
+    <a class="toc-item" data-slide="15"><span class="num">16</span>Agents & Durable Objects</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-section-title">02 数据与存储</div>
+    <a class="toc-item" data-slide="16"><span class="num">17</span>Section Divider</a>
+    <a class="toc-item" data-slide="17"><span class="num">18</span>数据产品矩阵</a>
+    <a class="toc-item" data-slide="18"><span class="num">19</span>数据链路架构</a>
+    <a class="toc-item" data-slide="19"><span class="num">20</span>R2 + Data Lake 组合</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-section-title">03 安全与访问控制</div>
+    <a class="toc-item" data-slide="20"><span class="num">21</span>Section Divider</a>
+    <a class="toc-item" data-slide="21"><span class="num">22</span>Cloudflare One — 零信任</a>
+    <a class="toc-item" data-slide="22"><span class="num">23</span>入口防护层级</a>
+    <a class="toc-item" data-slide="23"><span class="num">24</span>入口架构链路</a>
+    <a class="toc-item" data-slide="24"><span class="num">25</span>Cloudflare Mesh — 私有网络</a>
+    <a class="toc-item" data-slide="25"><span class="num">26</span>Mesh vs Tunnel vs Tailscale</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-section-title">04 交付、媒体与网络</div>
+    <a class="toc-item" data-slide="26"><span class="num">27</span>Section Divider</a>
+    <a class="toc-item" data-slide="27"><span class="num">28</span>CDN / LB / Argo</a>
+    <a class="toc-item" data-slide="28"><span class="num">29</span>媒体处理与网络接入</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-section-title">05 推荐组合与深度分析</div>
+    <a class="toc-item" data-slide="29"><span class="num">30</span>Section Divider</a>
+    <a class="toc-item" data-slide="30"><span class="num">31</span>场景 &times; 约束 选型矩阵</a>
+    <a class="toc-item" data-slide="31"><span class="num">32</span>默认 AI SaaS 架构</a>
+    <a class="toc-item" data-slide="32"><span class="num">33</span>企业 AI 架构</a>
+    <a class="toc-item" data-slide="33"><span class="num">34</span>独立优势分析</a>
+    <a class="toc-item" data-slide="34"><span class="num">35</span>不足与风险</a>
+    <a class="toc-item" data-slide="35"><span class="num">36</span>战略建议</a>
+    <a class="toc-item" data-slide="36"><span class="num">37</span>结语 Q&A</a>
+  </div>
+</aside>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(250px,40vw,500px);height:clamp(250px,40vw,500px);top:-8%;right:5%;background:rgba(243,128,32,.08)"></div>
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(200px,35vw,400px);height:clamp(200px,35vw,400px);bottom:-5%;left:10%;background:rgba(196,30,58,.06)"></div>
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(150px,25vw,300px);height:clamp(150px,25vw,300px);top:40%;left:-5%;background:rgba(201,184,150,.05)"></div>
+  <div style="position:absolute;background:rgba(232,164,116,.12);width:1px;height:clamp(80px,15vh,160px);top:clamp(2rem,5vw,4rem);left:clamp(2rem,5vw,4rem)"></div>
+  <div style="position:absolute;background:rgba(232,164,116,.12);height:1px;width:clamp(60px,10vw,120px);top:clamp(2rem,5vw,4rem);left:calc(clamp(2rem,5vw,4rem) + 30px)"></div>
+  <div style="text-align:center;position:relative;z-index:1;max-width:900px;padding:clamp(2rem,5vw,4rem)">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.65rem,1vw,.85rem);color:#d4a574;letter-spacing:.3em;text-transform:uppercase;margin-bottom:clamp(1rem,2.5vw,2rem)">CLOUDFLARE DEEP DIVE</div>
+    <h1 style="font-family:'Cormorant',serif;font-weight:700;font-size:clamp(2.2rem,5.5vw,4rem);color:#e8e4df;line-height:1.15;margin:0 0 clamp(.6rem,1.5vw,1.2rem)">Cloudflare 产品矩阵<br><span style="color:#d4a574;font-style:italic">深度调研报告</span></h1>
+    <div style="width:clamp(40px,8vw,80px);height:1px;background:linear-gradient(90deg,transparent,#c9b896,transparent);margin:0 auto clamp(1rem,2vw,1.5rem)"></div>
+    <p style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.8rem,1.4vw,1.05rem);color:#9a9590;line-height:1.7">面向 AI 全栈开发者的基础设施选型指南</p>
+    <div style="margin-top:clamp(1.5rem,3vw,2.5rem);font-family:'IBM Plex Sans',sans-serif;font-weight:400;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.5);letter-spacing:.15em">2026 &middot; AI FULLSTACK INFRASTRUCTURE</div>
+  </div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(200px,35vw,400px);height:clamp(200px,35vw,400px);bottom:-5%;right:10%;background:rgba(201,184,150,.06)"></div>
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(150px,25vw,300px);height:clamp(150px,25vw,300px);top:10%;left:-5%;background:rgba(243,128,32,.05)"></div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">02</div>
+  <div style="position:relative;z-index:1;max-width:900px;padding:clamp(2rem,5vw,4rem);width:100%">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.65rem,1vw,.85rem);color:#d4a574;letter-spacing:.25em;text-transform:uppercase;margin-bottom:clamp(.8rem,2vw,1.2rem)">AGENDA</div>
+    <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.6rem,3.5vw,2.8rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(1.5rem,3vw,2.5rem)">报告<span style="color:#F38020">五大板块</span></h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(clamp(180px,20vw,260px),1fr));gap:clamp(1rem,2vw,1.5rem)">
+      <div style="padding:clamp(1rem,1.5vw,1.2rem);background:rgba(255,255,255,.02);border:1px solid rgba(243,128,32,.25);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.85rem,1.2vw,1.05rem);color:#F38020;margin-bottom:clamp(.3rem,.5vw,.4rem)">01 &nbsp;AI 平台</div>
+        <div style="font-size:clamp(.6rem,.9vw,.7rem);color:#9a9590;line-height:1.5">Workers / Workers AI / AI Gateway / Vectorize / AI Search / Agents</div>
+      </div>
+      <div style="padding:clamp(1rem,1.5vw,1.2rem);background:rgba(255,255,255,.02);border:1px solid rgba(201,184,150,.25);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.85rem,1.2vw,1.05rem);color:#c9b896;margin-bottom:clamp(.3rem,.5vw,.4rem)">02 &nbsp;数据存储</div>
+        <div style="font-size:clamp(.6rem,.9vw,.7rem);color:#9a9590;line-height:1.5">R2 / D1 / KV / Queues / Workflows / Pipelines</div>
+      </div>
+      <div style="padding:clamp(1rem,1.5vw,1.2rem);background:rgba(255,255,255,.02);border:1px solid rgba(232,180,184,.25);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.85rem,1.2vw,1.05rem);color:#e8b4b8;margin-bottom:clamp(.3rem,.5vw,.4rem)">03 &nbsp;安全控制</div>
+        <div style="font-size:clamp(.6rem,.9vw,.7rem);color:#9a9590;line-height:1.5">One / Access / Gateway / Turnstile / WAF / API Shield</div>
+      </div>
+      <div style="padding:clamp(1rem,1.5vw,1.2rem);background:rgba(255,255,255,.02);border:1px solid rgba(212,165,116,.25);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.85rem,1.2vw,1.05rem);color:#d4a574;margin-bottom:clamp(.3rem,.5vw,.4rem)">04 &nbsp;交付网络</div>
+        <div style="font-size:clamp(.6rem,.9vw,.7rem);color:#9a9590;line-height:1.5">CDN / Argo / LB / Spectrum / Magic Transit</div>
+      </div>
+      <div style="padding:clamp(1rem,1.5vw,1.2rem);background:rgba(255,255,255,.02);border:1px solid rgba(154,149,144,.2);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.85rem,1.2vw,1.05rem);color:#e8e4df;margin-bottom:clamp(.3rem,.5vw,.4rem)">05 &nbsp;推荐组合</div>
+        <div style="font-size:clamp(.6rem,.9vw,.7rem);color:#9a9590;line-height:1.5">6 大场景 &times; 默认架构 &times; 调优策略</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(250px,40vw,500px);height:clamp(250px,40vw,500px);top:20%;right:-5%;background:rgba(243,128,32,.07)"></div>
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(180px,30vw,350px);height:clamp(180px,30vw,350px);bottom:5%;left:5%;background:rgba(201,184,150,.05)"></div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">03</div>
+  <div style="text-align:center;position:relative;z-index:1;max-width:900px;padding:clamp(2rem,5vw,4rem)">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.65rem,1vw,.85rem);color:#d4a574;letter-spacing:.3em;text-transform:uppercase;margin-bottom:clamp(1rem,2.5vw,2rem)">CORE THESIS</div>
+    <h1 style="font-family:'Cormorant',serif;font-weight:700;font-size:clamp(1.8rem,4.5vw,3.2rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(1rem,2vw,1.5rem)">Cloudflare 的优势不是<span style="color:#F38020;font-style:italic">单一产品强</span><br>而是<span style="color:#c9b896;font-style:italic">可组合的平台</span></h1>
+    <div style="width:clamp(40px,8vw,80px);height:1px;background:linear-gradient(90deg,transparent,#c9b896,transparent);margin:0 auto clamp(1.5rem,3vw,2rem)"></div>
+    <p style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.75rem,1.2vw,.95rem);color:#9a9590;line-height:1.7;margin-bottom:clamp(1.5rem,3vw,2rem)">把边缘计算、对象存储、向量检索、模型网关、状态协调、零信任、安全与全球流量调度做成可组合的基础设施层</p>
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(.5rem,1vw,.7rem)">
+      <span style="padding:clamp(.3rem,.6vw,.5rem) clamp(.8rem,1.2vw,1rem);border-radius:20px;font-size:clamp(.65rem,1vw,.8rem);color:#F38020;border:1px solid rgba(243,128,32,.35);background:rgba(243,128,32,.06);font-weight:400">开发与 AI 平台</span>
+      <span style="padding:clamp(.3rem,.6vw,.5rem) clamp(.8rem,1.2vw,1rem);border-radius:20px;font-size:clamp(.65rem,1vw,.8rem);color:#c9b896;border:1px solid rgba(201,184,150,.35);background:rgba(201,184,150,.06);font-weight:400">数据与存储</span>
+      <span style="padding:clamp(.3rem,.6vw,.5rem) clamp(.8rem,1.2vw,1rem);border-radius:20px;font-size:clamp(.65rem,1vw,.8rem);color:#e8b4b8;border:1px solid rgba(232,180,184,.35);background:rgba(232,180,184,.06);font-weight:400">安全与访问控制</span>
+      <span style="padding:clamp(.3rem,.6vw,.5rem) clamp(.8rem,1.2vw,1rem);border-radius:20px;font-size:clamp(.65rem,1vw,.8rem);color:#d4a574;border:1px solid rgba(212,165,116,.35);background:rgba(212,165,116,.06);font-weight:400">交付与网络</span>
+      <span style="padding:clamp(.3rem,.6vw,.5rem) clamp(.8rem,1.2vw,1rem);border-radius:20px;font-size:clamp(.65rem,1vw,.8rem);color:#e8e4df;border:1px solid rgba(232,228,223,.2);background:rgba(232,228,223,.03);font-weight:400">推荐组合</span>
+    </div>
+  </div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(200px,30vw,350px);height:clamp(200px,30vw,350px);top:10%;left:-5%;background:rgba(196,30,58,.06)"></div>
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(180px,28vw,320px);height:clamp(180px,28vw,320px);bottom:5%;right:5%;background:rgba(243,128,32,.05)"></div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">04</div>
+  <div style="position:relative;z-index:1;max-width:1000px;padding:clamp(2rem,5vw,4rem);width:100%">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.65rem,1vw,.85rem);color:#d4a574;letter-spacing:.25em;text-transform:uppercase;margin-bottom:clamp(.8rem,2vw,1.2rem)">BOUNDARY</div>
+    <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.6rem,3.5vw,2.8rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(1rem,2vw,1.5rem)"><span style="color:#e8b4b8">不是</span>训练 GPU 云</h2>
+    <p style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.75rem,1.2vw,.95rem);color:#9a9590;line-height:1.6;max-width:700px;margin-bottom:clamp(1.5rem,3vw,2rem)">Cloudflare 很强于推理入口、边缘编排、RAG、Agent、访问控制、全球分发和对象/日志数据湖。但它不是模型训练 GPU 云。</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:clamp(1rem,2vw,1.5rem)">
+      <div style="padding:clamp(1rem,1.5vw,1.2rem);background:rgba(232,180,184,.03);border:1px solid rgba(232,180,184,.2);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.9rem,1.3vw,1.1rem);color:#e8b4b8;margin-bottom:clamp(.6rem,1vw,.8rem)">不适合</div>
+        <div style="font-size:clamp(.6rem,.9vw,.7rem);color:#9a9590;line-height:1.7">
+          <div style="margin-bottom:clamp(.4rem,.6vw,.5rem);padding-left:clamp(.8rem,1.2vw,1rem);position:relative"><span style="position:absolute;left:0;color:rgba(232,180,184,.4)">&times;</span> GPU 模型训练 / 微调</div>
+          <div style="margin-bottom:clamp(.4rem,.6vw,.5rem);padding-left:clamp(.8rem,1.2vw,1rem);position:relative"><span style="position:absolute;left:0;color:rgba(232,180,184,.4)">&times;</span> 大规模分布式训练调度</div>
+          <div style="margin-bottom:clamp(.4rem,.6vw,.5rem);padding-left:clamp(.8rem,1.2vw,1rem);position:relative"><span style="position:absolute;left:0;color:rgba(232,180,184,.4)">&times;</span> 长时间离线批量推理 (同步)</div>
+        </div>
+      </div>
+      <div style="padding:clamp(1rem,1.5vw,1.2rem);background:rgba(243,128,32,.03);border:1px solid rgba(243,128,32,.2);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.9rem,1.3vw,1.1rem);color:#F38020;margin-bottom:clamp(.6rem,1vw,.8rem)">核心优势</div>
+        <div style="font-size:clamp(.6rem,.9vw,.7rem);color:#9a9590;line-height:1.7">
+          <div style="margin-bottom:clamp(.4rem,.6vw,.5rem);padding-left:clamp(.8rem,1.2vw,1rem);position:relative"><span style="position:absolute;left:0;color:rgba(243,128,32,.5)">&check;</span> Serverless 推理 &amp; 边缘编排</div>
+          <div style="margin-bottom:clamp(.4rem,.6vw,.5rem);padding-left:clamp(.8rem,1.2vw,1rem);position:relative"><span style="position:absolute;left:0;color:rgba(243,128,32,.5)">&check;</span> 训练数据仓 / 检查点仓</div>
+          <div style="margin-bottom:clamp(.4rem,.6vw,.5rem);padding-left:clamp(.8rem,1.2vw,1rem);position:relative"><span style="position:absolute;left:0;color:rgba(243,128,32,.5)">&check;</span> 跨云低成本分发 / 数据湖目录</div>
+          <div style="margin-bottom:clamp(.4rem,.6vw,.5rem);padding-left:clamp(.8rem,1.2vw,1rem);position:relative"><span style="position:absolute;left:0;color:rgba(243,128,32,.5)">&check;</span> 日志 / 事件落地层</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(200px,35vw,400px);height:clamp(200px,35vw,400px);top:-5%;right:10%;background:rgba(243,128,32,.06)"></div>
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(180px,30vw,350px);height:clamp(180px,30vw,350px);bottom:-3%;left:5%;background:rgba(201,184,150,.05)"></div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">05</div>
+  <div style="position:relative;z-index:1;max-width:1000px;padding:clamp(2rem,5vw,4rem);width:100%">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.65rem,1vw,.85rem);color:#d4a574;letter-spacing:.25em;text-transform:uppercase;margin-bottom:clamp(.8rem,2vw,1.2rem)">RECOMMENDED COMBOS</div>
+    <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.5rem,3vw,2.4rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(1rem,2vw,1.5rem)"><span style="color:#F38020">6</span> 大场景 &times; 推荐组合</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(clamp(220px,28vw,300px),1fr));gap:clamp(.8rem,1.2vw,1rem)">
+      <div style="padding:clamp(.7rem,1vw,.9rem);background:rgba(255,255,255,.02);border:1px solid rgba(243,128,32,.2);border-radius:4px;border-left:3px solid #F38020">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.8rem,1.1vw,.95rem);color:#F38020;margin-bottom:clamp(.3rem,.5vw,.4rem)">通用 AI Web</div>
+        <div style="font-size:clamp(.55rem,.85vw,.68rem);color:#9a9590;line-height:1.5">Workers + AI Gateway + Workers AI + Vectorize + R2 + Turnstile + WAF</div>
+      </div>
+      <div style="padding:clamp(.7rem,1vw,.9rem);background:rgba(255,255,255,.02);border:1px solid rgba(243,128,32,.2);border-radius:4px;border-left:3px solid #F38020">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.8rem,1.1vw,.95rem);color:#F38020;margin-bottom:clamp(.3rem,.5vw,.4rem)">RAG / 知识库</div>
+        <div style="font-size:clamp(.55rem,.85vw,.68rem);color:#9a9590;line-height:1.5">AI Search 或 Vectorize + Workers AI + R2</div>
+      </div>
+      <div style="padding:clamp(.7rem,1vw,.9rem);background:rgba(255,255,255,.02);border:1px solid rgba(243,128,32,.2);border-radius:4px;border-left:3px solid #F38020">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.8rem,1.1vw,.95rem);color:#F38020;margin-bottom:clamp(.3rem,.5vw,.4rem)">实时 Agent</div>
+        <div style="font-size:clamp(.55rem,.85vw,.68rem);color:#9a9590;line-height:1.5">Durable Objects + Workers + AI Gateway</div>
+      </div>
+      <div style="padding:clamp(.7rem,1vw,.9rem);background:rgba(255,255,255,.02);border:1px solid rgba(201,184,150,.25);border-radius:4px;border-left:3px solid #c9b896">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.8rem,1.1vw,.95rem);color:#c9b896;margin-bottom:clamp(.3rem,.5vw,.4rem)">数据湖</div>
+        <div style="font-size:clamp(.55rem,.85vw,.68rem);color:#9a9590;line-height:1.5">R2 + R2 Data Catalog + Pipelines + 外部训练算力</div>
+      </div>
+      <div style="padding:clamp(.7rem,1vw,.9rem);background:rgba(255,255,255,.02);border:1px solid rgba(232,180,184,.25);border-radius:4px;border-left:3px solid #e8b4b8">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.8rem,1.1vw,.95rem);color:#e8b4b8;margin-bottom:clamp(.3rem,.5vw,.4rem)">企业内网</div>
+        <div style="font-size:clamp(.55rem,.85vw,.68rem);color:#9a9590;line-height:1.5">Cloudflare One + Access + Gateway + Tunnel</div>
+      </div>
+      <div style="padding:clamp(.7rem,1vw,.9rem);background:rgba(255,255,255,.02);border:1px solid rgba(212,165,116,.25);border-radius:4px;border-left:3px solid #d4a574">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.8rem,1.1vw,.95rem);color:#d4a574;margin-bottom:clamp(.3rem,.5vw,.4rem)">混合云</div>
+        <div style="font-size:clamp(.55rem,.85vw,.68rem);color:#9a9590;line-height:1.5">LB / Argo / Spectrum / Magic Transit + Access / Gateway</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(200px,30vw,350px);height:clamp(200px,30vw,350px);top:5%;right:-3%;background:rgba(243,128,32,.06)"></div>
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(180px,28vw,320px);height:clamp(180px,28vw,320px);bottom:0;left:0;background:rgba(201,184,150,.05)"></div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">06</div>
+  <div style="position:relative;z-index:1;max-width:1000px;padding:clamp(2rem,5vw,4rem);width:100%">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.65rem,1vw,.85rem);color:#d4a574;letter-spacing:.25em;text-transform:uppercase;margin-bottom:clamp(.8rem,2vw,1.2rem)">PRODUCT MATRIX</div>
+    <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.5rem,3vw,2.4rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(1rem,2vw,1.5rem)">30+ 产品 &times; <span style="color:#F38020">4</span> 大分组</h2>
+    <!-- AI Platform -->
+    <div style="margin-bottom:clamp(.8rem,1.2vw,1rem)">
+      <div style="font-size:clamp(.55rem,.8vw,.65rem);color:#F38020;letter-spacing:.15em;margin-bottom:clamp(.3rem,.5vw,.4rem);text-transform:uppercase">AI 平台</div>
+      <div style="display:flex;flex-wrap:wrap;gap:clamp(.3rem,.5vw,.4rem)">
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#F38020;border:1px solid rgba(243,128,32,.3);background:rgba(243,128,32,.04)">Workers</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#F38020;border:1px solid rgba(243,128,32,.3);background:rgba(243,128,32,.04)">Workers AI</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#F38020;border:1px solid rgba(243,128,32,.3);background:rgba(243,128,32,.04)">AI Gateway</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#F38020;border:1px solid rgba(243,128,32,.3);background:rgba(243,128,32,.04)">Vectorize</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#F38020;border:1px solid rgba(243,128,32,.3);background:rgba(243,128,32,.04)">AI Search</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#F38020;border:1px solid rgba(243,128,32,.3);background:rgba(243,128,32,.04)">Agents</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#F38020;border:1px solid rgba(243,128,32,.3);background:rgba(243,128,32,.04)">Durable Objects</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#F38020;border:1px solid rgba(243,128,32,.3);background:rgba(243,128,32,.04)">Pages</span>
+      </div>
+    </div>
+    <!-- Storage -->
+    <div style="margin-bottom:clamp(.8rem,1.2vw,1rem)">
+      <div style="font-size:clamp(.55rem,.8vw,.65rem);color:#c9b896;letter-spacing:.15em;margin-bottom:clamp(.3rem,.5vw,.4rem);text-transform:uppercase">数据存储</div>
+      <div style="display:flex;flex-wrap:wrap;gap:clamp(.3rem,.5vw,.4rem)">
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#c9b896;border:1px solid rgba(201,184,150,.3);background:rgba(201,184,150,.04)">R2</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#c9b896;border:1px solid rgba(201,184,150,.3);background:rgba(201,184,150,.04)">R2 Data Catalog</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#c9b896;border:1px solid rgba(201,184,150,.3);background:rgba(201,184,150,.04)">D1</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#c9b896;border:1px solid rgba(201,184,150,.3);background:rgba(201,184,150,.04)">KV</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#c9b896;border:1px solid rgba(201,184,150,.3);background:rgba(201,184,150,.04)">Queues</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#c9b896;border:1px solid rgba(201,184,150,.3);background:rgba(201,184,150,.04)">Workflows</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#c9b896;border:1px solid rgba(201,184,150,.3);background:rgba(201,184,150,.04)">Hyperdrive</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#c9b896;border:1px solid rgba(201,184,150,.3);background:rgba(201,184,150,.04)">Pipelines</span>
+      </div>
+    </div>
+    <!-- Security -->
+    <div style="margin-bottom:clamp(.8rem,1.2vw,1rem)">
+      <div style="font-size:clamp(.55rem,.8vw,.65rem);color:#e8b4b8;letter-spacing:.15em;margin-bottom:clamp(.3rem,.5vw,.4rem);text-transform:uppercase">安全控制</div>
+      <div style="display:flex;flex-wrap:wrap;gap:clamp(.3rem,.5vw,.4rem)">
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#e8b4b8;border:1px solid rgba(232,180,184,.3);background:rgba(232,180,184,.04)">Cloudflare One</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#e8b4b8;border:1px solid rgba(232,180,184,.3);background:rgba(232,180,184,.04)">Access</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#e8b4b8;border:1px solid rgba(232,180,184,.3);background:rgba(232,180,184,.04)">Gateway</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#e8b4b8;border:1px solid rgba(232,180,184,.3);background:rgba(232,180,184,.04)">Turnstile</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#e8b4b8;border:1px solid rgba(232,180,184,.3);background:rgba(232,180,184,.04)">WAF</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#e8b4b8;border:1px solid rgba(232,180,184,.3);background:rgba(232,180,184,.04)">API Shield</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#e8b4b8;border:1px solid rgba(232,180,184,.3);background:rgba(232,180,184,.04)">DDoS</span>
+      </div>
+    </div>
+    <!-- Network -->
+    <div>
+      <div style="font-size:clamp(.55rem,.8vw,.65rem);color:#d4a574;letter-spacing:.15em;margin-bottom:clamp(.3rem,.5vw,.4rem);text-transform:uppercase">交付网络</div>
+      <div style="display:flex;flex-wrap:wrap;gap:clamp(.3rem,.5vw,.4rem)">
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#d4a574;border:1px solid rgba(212,165,116,.3);background:rgba(212,165,116,.04)">CDN / Cache</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#d4a574;border:1px solid rgba(212,165,116,.3);background:rgba(212,165,116,.04)">Argo</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#d4a574;border:1px solid rgba(212,165,116,.3);background:rgba(212,165,116,.04)">Load Balancing</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#d4a574;border:1px solid rgba(212,165,116,.3);background:rgba(212,165,116,.04)">Spectrum</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#d4a574;border:1px solid rgba(212,165,116,.3);background:rgba(212,165,116,.04)">Magic Transit</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#d4a574;border:1px solid rgba(212,165,116,.3);background:rgba(212,165,116,.04)">Images</span>
+        <span style="padding:clamp(.2rem,.4vw,.3rem) clamp(.6rem,.8vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);color:#d4a574;border:1px solid rgba(212,165,116,.3);background:rgba(212,165,116,.04)">Stream</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(250px,40vw,500px);height:clamp(250px,40vw,500px);top:-5%;left:20%;background:rgba(243,128,32,.08)"></div>
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(180px,28vw,320px);height:clamp(180px,28vw,320px);bottom:10%;right:10%;background:rgba(212,165,116,.05)"></div>
+  <div style="text-align:center;position:relative;z-index:1;max-width:900px;padding:clamp(2rem,5vw,4rem)">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.65rem,1vw,.85rem);color:#d4a574;letter-spacing:.3em;text-transform:uppercase;margin-bottom:clamp(1rem,2.5vw,2rem)">PART I</div>
+    <h1 style="font-family:'Cormorant',serif;font-weight:700;font-size:clamp(2.5rem,6vw,5rem);color:#F38020;line-height:1.1;margin:0 0 clamp(1rem,2vw,1.5rem)">01 &nbsp;开发与 AI 平台</h1>
+    <div style="width:clamp(100px,15vw,200px);height:2px;background:linear-gradient(90deg,transparent,#F38020,transparent);margin:0 auto clamp(1rem,2vw,1.5rem)"></div>
+    <p style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.8rem,1.4vw,1.05rem);color:#9a9590;line-height:1.7">Workers &nbsp;/ &nbsp;Workers AI &nbsp;/ &nbsp;AI Gateway &nbsp;/ &nbsp;Vectorize &nbsp;/ &nbsp;AI Search &nbsp;/ &nbsp;Agents</p>
+  </div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(200px,35vw,400px);height:clamp(200px,35vw,400px);top:-5%;right:5%;background:rgba(243,128,32,.07)"></div>
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(150px,25vw,300px);height:clamp(150px,25vw,300px);bottom:5%;left:5%;background:rgba(201,184,150,.04)"></div>
+  <div style="position:absolute;background:rgba(232,164,116,.12);width:1px;height:clamp(80px,15vh,160px);top:clamp(2rem,5vw,4rem);left:clamp(2rem,5vw,4rem)"></div>
+  <div style="position:absolute;background:rgba(232,164,116,.12);height:1px;width:clamp(60px,10vw,120px);top:clamp(2rem,5vw,4rem);left:calc(clamp(2rem,5vw,4rem) + 30px)"></div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">08</div>
+  <div style="position:relative;z-index:1;max-width:1000px;padding:clamp(2rem,5vw,4rem);width:100%;display:flex;flex-direction:column">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.65rem,1vw,.85rem);color:#F38020;letter-spacing:.25em;text-transform:uppercase;margin-bottom:clamp(.8rem,2vw,1.2rem)">EDGE RUNTIME</div>
+    <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.6rem,3.5vw,2.8rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(.5rem,1vw,.8rem)"><span style="color:#F38020">Workers</span> — AI 应用的总装层</h2>
+    <p style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.75rem,1.15vw,.9rem);color:#9a9590;line-height:1.6;max-width:700px;margin-bottom:clamp(1rem,2vw,1.5rem)">把请求接入、鉴权、缓存、模型路由、向量检索、对象存储读写、日志与计费整合到一个边缘执行面。</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(clamp(180px,22vw,260px),1fr));gap:clamp(.8rem,1.2vw,1rem);margin-bottom:clamp(1rem,2vw,1.5rem)">
+      <div style="padding:clamp(.8rem,1.2vw,1rem);background:rgba(255,255,255,.02);border:1px solid rgba(243,128,32,.2);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.85rem,1.2vw,1rem);color:#F38020;margin-bottom:clamp(.4rem,.6vw,.5rem)">角色</div>
+        <div style="font-size:clamp(.6rem,.9vw,.7rem);color:#9a9590;line-height:1.6">API 网关 / 推理编排 / RAG orchestration / 实时前后处理 / 鉴权缓存</div>
+      </div>
+      <div style="padding:clamp(.8rem,1.2vw,1rem);background:rgba(255,255,255,.02);border:1px solid rgba(201,184,150,.2);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.85rem,1.2vw,1rem);color:#c9b896;margin-bottom:clamp(.4rem,.6vw,.5rem)">优势</div>
+        <div style="font-size:clamp(.6rem,.9vw,.7rem);color:#9a9590;line-height:1.6">冷启动极低 / 原生绑定 R2 D1 KV Queues DO AI / 按 CPU 计费 / 全球就近执行</div>
+      </div>
+      <div style="padding:clamp(.8rem,1.2vw,1rem);background:rgba(255,255,255,.02);border:1px solid rgba(232,180,184,.15);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.85rem,1.2vw,1rem);color:#e8b4b8;margin-bottom:clamp(.4rem,.6vw,.5rem)">注意</div>
+        <div style="font-size:clamp(.6rem,.9vw,.7rem);color:#9a9590;line-height:1.6">不负责训练 / 复杂长任务拆到 Queues+Workflows / 高 CPU 需管控预算</div>
+      </div>
+    </div>
+    <div style="padding:clamp(.6rem,1vw,.8rem) clamp(.8rem,1.2vw,1rem);background:rgba(243,128,32,.04);border-left:2px solid #F38020;border-radius:0 3px 3px 0">
+      <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:500;font-size:clamp(.6rem,.85vw,.72rem);color:#F38020;margin-bottom:clamp(.2rem,.4vw,.3rem);letter-spacing:.1em">BEST PRACTICE</div>
+      <div style="font-size:clamp(.58rem,.85vw,.68rem);color:#9a9590;line-height:1.6">同步链路短而确定，异步链路下沉到 Queues/Workflows &nbsp;|&nbsp; 模型调用经 AI Gateway &nbsp;|&nbsp; 知识库入库写入 R2 &nbsp;|&nbsp; 会话态写入 DO 或 D1 &nbsp;|&nbsp; 高复用短结果放 KV</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(200px,35vw,400px);height:clamp(200px,35vw,400px);top:15%;right:-5%;background:rgba(243,128,32,.06)"></div>
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(150px,25vw,300px);height:clamp(150px,25vw,300px);bottom:0;left:10%;background:rgba(201,184,150,.04)"></div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">09</div>
+  <div style="position:relative;z-index:1;max-width:1000px;padding:clamp(2rem,5vw,4rem);width:100%">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.65rem,1vw,.85rem);color:#F38020;letter-spacing:.25em;text-transform:uppercase;margin-bottom:clamp(.8rem,2vw,1.2rem)">ARCHITECTURE</div>
+    <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.5rem,3vw,2.4rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(1rem,2vw,1.5rem)"><span style="color:#F38020">Workers</span> 编排架构</h2>
+    <p style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.7rem,1.1vw,.85rem);color:#9a9590;line-height:1.6;max-width:600px;margin-bottom:clamp(1.5rem,3vw,2rem)">Workers 作为中心枢纽，统一调度 AI Gateway、Vectorize、R2、D1、Queues 等下游服务。</p>
+    <!-- CSS Flow Diagram -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:clamp(.6rem,1.2vw,1rem)">
+      <!-- Row 1: Client -->
+      <div style="display:flex;align-items:center;gap:clamp(.5rem,1vw,.8rem)">
+        <div style="padding:clamp(.5rem,1vw,.7rem) clamp(1rem,1.5vw,1.2rem);border-radius:4px;font-size:clamp(.7rem,1vw,.85rem);color:#e8e4df;border:1px solid rgba(232,228,223,.2);background:rgba(232,228,223,.05);font-family:'IBM Plex Sans',sans-serif">Client / Browser</div>
+        <div style="color:rgba(154,149,144,.5);font-size:1.1rem">&rarr;</div>
+        <div style="padding:clamp(.5rem,1vw,.7rem) clamp(1.2rem,1.8vw,1.5rem);border-radius:4px;font-size:clamp(.75rem,1.1vw,.9rem);color:#F38020;border:2px solid rgba(243,128,32,.4);background:rgba(243,128,32,.08);font-family:'Cormorant',serif;font-weight:600">Workers</div>
+      </div>
+      <!-- Arrow down -->
+      <div style="color:rgba(154,149,144,.4);font-size:1.1rem;transform:rotate(90deg)">&rarr;</div>
+      <!-- Row 2: Services -->
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:clamp(.5rem,1vw,.8rem)">
+        <div style="padding:clamp(.4rem,.8vw,.6rem) clamp(.8rem,1.2vw,1rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.75rem);color:#F38020;border:1px solid rgba(243,128,32,.3);background:rgba(243,128,32,.04);font-family:'IBM Plex Sans',sans-serif">AI Gateway</div>
+        <div style="padding:clamp(.4rem,.8vw,.6rem) clamp(.8rem,1.2vw,1rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.75rem);color:#F38020;border:1px solid rgba(243,128,32,.3);background:rgba(243,128,32,.04);font-family:'IBM Plex Sans',sans-serif">Vectorize</div>
+        <div style="padding:clamp(.4rem,.8vw,.6rem) clamp(.8rem,1.2vw,1rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.75rem);color:#c9b896;border:1px solid rgba(201,184,150,.3);background:rgba(201,184,150,.04);font-family:'IBM Plex Sans',sans-serif">R2</div>
+        <div style="padding:clamp(.4rem,.8vw,.6rem) clamp(.8rem,1.2vw,1rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.75rem);color:#c9b896;border:1px solid rgba(201,184,150,.3);background:rgba(201,184,150,.04);font-family:'IBM Plex Sans',sans-serif">D1</div>
+        <div style="padding:clamp(.4rem,.8vw,.6rem) clamp(.8rem,1.2vw,1rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.75rem);color:#c9b896;border:1px solid rgba(201,184,150,.3);background:rgba(201,184,150,.04);font-family:'IBM Plex Sans',sans-serif">Queues</div>
+        <div style="padding:clamp(.4rem,.8vw,.6rem) clamp(.8rem,1.2vw,1rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.75rem);color:#d4a574;border:1px solid rgba(212,165,116,.3);background:rgba(212,165,116,.04);font-family:'IBM Plex Sans',sans-serif">Durable Objects</div>
+      </div>
+    </div>
+    <div style="margin-top:clamp(1.5rem,3vw,2rem);display:flex;gap:clamp(1rem,2vw,1.5rem);flex-wrap:wrap">
+      <div style="font-size:clamp(.55rem,.8vw,.65rem);color:#9a9590"><span style="color:#F38020">&bull;</span> JS / TS / Python / Rust</div>
+      <div style="font-size:clamp(.55rem,.8vw,.65rem);color:#9a9590"><span style="color:#c9b896">&bull;</span> Free: 100K req/day</div>
+      <div style="font-size:clamp(.55rem,.8vw,.65rem);color:#9a9590"><span style="color:#e8b4b8">&bull;</span> Paid: 10M req + 30M CPU ms/mo</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(220px,38vw,420px);height:clamp(220px,38vw,420px);top:-3%;left:30%;background:rgba(243,128,32,.07)"></div>
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(150px,25vw,280px);height:clamp(150px,25vw,280px);bottom:10%;right:10%;background:rgba(201,184,150,.04)"></div>
+  <div style="position:absolute;background:rgba(232,164,116,.12);width:1px;height:clamp(80px,15vh,160px);top:clamp(2rem,5vw,4rem);left:clamp(2rem,5vw,4rem)"></div>
+  <div style="position:absolute;background:rgba(232,164,116,.12);height:1px;width:clamp(60px,10vw,120px);top:clamp(2rem,5vw,4rem);left:calc(clamp(2rem,5vw,4rem) + 30px)"></div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">10</div>
+  <div style="position:relative;z-index:1;max-width:1000px;padding:clamp(2rem,5vw,4rem);width:100%;display:flex;flex-direction:column">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.65rem,1vw,.85rem);color:#F38020;letter-spacing:.25em;text-transform:uppercase;margin-bottom:clamp(.8rem,2vw,1.2rem)">SERVERLESS INFERENCE</div>
+    <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.6rem,3.5vw,2.8rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(.5rem,1vw,.8rem)"><span style="color:#F38020">Workers AI</span> — 不租 GPU 的推理层</h2>
+    <p style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.75rem,1.15vw,.9rem);color:#9a9590;line-height:1.6;max-width:700px;margin-bottom:clamp(1rem,2vw,1.5rem)">Serverless GPU 推理，可从 Workers / Pages / API 调用。按 Neurons 计费，50+ 开源模型，全球网络就近执行。</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(clamp(240px,30vw,380px),1fr));gap:clamp(.8rem,1.2vw,1rem);margin-bottom:clamp(1rem,2vw,1.5rem)">
+      <div style="padding:clamp(.8rem,1.2vw,1rem);background:rgba(255,255,255,.02);border:1px solid rgba(243,128,32,.2);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.9rem,1.3vw,1.1rem);color:#F38020;margin-bottom:clamp(.3rem,.5vw,.4rem)">50+ 开源模型</div>
+        <div style="font-size:clamp(.6rem,.9vw,.7rem);color:#9a9590;line-height:1.6">文本生成 / 嵌入 / 图像生成 / 语音识别。Llama 3.1 / Mistral / BGE 等主流模型覆盖。Workers 体系内最低摩擦推理层。</div>
+      </div>
+      <div style="padding:clamp(.8rem,1.2vw,1rem);background:rgba(255,255,255,.02);border:1px solid rgba(201,184,150,.2);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.9rem,1.3vw,1.1rem);color:#c9b896;margin-bottom:clamp(.3rem,.5vw,.4rem)">$0.011 / 1K Neurons</div>
+        <div style="font-size:clamp(.6rem,.9vw,.7rem);color:#9a9590;line-height:1.6">Free + Paid 均含每日 10,000 Neurons 免额。长输出成本明显高于短输出。需结合缓存与路由控制大模型成本。</div>
+      </div>
+    </div>
+    <div style="padding:clamp(.6rem,1vw,.8rem) clamp(.8rem,1.2vw,1rem);background:rgba(243,128,32,.04);border-left:2px solid #F38020;border-radius:0 3px 3px 0">
+      <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:500;font-size:clamp(.6rem,.85vw,.72rem);color:#F38020;margin-bottom:clamp(.2rem,.4vw,.3rem);letter-spacing:.1em">BEST PRACTICE</div>
+      <div style="font-size:clamp(.58rem,.85vw,.68rem);color:#9a9590;line-height:1.6">实时路径优先用小模型或 embedding 模型 &nbsp;|&nbsp; 同类 prompt 做 cache key 归一化经 AI Gateway 缓存 &nbsp;|&nbsp; 不把训练和长时间批量任务塞进同步请求</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(220px,38vw,420px);height:clamp(220px,38vw,420px);bottom:-5%;left:15%;background:rgba(243,128,32,.06)"></div>
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(160px,25vw,300px);height:clamp(160px,25vw,300px);top:5%;right:10%;background:rgba(232,180,184,.04)"></div>
+  <div style="position:absolute;background:rgba(232,164,116,.12);width:1px;height:clamp(80px,15vh,160px);top:clamp(2rem,5vw,4rem);left:clamp(2rem,5vw,4rem)"></div>
+  <div style="position:absolute;background:rgba(232,164,116,.12);height:1px;width:clamp(60px,10vw,120px);top:clamp(2rem,5vw,4rem);left:calc(clamp(2rem,5vw,4rem) + 30px)"></div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">11</div>
+  <div style="position:relative;z-index:1;max-width:1000px;padding:clamp(2rem,5vw,4rem);width:100%;display:flex;flex-direction:column">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.65rem,1vw,.85rem);color:#F38020;letter-spacing:.25em;text-transform:uppercase;margin-bottom:clamp(.8rem,2vw,1.2rem)">MODEL GATEWAY</div>
+    <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.6rem,3.5vw,2.8rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(.5rem,1vw,.8rem)"><span style="color:#F38020">AI Gateway</span> — 生产环境价值最高的组件</h2>
+    <p style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.75rem,1.15vw,.9rem);color:#9a9590;line-height:1.6;max-width:700px;margin-bottom:clamp(1rem,2vw,1.5rem)">多模型接入后如何看得见、控得住、降得下成本、顶得住异常。OpenAI 兼容接口，跨供应商统一观测。</p>
+    <div style="display:flex;flex-wrap:wrap;gap:clamp(.6rem,1vw,.8rem);margin-bottom:clamp(1rem,2vw,1.5rem)">
+      <div style="padding:clamp(.6rem,1vw,.8rem) clamp(.9rem,1.2vw,1.1rem);background:rgba(255,255,255,.02);border:1px solid rgba(243,128,32,.2);border-radius:4px;flex:1;min-width:clamp(120px,14vw,160px)">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.85rem,1.15vw,1rem);color:#F38020;margin-bottom:clamp(.2rem,.3vw,.3rem)">多供应商</div>
+        <div style="font-size:clamp(.55rem,.8vw,.65rem);color:#9a9590">OpenAI / Anthropic / Google 统一接口</div>
+      </div>
+      <div style="padding:clamp(.6rem,1vw,.8rem) clamp(.9rem,1.2vw,1.1rem);background:rgba(255,255,255,.02);border:1px solid rgba(201,184,150,.2);border-radius:4px;flex:1;min-width:clamp(120px,14vw,160px)">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.85rem,1.15vw,1rem);color:#c9b896;margin-bottom:clamp(.2rem,.3vw,.3rem)">缓存</div>
+        <div style="font-size:clamp(.55rem,.8vw,.65rem);color:#9a9590">响应缓存降低重复调用成本</div>
+      </div>
+      <div style="padding:clamp(.6rem,1vw,.8rem) clamp(.9rem,1.2vw,1.1rem);background:rgba(255,255,255,.02);border:1px solid rgba(232,180,184,.15);border-radius:4px;flex:1;min-width:clamp(120px,14vw,160px)">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.85rem,1.15vw,1rem);color:#e8b4b8;margin-bottom:clamp(.2rem,.3vw,.3rem)">限流</div>
+        <div style="font-size:clamp(.55rem,.8vw,.65rem);color:#9a9590">按 user / API key / 路径控制</div>
+      </div>
+      <div style="padding:clamp(.6rem,1vw,.8rem) clamp(.9rem,1.2vw,1.1rem);background:rgba(255,255,255,.02);border:1px solid rgba(212,165,116,.15);border-radius:4px;flex:1;min-width:clamp(120px,14vw,160px)">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.85rem,1.15vw,1rem);color:#d4a574;margin-bottom:clamp(.2rem,.3vw,.3rem)">回退</div>
+        <div style="font-size:clamp(.55rem,.8vw,.65rem);color:#9a9590">Provider fallback 自动切换</div>
+      </div>
+      <div style="padding:clamp(.6rem,1vw,.8rem) clamp(.9rem,1.2vw,1.1rem);background:rgba(255,255,255,.02);border:1px solid rgba(154,149,144,.15);border-radius:4px;flex:1;min-width:clamp(120px,14vw,160px)">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.85rem,1.15vw,1rem);color:#9a9590;margin-bottom:clamp(.2rem,.3vw,.3rem)">日志</div>
+        <div style="font-size:clamp(.55rem,.8vw,.65rem);color:#9a9590">统一签名、日志与分析</div>
+      </div>
+    </div>
+    <div style="padding:clamp(.6rem,1vw,.8rem) clamp(.8rem,1.2vw,1rem);background:rgba(243,128,32,.04);border-left:2px solid #F38020;border-radius:0 3px 3px 0">
+      <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:500;font-size:clamp(.6rem,.85vw,.72rem);color:#F38020;margin-bottom:clamp(.2rem,.4vw,.3rem);letter-spacing:.1em">BEST PRACTICE</div>
+      <div style="font-size:clamp(.58rem,.85vw,.68rem);color:#9a9590;line-height:1.6">把所有外部模型收口到 AI Gateway &nbsp;|&nbsp; 成本敏感做响应缓存 &nbsp;|&nbsp; 稳定性敏感配 fallback &nbsp;|&nbsp; 租户型按 user 或 API key 限流 &nbsp;|&nbsp; 核心能力免费可用</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(200px,35vw,400px);height:clamp(200px,35vw,400px);top:10%;left:-5%;background:rgba(243,128,32,.06)"></div>
+  <div style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(150px,25vw,280px);height:clamp(150px,25vw,280px);bottom:5%;right:5%;background:rgba(201,184,150,.04)"></div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">12</div>
+  <div style="position:relative;z-index:1;max-width:1000px;padding:clamp(2rem,5vw,4rem);width:100%">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.65rem,1vw,.85rem);color:#F38020;letter-spacing:.25em;text-transform:uppercase;margin-bottom:clamp(.8rem,2vw,1.2rem)">GATEWAY ARCHITECTURE</div>
+    <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.5rem,3vw,2.4rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(1rem,2vw,1.5rem)"><span style="color:#F38020">AI Gateway</span> 请求架构</h2>
+    <p style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.7rem,1.1vw,.85rem);color:#9a9590;line-height:1.6;max-width:600px;margin-bottom:clamp(1.5rem,3vw,2rem)">应用/Worker 统一收口到 AI Gateway，按策略路由到不同供应商，日志与分析旁路记录。</p>
+    <!-- CSS Flow Diagram -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:clamp(.6rem,1.2vw,1rem)">
+      <!-- Row 1: App -->
+      <div style="display:flex;align-items:center;gap:clamp(.5rem,1vw,.8rem)">
+        <div style="padding:clamp(.5rem,1vw,.7rem) clamp(1rem,1.5vw,1.2rem);border-radius:4px;font-size:clamp(.7rem,1vw,.85rem);color:#e8e4df;border:1px solid rgba(232,228,223,.2);background:rgba(232,228,223,.05);font-family:'IBM Plex Sans',sans-serif">App / Workers</div>
+        <div style="color:rgba(154,149,144,.5);font-size:1.1rem">&rarr;</div>
+        <div style="padding:clamp(.5rem,1vw,.7rem) clamp(1.2rem,1.8vw,1.5rem);border-radius:4px;font-size:clamp(.75rem,1.1vw,.9rem);color:#F38020;border:2px solid rgba(243,128,32,.4);background:rgba(243,128,32,.08);font-family:'Cormorant',serif;font-weight:600">AI Gateway</div>
+      </div>
+      <!-- Arrow down -->
+      <div style="color:rgba(154,149,144,.4);font-size:1.1rem;transform:rotate(90deg)">&rarr;</div>
+      <!-- Row 2: Providers -->
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:clamp(.5rem,1vw,.8rem)">
+        <div style="padding:clamp(.4rem,.8vw,.6rem) clamp(.8rem,1.2vw,1rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.75rem);color:#c9b896;border:1px solid rgba(201,184,150,.3);background:rgba(201,184,150,.04);font-family:'IBM Plex Sans',sans-serif">Provider A (OpenAI)</div>
+        <div style="padding:clamp(.4rem,.8vw,.6rem) clamp(.8rem,1.2vw,1rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.75rem);color:#c9b896;border:1px solid rgba(201,184,150,.3);background:rgba(201,184,150,.04);font-family:'IBM Plex Sans',sans-serif">Provider B (Anthropic)</div>
+        <div style="padding:clamp(.4rem,.8vw,.6rem) clamp(.8rem,1.2vw,1rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.75rem);color:#c9b896;border:1px solid rgba(201,184,150,.3);background:rgba(201,184,150,.04);font-family:'IBM Plex Sans',sans-serif">Provider C (Google)</div>
+        <div style="padding:clamp(.4rem,.8vw,.6rem) clamp(.8rem,1.2vw,1rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.75rem);color:#F38020;border:1px solid rgba(243,128,32,.3);background:rgba(243,128,32,.04);font-family:'IBM Plex Sans',sans-serif">Workers AI</div>
+      </div>
+      <!-- Arrow down -->
+      <div style="color:rgba(154,149,144,.4);font-size:1.1rem;transform:rotate(90deg)">&rarr;</div>
+      <!-- Row 3: Logs -->
+      <div style="padding:clamp(.4rem,.8vw,.6rem) clamp(1rem,1.5vw,1.2rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.75rem);color:#9a9590;border:1px solid rgba(154,149,144,.2);background:rgba(255,255,255,.02);font-family:'IBM Plex Sans',sans-serif">Logs &amp; Analytics &amp; Cost Tracking</div>
+    </div>
+    <div style="margin-top:clamp(1.5rem,3vw,2rem);display:flex;gap:clamp(1rem,2vw,1.5rem);flex-wrap:wrap">
+      <div style="font-size:clamp(.55rem,.8vw,.65rem);color:#9a9590"><span style="color:#F38020">&bull;</span> OpenAI 兼容接口</div>
+      <div style="font-size:clamp(.55rem,.8vw,.65rem);color:#9a9590"><span style="color:#c9b896">&bull;</span> 核心能力免费</div>
+      <div style="font-size:clamp(.55rem,.8vw,.65rem);color:#9a9590"><span style="color:#e8b4b8">&bull;</span> Paid: 10M logs/gateway</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="shape s1" style="background:rgba(243,128,32,.08)"></div>
+  <div class="shape s2"></div>
+  <div class="shape s3"></div>
+  <div class="line line-v"></div>
+  <div class="line line-h"></div>
+  <div class="slide-number">13</div>
+  <div class="content-slide">
+    <div class="tag">Vector Store</div>
+    <h2><span class="hl">Vectorize</span> — 向量数据库</h2>
+    <p class="body">Cloudflare 原生向量层，与 Workers AI、R2、D1 深度集成。核心定位：存<span class="hl">检索索引</span>，而非原始大对象。</p>
+    <ul class="list">
+      <li><strong>向量 + 轻量 metadata</strong> — 不存原文、PDF、视频帧</li>
+      <li><strong>原始文档 → R2</strong> — 保持分离，成本可控</li>
+      <li><strong>结构化元数据 → D1</strong> — 查询过滤维度</li>
+      <li><strong>Workers AI 生成嵌入</strong> — 单平台链路闭环</li>
+    </ul>
+    <div class="diagram">
+      <div class="diagram-box storage">R2 Documents</div>
+      <div class="diagram-arrow">→</div>
+      <div class="diagram-box ai">Workers AI Embeddings</div>
+      <div class="diagram-arrow">→</div>
+      <div class="diagram-box ai">Vectorize Index</div>
+    </div>
+  </div>
+  <div class="slide-hint">AI / RAG</div>
+</div>
+
+<div class="slide">
+  <div class="shape s1" style="background:rgba(243,128,32,.08)"></div>
+  <div class="shape s2"></div>
+  <div class="shape s3"></div>
+  <div class="line line-v"></div>
+  <div class="line line-h"></div>
+  <div class="slide-number">14</div>
+  <div class="content-slide">
+    <div class="tag">Managed RAG</div>
+    <h2><span class="hl">AI Search</span> — 托管检索服务</h2>
+    <p class="body">开箱即用的 RAG：自动索引、chunking、混合检索、聊天接口。2026-04-16 起新实例含内置存储与向量索引。</p>
+    <ul class="list">
+      <li><strong>数据接入 → Markdown → Chunking → Embedding</strong> 全托管</li>
+      <li><strong>Keyword + Vector</strong> 混合检索</li>
+      <li><strong>公开端点</strong> 直接 chat/completions</li>
+      <li><strong>Web crawling</strong> 内置爬取能力</li>
+    </ul>
+    <div class="diagram">
+      <div class="diagram-box">Website / R2 / Upload</div>
+      <div class="diagram-arrow">→</div>
+      <div class="diagram-box ai">Indexing + Chunking</div>
+      <div class="diagram-arrow">→</div>
+      <div class="diagram-box ai">AI Search Index</div>
+      <div class="diagram-arrow">→</div>
+      <div class="diagram-box">Search / Chat</div>
+    </div>
+  </div>
+  <div class="slide-hint">AI / RAG</div>
+</div>
+
+<div class="slide">
+  <div class="shape s1" style="background:rgba(243,128,32,.06)"></div>
+  <div class="shape s2"></div>
+  <div class="shape s3"></div>
+  <div class="line line-v"></div>
+  <div class="line line-h"></div>
+  <div class="slide-number">15</div>
+  <div class="content-slide">
+    <div class="tag">Decision Framework</div>
+    <h2><span class="hl">AI Search</span> vs <span class="hl-pink">Vectorize</span></h2>
+    <p class="body">AI Search = 快速上线 RAG；Vectorize = 自定义索引与检索策略。</p>
+    <div class="compare-table">
+      <table>
+        <tr><th>场景</th><th>AI Search</th><th>Vectorize</th></tr>
+        <tr><td>快速上线文档问答</td><td class="yes">首选</td><td>需自建 pipeline</td></tr>
+        <tr><td>自定义 metadata 检索</td><td>受限</td><td class="custom">完全可控</td></tr>
+        <tr><td>自定义索引分片</td><td>托管</td><td class="custom">可设计</td></tr>
+        <tr><td>多模态 embedding</td><td>文本为主</td><td class="custom">支持自定义</td></tr>
+        <tr><td>公开端点</td><td class="yes">内置</td><td>需 Workers 包装</td></tr>
+      </table>
+    </div>
+    <p class="body" style="margin-top:clamp(1rem,2vw,1.5rem)">推荐：<strong>先 AI Search 验证产品</strong>，后视需要沉到 Vectorize 自定义栈。</p>
+  </div>
+  <div class="slide-hint">AI / Selection</div>
+</div>
+
+<div class="slide">
+  <div class="shape s1" style="background:rgba(243,128,32,.08)"></div>
+  <div class="shape s2"></div>
+  <div class="shape s3"></div>
+  <div class="line line-v"></div>
+  <div class="line line-h"></div>
+  <div class="slide-number">16</div>
+  <div class="content-slide">
+    <div class="tag">Agent Runtime</div>
+    <h2><span class="hl">Agents</span> & <span class="hl-warm">Durable Objects</span></h2>
+    <p class="body">每个 Agent 实例自带 SQLite 状态、WebSocket 同步、休眠唤醒。Durable Objects 是底层强一致原语。</p>
+    <ul class="list">
+      <li><strong>持久状态</strong> — 每实例 SQLite，不依赖外部 DB</li>
+      <li><strong>WebSocket</strong> — 实时双向，支持 hibernation</li>
+      <li><strong>HITL (Human-in-the-loop)</strong> — 人工接管节点</li>
+      <li><strong>房间/任务锁</strong> — Durable Objects 协调并发</li>
+    </ul>
+    <div class="diagram">
+      <div class="diagram-box ai">Agent Instance</div>
+      <div class="diagram-arrow">↔</div>
+      <div class="diagram-box network">WebSocket</div>
+      <div class="diagram-arrow">→</div>
+      <div class="diagram-box storage">SQLite State</div>
+      <div class="diagram-arrow">+</div>
+      <div class="diagram-box network">Durable Object</div>
+    </div>
+  </div>
+  <div class="slide-hint">AI / Agent</div>
+</div>
+
+<div class="slide section-divider">
+  <div class="shape s1" style="background:rgba(201,184,150,.08)"></div>
+  <div class="shape s2" style="background:rgba(232,180,184,.05)"></div>
+  <div class="shape s3"></div>
+  <div class="content">
+    <div class="eyebrow">Part III</div>
+    <h1><span class="hl-gold">数据与异步地基</span></h1>
+    <div class="line-decor"></div>
+    <p class="desc">Pages / R2 / D1 / KV / Queues / Workflows / Pipelines</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="shape s1" style="background:rgba(201,184,150,.08)"></div>
+  <div class="shape s2"></div>
+  <div class="shape s3"></div>
+  <div class="line line-v"></div>
+  <div class="line line-h"></div>
+  <div class="slide-number">18</div>
+  <div class="content-slide">
+    <div class="tag">Data Layer</div>
+    <h2>数据产品<span class="hl-gold">矩阵</span></h2>
+    <p class="body">AI 应用前端、存储与异步链路的核心组件。</p>
+    <div class="product-grid">
+      <div class="product-card storage">
+        <div class="name">Pages</div>
+        <div class="role">前端/UI 部署</div>
+      </div>
+      <div class="product-card storage">
+        <div class="name">R2</div>
+        <div class="role">对象存储 / 零 egress</div>
+      </div>
+      <div class="product-card storage">
+        <div class="name">R2 Catalog</div>
+        <div class="role">Iceberg / Data Lake</div>
+      </div>
+      <div class="product-card storage">
+        <div class="name">D1</div>
+        <div class="role">SQLite 结构化</div>
+      </div>
+      <div class="product-card async">
+        <div class="name">KV</div>
+        <div class="role">全局读缓存</div>
+      </div>
+      <div class="product-card async">
+        <div class="name">Queues</div>
+        <div class="role">异步消息解耦</div>
+      </div>
+      <div class="product-card async">
+        <div class="name">Workflows</div>
+        <div class="role">长流程编排</div>
+      </div>
+      <div class="product-card async">
+        <div class="name">Hyperdrive</div>
+        <div class="role">外部 DB 加速</div>
+      </div>
+      <div class="product-card async">
+        <div class="name">Pipelines</div>
+        <div class="role">流式入湖 ETL</div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-hint">Storage / Async</div>
+</div>
+
+<div class="slide">
+  <div class="shape s1" style="background:rgba(201,184,150,.08)"></div>
+  <div class="shape s2"></div>
+  <div class="shape s3"></div>
+  <div class="line line-v"></div>
+  <div class="line line-h"></div>
+  <div class="slide-number">19</div>
+  <div class="content-slide">
+    <div class="tag">Architecture</div>
+    <h2>数据链路<span class="hl-gold">架构</span></h2>
+    <p class="body">Pages 前端 → Workers 编排 → 多层存储与异步链路。</p>
+    <div class="flow-diagram">
+      <div class="flow-row">
+        <div class="flow-node primary">Pages (UI)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node primary">Workers (API)</div>
+      </div>
+      <div class="flow-row">
+        <div class="flow-arrow" style="transform:rotate(90deg)">↓</div>
+      </div>
+      <div class="flow-row" style="justify-content:center;gap:clamp(1rem,2vw,1.5rem)">
+        <div class="flow-group">
+          <div class="flow-node storage">D1</div>
+          <div class="flow-node storage">KV</div>
+        </div>
+        <div class="flow-group">
+          <div class="flow-node storage">Queues</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node storage">Workflows</div>
+        </div>
+        <div class="flow-group">
+          <div class="flow-node storage">R2</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node storage">Catalog</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-hint">Storage / Flow</div>
+</div>
+
+<div class="slide">
+  <div class="shape s1" style="background:rgba(201,184,150,.1)"></div>
+  <div class="shape s2"></div>
+  <div class="shape s3"></div>
+  <div class="line line-v"></div>
+  <div class="line line-h"></div>
+  <div class="slide-number">20</div>
+  <div class="content-slide">
+    <div class="tag">Training Data Lake</div>
+    <h2><span class="hl-gold">R2</span> + Data Lake 组合</h2>
+    <p class="body">训练场景最佳实践：R2 存原始数据，Catalog 做 Iceberg 目录，Pipelines 入湖，外部 GPU 训练从 R2 取数据。</p>
+    <ul class="list">
+      <li><strong>R2</strong> — 训练数据、检查点、模型产物，零 egress</li>
+      <li><strong>R2 Data Catalog</strong> — Iceberg 表，配合 PyIceberg/Spark 查询</li>
+      <li><strong>Pipelines</strong> — 日志/埋点/事件流式写入 Iceberg/Parquet</li>
+      <li><strong>外部训练算力</strong> — GPU 云从 R2 取样本，结果回写 R2</li>
+    </ul>
+    <div class="diagram">
+      <div class="diagram-box storage">R2 Raw Data</div>
+      <div class="diagram-arrow">→</div>
+      <div class="diagram-box storage">Pipelines ETL</div>
+      <div class="diagram-arrow">→</div>
+      <div class="diagram-box storage">Iceberg Catalog</div>
+      <div class="diagram-arrow">→</div>
+      <div class="diagram-box">External GPU</div>
+    </div>
+  </div>
+  <div class="slide-hint">Storage / Training</div>
+</div>
+
+<!-- Cloudflare Mesh: Product Slide -->
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f;flex-direction:column">
+  <div style="position:absolute;width:clamp(250px,40vw,500px);height:clamp(250px,40vw,500px);top:-8%;right:5%;border-radius:50%;filter:blur(80px);background:rgba(232,180,184,.07);pointer-events:none"></div>
+  <div style="position:absolute;width:clamp(200px,35vw,400px);height:clamp(200px,35vw,400px);bottom:-5%;left:10%;border-radius:50%;filter:blur(80px);background:rgba(212,165,116,.06);pointer-events:none"></div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">NEW</div>
+  <div style="position:relative;z-index:1;max-width:1000px;padding:clamp(2rem,5vw,4rem);width:100%">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:#e8b4b8;letter-spacing:.25em;text-transform:uppercase;margin-bottom:clamp(.8rem,2vw,1.2rem);opacity:0;animation:reveal .8s .3s forwards">Private Networking</div>
+    <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.6rem,3.5vw,2.8rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(.3rem,.6vw,.5rem);opacity:0;animation:reveal .8s .5s forwards"><span style="color:#e8b4b8">Cloudflare Mesh</span> — 后量子加密私有网络</h2>
+    <p style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.7rem,1.1vw,.85rem);color:#9a9590;line-height:1.6;max-width:750px;margin-bottom:clamp(1rem,2vw,1.5rem);opacity:0;animation:reveal .8s .6s forwards">原 WARP Connector，现为 Cloudflare One 私有网络组件。设备与服务器通过 Cloudflare 边缘网络互联，无需 VPN 或跳板机，内置后量子加密。</p>
+    <!-- CSS Diagram: Nodes ↔ CF Network ↔ Clients -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:clamp(.6rem,1vw,.9rem);margin-bottom:clamp(1rem,2vw,1.5rem);opacity:0;animation:reveal .8s .8s forwards;width:100%">
+      <div style="display:flex;align-items:center;gap:clamp(.5rem,1vw,.8rem)">
+        <div style="padding:clamp(.35rem,.6vw,.5rem) clamp(.6rem,1vw,.8rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.72rem);color:#e8b4b8;border:1px solid rgba(232,180,184,.3);background:rgba(232,180,184,.05);font-weight:400">Linux Server</div>
+        <div style="padding:clamp(.35rem,.6vw,.5rem) clamp(.6rem,1vw,.8rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.72rem);color:#e8b4b8;border:1px solid rgba(232,180,184,.3);background:rgba(232,180,184,.05);font-weight:400">VM / Container</div>
+        <span style="color:rgba(154,149,144,.4);font-size:clamp(.8rem,1vw,1rem)">→</span>
+        <div style="padding:clamp(.4rem,.7vw,.55rem) clamp(.8rem,1.2vw,1rem);border-radius:4px;font-size:clamp(.65rem,.95vw,.8rem);color:#d4a574;border:1px solid rgba(212,165,116,.3);background:rgba(212,165,116,.06);font-weight:500">Cloudflare Global Edge</div>
+        <span style="color:rgba(154,149,144,.4);font-size:clamp(.8rem,1vw,1rem)">←</span>
+        <div style="padding:clamp(.35rem,.6vw,.5rem) clamp(.6rem,1vw,.8rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.72rem);color:#c9b896;border:1px solid rgba(201,184,150,.3);background:rgba(201,184,150,.05);font-weight:400">MacBook</div>
+        <div style="padding:clamp(.35rem,.6vw,.5rem) clamp(.6rem,1vw,.8rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.72rem);color:#c9b896;border:1px solid rgba(201,184,150,.3);background:rgba(201,184,150,.05);font-weight:400">iPhone</div>
+      </div>
+      <div style="font-size:clamp(.55rem,.8vw,.65rem);color:rgba(154,149,144,.4);letter-spacing:.05em;text-align:center">Mesh Nodes (warp-cli headless) &nbsp;·&nbsp; Client Devices (warp-cli UI) &nbsp;·&nbsp; Mesh IP: 100.96.0.0/12</div>
+    </div>
+    <!-- Key features grid -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(clamp(180px,22vw,260px),1fr));gap:clamp(.6rem,1vw,.8rem);opacity:0;animation:reveal .8s .95s forwards">
+      <div style="padding:clamp(.6rem,1vw,.8rem) clamp(.8rem,1.2vw,1rem);background:rgba(255,255,255,.02);border:1px solid rgba(232,180,184,.15);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.8rem,1.1vw,.92rem);color:#e8e4df;margin-bottom:clamp(.2rem,.4vw,.3rem)">后量子加密</div>
+        <div style="font-size:clamp(.6rem,.85vw,.7rem);color:#9a9590;line-height:1.5">内置 PQ 加密，面向未来的安全基线</div>
+      </div>
+      <div style="padding:clamp(.6rem,1vw,.8rem) clamp(.8rem,1.2vw,1rem);background:rgba(255,255,255,.02);border:1px solid rgba(212,165,116,.15);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.8rem,1.1vw,.92rem);color:#e8e4df;margin-bottom:clamp(.2rem,.4vw,.3rem)">VPN 替代</div>
+        <div style="font-size:clamp(.6rem,.85vw,.7rem);color:#9a9590;line-height:1.5">无需 VPN 设备，设备直连 + 零信任策略</div>
+      </div>
+      <div style="padding:clamp(.6rem,1vw,.8rem) clamp(.8rem,1.2vw,1rem);background:rgba(255,255,255,.02);border:1px solid rgba(201,184,150,.15);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.8rem,1.1vw,.92rem);color:#e8e4df;margin-bottom:clamp(.2rem,.4vw,.3rem)">Workers VPC 集成</div>
+        <div style="font-size:clamp(.6rem,.85vw,.7rem);color:#9a9590;line-height:1.5">Workers 通过 VPC 绑定直连私有服务</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cloudflare Mesh: Comparison Slide -->
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f;flex-direction:column">
+  <div style="position:absolute;width:clamp(200px,35vw,400px);height:clamp(200px,35vw,400px);bottom:-5%;right:5%;border-radius:50%;filter:blur(80px);background:rgba(212,165,116,.06);pointer-events:none"></div>
+  <div style="position:absolute;width:clamp(180px,30vw,350px);height:clamp(180px,30vw,350px);top:10%;left:-5%;border-radius:50%;filter:blur(80px);background:rgba(232,180,184,.05);pointer-events:none"></div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">NEW</div>
+  <div style="position:relative;z-index:1;max-width:1050px;padding:clamp(2rem,5vw,4rem);width:100%">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:#d4a574;letter-spacing:.25em;text-transform:uppercase;margin-bottom:clamp(.8rem,2vw,1.2rem);opacity:0;animation:reveal .8s .3s forwards">Comparison</div>
+    <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.5rem,3.2vw,2.6rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(1rem,2vw,1.5rem);opacity:0;animation:reveal .8s .5s forwards">Mesh vs Tunnel vs <span style="color:#c9b896">Tailscale</span></h2>
+    <!-- Comparison Table -->
+    <table style="width:100%;border-collapse:collapse;font-size:clamp(.6rem,.95vw,.75rem);opacity:0;animation:reveal .8s .7s forwards">
+      <thead>
+        <tr style="border-bottom:1px solid rgba(201,184,150,.25)">
+          <th style="font-weight:400;color:#c9b896;text-align:left;padding:clamp(.4rem,.7vw,.55rem) clamp(.3rem,.5vw,.4rem);white-space:nowrap;width:18%">维度</th>
+          <th style="font-weight:400;color:#e8b4b8;text-align:left;padding:clamp(.4rem,.7vw,.55rem);width:27%">Cloudflare Mesh</th>
+          <th style="font-weight:400;color:#d4a574;text-align:left;padding:clamp(.4rem,.7vw,.55rem);width:27%">Cloudflare Tunnel</th>
+          <th style="font-weight:400;color:#c9b896;text-align:left;padding:clamp(.4rem,.7vw,.55rem);width:28%">Tailscale</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid rgba(154,149,144,.08)">
+          <td style="color:#e8e4df;padding:clamp(.35rem,.6vw,.45rem) clamp(.3rem,.5vw,.4rem);font-weight:400;white-space:nowrap">定位</td>
+          <td style="color:#9a9590;padding:clamp(.35rem,.6vw,.45rem)">私有网络互联 (VPN 替代)</td>
+          <td style="color:#9a9590;padding:clamp(.35rem,.6vw,.45rem)">安全发布内部服务</td>
+          <td style="color:#9a9590;padding:clamp(.35rem,.6vw,.45rem)">P2P Mesh VPN</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(154,149,144,.08)">
+          <td style="color:#e8e4df;padding:clamp(.35rem,.6vw,.45rem) clamp(.3rem,.5vw,.4rem);font-weight:400;white-space:nowrap">流量方向</td>
+          <td style="color:#9a9590;padding:clamp(.35rem,.6vw,.45rem)">双向，任意节点互通</td>
+          <td style="color:#9a9590;padding:clamp(.35rem,.6vw,.45rem)">单向入站（外部→内部）</td>
+          <td style="color:#9a9590;padding:clamp(.35rem,.6vw,.45rem)">双向 P2P 直连</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(154,149,144,.08)">
+          <td style="color:#e8e4df;padding:clamp(.35rem,.6vw,.45rem) clamp(.3rem,.5vw,.4rem);font-weight:400;white-space:nowrap">协议</td>
+          <td style="color:#9a9590;padding:clamp(.35rem,.6vw,.45rem)">TCP / UDP / ICMP</td>
+          <td style="color:#9a9590;padding:clamp(.35rem,.6vw,.45rem)">HTTP/S, TCP, SSH, RDP</td>
+          <td style="color:#9a9590;padding:clamp(.35rem,.6vw,.45rem)">WireGuard (内核级)</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(154,149,144,.08)">
+          <td style="color:#e8e4df;padding:clamp(.35rem,.6vw,.45rem) clamp(.3rem,.5vw,.4rem);font-weight:400;white-space:nowrap">加密</td>
+          <td style="color:#e8b4b8;padding:clamp(.35rem,.6vw,.45rem)">后量子加密 ✦</td>
+          <td style="color:#9a9590;padding:clamp(.35rem,.6vw,.45rem)">TLS (标准)</td>
+          <td style="color:#9a9590;padding:clamp(.35rem,.6vw,.45rem)">WireGuard (P2P 端到端)</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(154,149,144,.08)">
+          <td style="color:#e8e4df;padding:clamp(.35rem,.6vw,.45rem) clamp(.3rem,.5vw,.4rem);font-weight:400;white-space:nowrap">流量路径</td>
+          <td style="color:#9a9590;padding:clamp(.35rem,.6vw,.45rem)">经 Cloudflare 边缘中转</td>
+          <td style="color:#9a9590;padding:clamp(.35rem,.6vw,.45rem)">经 Cloudflare 边缘中转</td>
+          <td style="color:#c9b896;padding:clamp(.35rem,.6vw,.45rem)">P2P 直连 (DERP 备用)</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(154,149,144,.08)">
+          <td style="color:#e8e4df;padding:clamp(.35rem,.6vw,.45rem) clamp(.3rem,.5vw,.4rem);font-weight:400;white-space:nowrap">Split Tunnel</td>
+          <td style="color:#d4a574;padding:clamp(.35rem,.6vw,.45rem)">细粒度控制 ✦</td>
+          <td style="color:#9a9590;padding:clamp(.35rem,.6vw,.45rem)">按路由规则</td>
+          <td style="color:#9a9590;padding:clamp(.35rem,.6vw,.45rem)">Exit Node 全有或全无</td>
+        </tr>
+        <tr>
+          <td style="color:#e8e4df;padding:clamp(.35rem,.6vw,.45rem) clamp(.3rem,.5vw,.4rem);font-weight:400;white-space:nowrap">零信任集成</td>
+          <td style="color:#e8b4b8;padding:clamp(.35rem,.6vw,.45rem)">Gateway + Posture + Access ✦</td>
+          <td style="color:#d4a574;padding:clamp(.35rem,.6vw,.45rem)">Access + 策略引擎 ✦</td>
+          <td style="color:#9a9590;padding:clamp(.35rem,.6vw,.45rem)">ACL 仅</td>
+        </tr>
+      </tbody>
+    </table>
+    <!-- When to use -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(.6rem,1vw,.8rem);margin-top:clamp(1rem,2vw,1.5rem);opacity:0;animation:reveal .8s .9s forwards">
+      <div style="padding:clamp(.5rem,.8vw,.65rem) clamp(.7rem,1vw,.8rem);background:rgba(232,180,184,.03);border-left:2px solid #e8b4b8;border-radius:0 3px 3px 0">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.75rem,1vw,.82rem);color:#e8b4b8;margin-bottom:clamp(.15rem,.3vw,.2rem)">用 Mesh</div>
+        <div style="font-size:clamp(.55rem,.8vw,.65rem);color:#9a9590;line-height:1.45">跨云互联 · VPN 替代 · AI Agent 组网 · Workers VPC</div>
+      </div>
+      <div style="padding:clamp(.5rem,.8vw,.65rem) clamp(.7rem,1vw,.8rem);background:rgba(212,165,116,.03);border-left:2px solid #d4a574;border-radius:0 3px 3px 0">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.75rem,1vw,.82rem);color:#d4a574;margin-bottom:clamp(.15rem,.3vw,.2rem)">用 Tunnel</div>
+        <div style="font-size:clamp(.55rem,.8vw,.65rem);color:#9a9590;line-height:1.45">对外发布 Web 服务 · SSH/RDP 代理 · 无需开放端口</div>
+      </div>
+      <div style="padding:clamp(.5rem,.8vw,.65rem) clamp(.7rem,1vw,.8rem);background:rgba(201,184,150,.03);border-left:2px solid #c9b896;border-radius:0 3px 3px 0">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.75rem,1vw,.82rem);color:#c9b896;margin-bottom:clamp(.15rem,.3vw,.2rem)">用 Tailscale</div>
+        <div style="font-size:clamp(.55rem,.8vw,.65rem);color:#9a9590;line-height:1.45">个人 Homelab · 极简组网 · 真正 P2P 隐私 · 自托管 Headscale</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide section-divider">
+  <div class="shape s1" style="background:rgba(232,180,184,.08)"></div>
+  <div class="shape s2" style="background:rgba(196,30,58,.05)"></div>
+  <div class="shape s3"></div>
+  <div class="content">
+    <div class="eyebrow">Part IV</div>
+    <h1><span class="hl-pink">安全与访问控制</span></h1>
+    <div class="line-decor" style="background:linear-gradient(90deg,transparent,var(--accent-pink),transparent)"></div>
+    <p class="desc">Cloudflare One / Access / Gateway / Turnstile / WAF</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="shape s1" style="background:rgba(232,180,184,.08)"></div>
+  <div class="shape s2"></div>
+  <div class="shape s3"></div>
+  <div class="line line-v"></div>
+  <div class="line line-h"></div>
+  <div class="slide-number">22</div>
+  <div class="content-slide">
+    <div class="tag">Zero Trust</div>
+    <h2><span class="hl-pink">Cloudflare One</span> — 零信任平台</h2>
+    <p class="body">Access = 入站访问控制；Gateway = 出站流量治理。企业 AI 工具的安全前提。</p>
+    <div class="zt-diagram">
+      <div class="zt-box">
+        <div class="title">Access (ZTNA)</div>
+        <div class="role">入站身份与设备访问控制</div>
+        <div class="role">内部 AI 控制台 / MCP / 向量后台</div>
+        <div class="arrow-label">↓ 入站 ↓</div>
+      </div>
+      <div class="zt-box">
+        <div class="title">Gateway (SWG)</div>
+        <div class="role">出站 SWG 策略与 DLP</div>
+        <div class="role">员工访问外部 LLM / Shadow AI</div>
+        <div class="arrow-label">↑ 出站 ↑</div>
+      </div>
+    </div>
+    <div class="diagram" style="margin-top:clamp(1rem,2vw,1.5rem)">
+      <div class="diagram-box security">Access</div>
+      <div class="diagram-arrow">←</div>
+      <div class="diagram-box">Tunnel</div>
+      <div class="diagram-arrow">←</div>
+      <div class="diagram-box security">Gateway</div>
+      <div class="diagram-arrow">→</div>
+      <div class="diagram-box">External LLM</div>
+    </div>
+  </div>
+  <div class="slide-hint">Security / Zero Trust</div>
+</div>
+
+<div class="slide">
+  <div class="shape s1" style="background:rgba(232,180,184,.08)"></div>
+  <div class="shape s2"></div>
+  <div class="shape s3"></div>
+  <div class="line line-v"></div>
+  <div class="line line-h"></div>
+  <div class="slide-number">23</div>
+  <div class="content-slide">
+    <div class="tag">Layered Defense</div>
+    <h2>入口<span class="hl-pink">防护层级</span></h2>
+    <p class="body">AI API 暴露面的分层防御最佳实践：从人机验证到 DDoS 兜底。</p>
+    <div class="defense-layers">
+      <div class="defense-layer">
+        <div class="num">1</div>
+        <div class="name">Turnstile</div>
+        <div class="desc">人机验证 / 表单防刷 / 公开 API 防滥用</div>
+      </div>
+      <div class="defense-layer">
+        <div class="num">2</div>
+        <div class="name">WAF</div>
+        <div class="desc">应用层规则 / 托管规则 / rate limit</div>
+      </div>
+      <div class="defense-layer">
+        <div class="num">3</div>
+        <div class="name">API Shield</div>
+        <div class="desc">API 发现 / Schema 校验 / BOLA 防护</div>
+      </div>
+      <div class="defense-layer">
+        <div class="num">4</div>
+        <div class="name">DDoS Protection</div>
+        <div class="desc">L3/4/7 自动缓解 / 公网入口兜底</div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-hint">Security / Defense</div>
+</div>
+
+<div class="slide">
+  <div class="shape s1" style="background:rgba(232,180,184,.08)"></div>
+  <div class="shape s2"></div>
+  <div class="shape s3"></div>
+  <div class="line line-v"></div>
+  <div class="line line-h"></div>
+  <div class="slide-number">24</div>
+  <div class="content-slide">
+    <div class="tag">Security Flow</div>
+    <h2>入口<span class="hl-pink">架构链路</span></h2>
+    <p class="body">请求从浏览器到 API 的完整安全过滤链路。</p>
+    <div class="flow-diagram">
+      <div class="flow-row">
+        <div class="flow-node">Browser</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node security">Turnstile</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">API Endpoint</div>
+      </div>
+      <div class="flow-row" style="justify-content:center">
+        <div class="flow-arrow" style="transform:rotate(90deg)">↓</div>
+      </div>
+      <div class="flow-row">
+        <div class="flow-node security">WAF</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node security">API Shield</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node security">DDoS</div>
+      </div>
+      <div class="flow-row" style="justify-content:center">
+        <div class="flow-arrow" style="transform:rotate(90deg)">↓</div>
+      </div>
+      <div class="flow-row">
+        <div class="flow-node primary" style="border-color:var(--accent-orange);background:rgba(243,128,32,.08)">Workers / AI API</div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-hint">Security / Architecture</div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
+  <div class="shape" style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(250px,40vw,500px);height:clamp(250px,40vw,500px);top:-8%;right:5%;background:rgba(212,165,116,.1)"></div>
+  <div class="shape" style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(200px,35vw,400px);height:clamp(200px,35vw,400px);bottom:-5%;left:10%;background:rgba(212,165,116,.06)"></div>
+  <div class="shape" style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(150px,25vw,300px);height:clamp(150px,25vw,300px);top:40%;left:-5%;background:rgba(201,184,150,.05)"></div>
+  <div style="text-align:center;position:relative;z-index:1;max-width:900px;padding:clamp(2rem,5vw,4rem)">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.65rem,1vw,.85rem);color:#d4a574;letter-spacing:.3em;text-transform:uppercase;margin-bottom:clamp(1rem,2.5vw,2rem);opacity:0;animation:reveal .8s .2s forwards">Part IV</div>
+    <h1 style="font-family:'Cormorant',serif;font-weight:700;font-size:clamp(2.5rem,6vw,5rem);color:#d4a574;line-height:1.15;margin:0 0 clamp(1rem,2vw,1.5rem);opacity:0;animation:reveal .8s .4s forwards">04 交付、媒体与网络</h1>
+    <div style="width:clamp(100px,15vw,200px);height:2px;background:linear-gradient(90deg,transparent,#d4a574,transparent);margin:0 auto;opacity:0;animation:reveal .8s .6s forwards"></div>
+    <p style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.8rem,1.4vw,1.05rem);color:#9a9590;line-height:1.7;margin-top:clamp(1.5rem,3vw,2.5rem);opacity:0;animation:reveal .8s .8s forwards">CDN / Load Balancing / Argo / Images / Stream / Spectrum / Magic Transit</p>
+  </div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
+  <div class="shape" style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(250px,40vw,500px);height:clamp(250px,40vw,500px);top:-8%;right:5%;background:rgba(212,165,116,.08)"></div>
+  <div class="shape" style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(200px,35vw,400px);height:clamp(200px,35vw,400px);bottom:-5%;left:10%;background:rgba(201,184,150,.06)"></div>
+  <div class="shape" style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(150px,25vw,300px);height:clamp(150px,25vw,300px);top:40%;left:-5%;background:rgba(212,165,116,.05)"></div>
+  <div class="line" style="position:absolute;background:rgba(212,165,116,.12);width:1px;height:clamp(80px,15vh,160px);top:clamp(2rem,5vw,4rem);left:clamp(2rem,5vw,4rem)"></div>
+  <div class="line" style="position:absolute;background:rgba(212,165,116,.12);height:1px;width:clamp(60px,10vw,120px);top:clamp(2rem,5vw,4rem);left:calc(clamp(2rem,5vw,4rem) + 30px)"></div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">26</div>
+  <div style="display:flex;flex-direction:column;align-items:flex-start;padding:clamp(2rem,5vw,4rem);max-width:1000px;position:relative;z-index:1">
+    <div style="font-size:clamp(.6rem,.9vw,.75rem);color:#d4a574;letter-spacing:.25em;text-transform:uppercase;margin-bottom:clamp(.8rem,2vw,1.2rem);opacity:0;animation:reveal .8s .3s forwards">Global Delivery</div>
+    <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.6rem,3.5vw,2.8rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(.5rem,1vw,.8rem);opacity:0;animation:reveal .8s .5s forwards"><span style="color:#d4a574">CDN/Cache</span> + <span style="color:#d4a574">Load Balancing</span> + <span style="color:#d4a574">Argo</span></h2>
+    <p style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.75rem,1.2vw,.95rem);color:#9a9590;line-height:1.6;max-width:700px;opacity:0;animation:reveal .8s .7s forwards">三者组合决定 AI API 的全球交付质量：CDN 缓存静态与重复结果，LB 调度多区推理后端，Argo 优化跨区不可缓存请求。</p>
+    <!-- CSS Diagram: Users → CDN → Argo → LoadBalancing → {Region A, Region B} -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:clamp(.5rem,1vw,.8rem);margin-top:clamp(1.5rem,3vw,2rem);opacity:0;animation:reveal .8s .9s forwards;width:100%">
+      <div style="display:flex;align-items:center;gap:clamp(.4rem,.8vw,.6rem)">
+        <div style="padding:clamp(.3rem,.5vw,.5rem) clamp(.5rem,.9vw,.7rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.7rem);color:#e8e4df;border:1px solid rgba(212,165,116,.2);background:rgba(255,255,255,.03)">Global Users</div>
+        <span style="color:rgba(154,149,144,.5);font-size:1rem">→</span>
+        <div style="padding:clamp(.3rem,.5vw,.5rem) clamp(.5rem,.9vw,.7rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.7rem);color:#d4a574;border:1px solid rgba(212,165,116,.3);background:rgba(212,165,116,.08)">Cache / CDN</div>
+        <span style="color:rgba(154,149,144,.5);font-size:1rem">→</span>
+        <div style="padding:clamp(.3rem,.5vw,.5rem) clamp(.5rem,.9vw,.7rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.7rem);color:#d4a574;border:1px solid rgba(212,165,116,.3);background:rgba(212,165,116,.08)">Argo Smart Routing</div>
+        <span style="color:rgba(154,149,144,.5);font-size:1rem">→</span>
+        <div style="padding:clamp(.3rem,.5vw,.5rem) clamp(.5rem,.9vw,.7rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.7rem);color:#d4a574;border:1px solid rgba(212,165,116,.3);background:rgba(212,165,116,.08)">Load Balancing</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center">
+        <span style="color:rgba(154,149,144,.5);font-size:1rem;transform:rotate(90deg);display:inline-block">↓</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:clamp(1rem,2vw,1.5rem)">
+        <div style="padding:clamp(.3rem,.5vw,.5rem) clamp(.5rem,.9vw,.7rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.7rem);color:#e8e4df;border:1px solid rgba(201,184,150,.2);background:rgba(201,184,150,.06)">Region A — Model / Origin</div>
+        <div style="padding:clamp(.3rem,.5vw,.5rem) clamp(.5rem,.9vw,.7rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.7rem);color:#e8e4df;border:1px solid rgba(201,184,150,.2);background:rgba(201,184,150,.06)">Region B — Model / Origin</div>
+      </div>
+    </div>
+    <!-- Key points -->
+    <div style="margin:clamp(1rem,2vw,1.5rem) 0 0;padding:0;list-style:none;opacity:0;animation:reveal .8s 1.1s forwards">
+      <div style="font-size:clamp(.7rem,1.1vw,.85rem);color:#9a9590;margin-bottom:clamp(.4rem,.8vw,.6rem);position:relative;padding-left:clamp(1rem,1.5vw,1.2rem)"><span style="position:absolute;left:0;top:.5em;width:clamp(6px,8px,8px);height:1px;background:#d4a574;display:inline-block"></span><strong style="color:#e8e4df;font-weight:400">CDN/Cache</strong> — 静态前端、公开文档块、重复检索结果缓存，降低源站压力</div>
+      <div style="font-size:clamp(.7rem,1.1vw,.85rem);color:#9a9590;margin-bottom:clamp(.4rem,.8vw,.6rem);position:relative;padding-left:clamp(1rem,1.5vw,1.2rem)"><span style="position:absolute;left:0;top:.5em;width:clamp(6px,8px,8px);height:1px;background:#d4a574;display:inline-block"></span><strong style="color:#e8e4df;font-weight:400">Load Balancing</strong> — 多区域推理后端健康调度与故障切换（付费附加）</div>
+      <div style="font-size:clamp(.7rem,1.1vw,.85rem);color:#9a9590;margin-bottom:clamp(.4rem,.8vw,.6rem);position:relative;padding-left:clamp(1rem,1.5vw,1.2rem)"><span style="position:absolute;left:0;top:.5em;width:clamp(6px,8px,8px);height:1px;background:#d4a574;display:inline-block"></span><strong style="color:#e8e4df;font-weight:400">Argo Smart Routing</strong> — 智能路径优化，跨区域请求平均加速约 <strong style="color:#d4a574">30%</strong></div>
+    </div>
+  </div>
+  <div style="position:absolute;bottom:clamp(1.5rem,4vw,3rem);right:clamp(1.5rem,4vw,3rem);font-size:clamp(.5rem,.75vw,.65rem);color:rgba(154,149,144,.3);letter-spacing:.1em">Delivery / Network</div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
+  <div class="shape" style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(250px,40vw,500px);height:clamp(250px,40vw,500px);top:-8%;right:5%;background:rgba(212,165,116,.08)"></div>
+  <div class="shape" style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(200px,35vw,400px);height:clamp(200px,35vw,400px);bottom:-5%;left:10%;background:rgba(232,180,184,.05)"></div>
+  <div class="shape" style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(150px,25vw,300px);height:clamp(150px,25vw,300px);top:40%;left:-5%;background:rgba(201,184,150,.05)"></div>
+  <div class="line" style="position:absolute;background:rgba(212,165,116,.12);width:1px;height:clamp(80px,15vh,160px);top:clamp(2rem,5vw,4rem);left:clamp(2rem,5vw,4rem)"></div>
+  <div class="line" style="position:absolute;background:rgba(212,165,116,.12);height:1px;width:clamp(60px,10vw,120px);top:clamp(2rem,5vw,4rem);left:calc(clamp(2rem,5vw,4rem) + 30px)"></div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">27</div>
+  <div style="display:flex;flex-direction:column;align-items:flex-start;padding:clamp(2rem,5vw,4rem);max-width:1000px;position:relative;z-index:1">
+    <div style="font-size:clamp(.6rem,.9vw,.75rem);color:#d4a574;letter-spacing:.25em;text-transform:uppercase;margin-bottom:clamp(.8rem,2vw,1.2rem);opacity:0;animation:reveal .8s .3s forwards">Media & Network</div>
+    <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.6rem,3.5vw,2.8rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(.5rem,1vw,.8rem);opacity:0;animation:reveal .8s .5s forwards">媒体处理与<span style="color:#d4a574">网络接入</span></h2>
+    <p style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.75rem,1.2vw,.95rem);color:#9a9590;line-height:1.6;max-width:700px;opacity:0;animation:reveal .8s .7s forwards">Images/Stream 负责多模态与视频分发；Spectrum/Magic Transit 负责非 HTTP 协议与企业级网络防护。</p>
+    <!-- 4 Cards -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(clamp(160px,22vw,220px),1fr));gap:clamp(.8rem,1.5vw,1.2rem);margin-top:clamp(1.5rem,3vw,2rem);opacity:0;animation:reveal .8s .9s forwards;width:100%">
+      <!-- Images -->
+      <div style="padding:clamp(.8rem,1.5vw,1rem);background:rgba(255,255,255,.02);border:1px solid rgba(212,165,116,.25);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.9rem,1.3vw,1.1rem);color:#d4a574;margin-bottom:clamp(.3rem,.5vw,.4rem)">Images</div>
+        <div style="font-size:clamp(.6rem,.9vw,.7rem);color:#9a9590;line-height:1.6">边缘图像变换：缩放、裁切、格式转换。多模态输入前预处理层，减少回源与重复转码。</div>
+        <div style="margin-top:clamp(.3rem,.5vw,.4rem);font-size:clamp(.5rem,.75vw,.6rem);color:rgba(154,149,144,.5)">免费 5,000 次变换/月</div>
+      </div>
+      <!-- Stream -->
+      <div style="padding:clamp(.8rem,1.5vw,1rem);background:rgba(255,255,255,.02);border:1px solid rgba(212,165,116,.25);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.9rem,1.3vw,1.1rem);color:#d4a574;margin-bottom:clamp(.3rem,.5vw,.4rem)">Stream</div>
+        <div style="font-size:clamp(.6rem,.9vw,.7rem);color:#9a9590;line-height:1.6">视频上传、编码、播放一体化。适合培训视频、AI 生成视频与直播回放分发。</div>
+        <div style="margin-top:clamp(.3rem,.5vw,.4rem);font-size:clamp(.5rem,.75vw,.6rem);color:rgba(154,149,144,.5)">$5/1,000 分钟存储</div>
+      </div>
+      <!-- Spectrum -->
+      <div style="padding:clamp(.8rem,1.5vw,1rem);background:rgba(255,255,255,.02);border:1px solid rgba(201,184,150,.2);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.9rem,1.3vw,1.1rem);color:#c9b896;margin-bottom:clamp(.3rem,.5vw,.4rem)">Spectrum</div>
+        <div style="font-size:clamp(.6rem,.9vw,.7rem);color:#9a9590;line-height:1.6">TCP/UDP 代理与四层防护。保护 MQTT 设备流量、SSH/Git 运维入口与私有推理协议。</div>
+        <div style="margin-top:clamp(.3rem,.5vw,.4rem);font-size:clamp(.5rem,.75vw,.6rem);color:rgba(154,149,144,.5)">协议范围随计划变化</div>
+      </div>
+      <!-- Magic Transit -->
+      <div style="padding:clamp(.8rem,1.5vw,1rem);background:rgba(255,255,255,.02);border:1px solid rgba(232,180,184,.2);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.9rem,1.3vw,1.1rem);color:#e8b4b8;margin-bottom:clamp(.3rem,.5vw,.4rem)">Magic Transit</div>
+        <div style="font-size:clamp(.6rem,.9vw,.7rem);color:#9a9590;line-height:1.6">网络级 DDoS 防护与加速。保护自建 GPU 集群、IDC 与混合云公网前缀。</div>
+        <div style="margin-top:clamp(.3rem,.5vw,.4rem);font-size:clamp(.5rem,.75vw,.6rem);color:#e8b4b8;opacity:.7">Enterprise-only</div>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute;bottom:clamp(1.5rem,4vw,3rem);right:clamp(1.5rem,4vw,3rem);font-size:clamp(.5rem,.75vw,.65rem);color:rgba(154,149,144,.3);letter-spacing:.1em">Media / Network</div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
+  <div class="shape" style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(250px,40vw,500px);height:clamp(250px,40vw,500px);top:-8%;right:5%;background:rgba(212,165,116,.1)"></div>
+  <div class="shape" style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(200px,35vw,400px);height:clamp(200px,35vw,400px);bottom:-5%;left:10%;background:rgba(201,184,150,.06)"></div>
+  <div class="shape" style="position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;width:clamp(150px,25vw,300px);height:clamp(150px,25vw,300px);top:40%;left:-5%;background:rgba(232,180,184,.04)"></div>
+  <div style="text-align:center;position:relative;z-index:1;max-width:900px;padding:clamp(2rem,5vw,4rem)">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.65rem,1vw,.85rem);color:#d4a574;letter-spacing:.3em;text-transform:uppercase;margin-bottom:clamp(1rem,2.5vw,2rem);opacity:0;animation:reveal .8s .2s forwards">Part V</div>
+    <h1 style="font-family:'Cormorant',serif;font-weight:700;font-size:clamp(2.5rem,6vw,5rem);color:#d4a574;line-height:1.15;margin:0 0 clamp(1rem,2vw,1.5rem);opacity:0;animation:reveal .8s .4s forwards">05 推荐组合与深度分析</h1>
+    <div style="width:clamp(100px,15vw,200px);height:2px;background:linear-gradient(90deg,transparent,#d4a574,transparent);margin:0 auto;opacity:0;animation:reveal .8s .6s forwards"></div>
+    <p style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.8rem,1.4vw,1.05rem);color:#9a9590;line-height:1.7;margin-top:clamp(1.5rem,3vw,2.5rem);opacity:0;animation:reveal .8s .8s forwards">推荐架构 / 选型决策 / 成本与合规考量</p>
+  </div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
+  <div style="position:absolute;width:clamp(300px,40vw,500px);height:clamp(300px,40vw,500px);top:-10%;right:-5%;border-radius:50%;background:rgba(243,128,32,.06);filter:blur(80px);pointer-events:none"></div>
+  <div style="position:absolute;width:clamp(200px,30vw,350px);height:clamp(200px,30vw,350px);bottom:-8%;left:5%;border-radius:50%;background:rgba(201,184,150,.05);filter:blur(80px);pointer-events:none"></div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">29</div>
+  <div style="text-align:center;position:relative;z-index:1;max-width:clamp(700px,85vw,1100px);padding:clamp(1.5rem,4vw,3rem)">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.8rem);color:#d4a574;letter-spacing:.3em;text-transform:uppercase;margin-bottom:clamp(.6rem,1.5vw,1rem)">SCENARIO MATRIX</div>
+    <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.5rem,3.2vw,2.6rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(1rem,2vw,1.5rem)">AI 场景 <span style="color:#F38020">&times;</span> 约束条件 选型矩阵</h2>
+    <div style="width:clamp(60px,10vw,100px);height:1px;background:linear-gradient(90deg,transparent,#c9b896,transparent);margin:0 auto clamp(1rem,2vw,1.5rem)"></div>
+    <table style="width:100%;border-collapse:collapse;font-size:clamp(.55rem,.9vw,.72rem);text-align:left">
+      <thead>
+        <tr style="border-bottom:1px solid rgba(201,184,150,.25)">
+          <th style="font-weight:400;color:#c9b896;padding:clamp(.4rem,.7vw,.55rem) clamp(.3rem,.5vw,.4rem);white-space:nowrap">AI 类型</th>
+          <th style="font-weight:400;color:#c9b896;padding:clamp(.4rem,.7vw,.55rem);white-space:nowrap">推荐组合</th>
+          <th style="font-weight:400;color:#c9b896;padding:clamp(.4rem,.7vw,.55rem);white-space:nowrap">预算敏感</th>
+          <th style="font-weight:400;color:#c9b896;padding:clamp(.4rem,.7vw,.55rem);white-space:nowrap">低延迟</th>
+          <th style="font-weight:400;color:#c9b896;padding:clamp(.4rem,.7vw,.55rem);white-space:nowrap">高合规</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid rgba(154,149,144,.08)">
+          <td style="color:#e8e4df;padding:clamp(.4rem,.7vw,.55rem) clamp(.3rem,.5vw,.4rem);font-weight:400;white-space:nowrap">模型训练</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">R2 + Catalog + Pipelines + 外部GPU</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">仅 R2，不上 Catalog</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">训练不看边缘时延</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">Data Localization + Access/Tunnel</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(154,149,144,.08)">
+          <td style="color:#e8e4df;padding:clamp(.4rem,.7vw,.55rem) clamp(.3rem,.5vw,.4rem);font-weight:400;white-space:nowrap">批量推理</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">Workers + Queues + Workflows + R2 + D1</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">先 Queues，后补 Workflows</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">Hyperdrive 连外部 DB</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">Gateway/Access + R2 私桶</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(154,149,144,.08)">
+          <td style="color:#e8e4df;padding:clamp(.4rem,.7vw,.55rem) clamp(.3rem,.5vw,.4rem);font-weight:400;white-space:nowrap">实时推理</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">Workers + AI Gateway + Workers AI/外部 + KV</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">小模型 + 强缓存</td>
+          <td style="color:#F38020;padding:clamp(.4rem,.7vw,.55rem)">Workers AI 就近 + Argo</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">Access + WAF + Turnstile</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(154,149,144,.08)">
+          <td style="color:#e8e4df;padding:clamp(.4rem,.7vw,.55rem) clamp(.3rem,.5vw,.4rem);font-weight:400;white-space:nowrap">边缘推理</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">Workers + Workers AI + Durable Objects</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">减少 DO 状态管理</td>
+          <td style="color:#F38020;padding:clamp(.4rem,.7vw,.55rem)">小模型 + embedding 优先</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">Turnstile/WAF + Spectrum</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(154,149,144,.08)">
+          <td style="color:#e8e4df;padding:clamp(.4rem,.7vw,.55rem) clamp(.3rem,.5vw,.4rem);font-weight:400;white-space:nowrap">数据采集</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">Turnstile + Workers + Queues + Pipelines + R2</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">R2 + Queues 即可</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">高吞吐用 Pipelines</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">Gateway/DLP + Data Localization</td>
+        </tr>
+        <tr>
+          <td style="color:#e8e4df;padding:clamp(.4rem,.7vw,.55rem) clamp(.3rem,.5vw,.4rem);font-weight:400;white-space:nowrap">身份控制</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">Cloudflare One + Access + Gateway + Tunnel</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">从 Access/One Client 起步</td>
+          <td style="color:#9a9590;padding:clamp(.4rem,.7vw,.55rem)">不走传统 VPN 回传</td>
+          <td style="color:#F38020;padding:clamp(.4rem,.7vw,.55rem)">DLP + 日志 + 设备姿态 + Tunnel</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top:clamp(.8rem,1.5vw,1.2rem);font-size:clamp(.5rem,.75vw,.65rem);color:rgba(154,149,144,.4);letter-spacing:.1em">
+      <span style="color:#F38020">■</span> 该约束下的差异化优势项
+    </div>
+  </div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
+  <div style="position:absolute;width:clamp(250px,35vw,450px);height:clamp(250px,35vw,450px);bottom:-10%;left:-5%;border-radius:50%;background:rgba(201,184,150,.06);filter:blur(80px);pointer-events:none"></div>
+  <div style="position:absolute;width:clamp(180px,25vw,300px);height:clamp(180px,25vw,300px);top:-5%;right:10%;border-radius:50%;background:rgba(232,180,184,.05);filter:blur(80px);pointer-events:none"></div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">30</div>
+  <div style="text-align:center;position:relative;z-index:1;max-width:clamp(700px,90vw,1050px);padding:clamp(1.5rem,3vw,2.5rem)">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.8rem);color:#d4a574;letter-spacing:.3em;text-transform:uppercase;margin-bottom:clamp(.5rem,1.2vw,.8rem)">DEFAULT ARCHITECTURE</div>
+    <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.5rem,3.2vw,2.6rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(.4rem,.8vw,.6rem)">最均衡的 <span style="color:#c9b896">AI SaaS</span> 默认架构</h2>
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.65rem,1vw,.8rem);color:#9a9590;margin-bottom:clamp(1rem,2vw,1.5rem)">开发速度 / 可观测性 / 成本控制 / 扩展性 四维最优</div>
+
+    <!-- Security Entry -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:clamp(.3rem,.6vw,.5rem);margin-bottom:clamp(.6rem,1.2vw,1rem)">
+      <div style="padding:clamp(.25rem,.5vw,.4rem) clamp(.5rem,.9vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);border:1px solid rgba(232,180,184,.35);color:#e8b4b8;background:rgba(232,180,184,.06)">Turnstile</div>
+      <div style="color:rgba(154,149,144,.3);font-size:clamp(.7rem,.9vw,.8rem)">+</div>
+      <div style="padding:clamp(.25rem,.5vw,.4rem) clamp(.5rem,.9vw,.7rem);border-radius:3px;font-size:clamp(.55rem,.85vw,.68rem);border:1px solid rgba(232,180,184,.35);color:#e8b4b8;background:rgba(232,180,184,.06)">WAF</div>
+      <div style="color:rgba(154,149,144,.4);font-size:clamp(.8rem,1vw,.9rem);margin:0 clamp(.1rem,.3vw,.2rem)">&#8595;</div>
+    </div>
+
+    <!-- Main Flow -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:clamp(.3rem,.5vw,.4rem);flex-wrap:wrap">
+      <div style="padding:clamp(.3rem,.5vw,.45rem) clamp(.6rem,1vw,.8rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.72rem);border:1px solid rgba(201,184,150,.3);color:#c9b896;background:rgba(201,184,150,.06)">Pages</div>
+      <div style="font-family:'IBM Plex Sans',sans-serif;font-size:clamp(.5rem,.7vw,.6rem);color:rgba(154,149,144,.5);margin:0 clamp(.05rem,.15vw,.1rem)">(前端)</div>
+      <div style="color:rgba(154,149,144,.4);font-size:clamp(.8rem,1vw,.9rem)">&#8594;</div>
+      <div style="padding:clamp(.3rem,.5vw,.45rem) clamp(.6rem,1vw,.8rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.72rem);border:1px solid rgba(243,128,32,.35);color:#F38020;background:rgba(243,128,32,.06)">Workers</div>
+      <div style="font-family:'IBM Plex Sans',sans-serif;font-size:clamp(.5rem,.7vw,.6rem);color:rgba(154,149,144,.5);margin:0 clamp(.05rem,.15vw,.1rem)">(API)</div>
+      <div style="color:rgba(154,149,144,.4);font-size:clamp(.8rem,1vw,.9rem)">&#8594;</div>
+      <div style="padding:clamp(.3rem,.5vw,.45rem) clamp(.6rem,1vw,.8rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.72rem);border:1px solid rgba(243,128,32,.35);color:#F38020;background:rgba(243,128,32,.06)">AI Gateway</div>
+      <div style="color:rgba(154,149,144,.4);font-size:clamp(.8rem,1vw,.9rem)">&#8594;</div>
+      <div style="padding:clamp(.3rem,.5vw,.45rem) clamp(.6rem,1vw,.8rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.72rem);border:1px solid rgba(243,128,32,.35);color:#F38020;background:rgba(243,128,32,.06)">Workers AI</div>
+      <div style="color:rgba(154,149,144,.3);font-size:clamp(.7rem,.9vw,.8rem)">/</div>
+      <div style="padding:clamp(.3rem,.5vw,.45rem) clamp(.6rem,1vw,.8rem);border-radius:3px;font-size:clamp(.6rem,.9vw,.72rem);border:1px solid rgba(212,165,116,.3);color:#d4a574;background:rgba(212,165,116,.06)">External Model</div>
+    </div>
+
+    <!-- Workers fan-out -->
+    <div style="display:flex;flex-direction:column;align-items:center;margin-top:clamp(.6rem,1.2vw,1rem)">
+      <div style="color:rgba(154,149,144,.3);font-size:clamp(.6rem,.8vw,.7rem);margin-bottom:clamp(.3rem,.6vw,.4rem);letter-spacing:.1em">Workers &#8595; 数据层</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:clamp(.4rem,.8vw,.6rem);flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:clamp(.15rem,.3vw,.2rem)">
+          <div style="padding:clamp(.25rem,.45vw,.35rem) clamp(.5rem,.8vw,.6rem);border-radius:3px;font-size:clamp(.55rem,.82vw,.65rem);border:1px solid rgba(201,184,150,.25);color:#c9b896;background:rgba(201,184,150,.04)">Vectorize</div>
+          <div style="color:rgba(154,149,144,.3);font-size:clamp(.55rem,.7vw,.6rem)">+ AI Search</div>
+        </div>
+        <div style="padding:clamp(.25rem,.45vw,.35rem) clamp(.5rem,.8vw,.6rem);border-radius:3px;font-size:clamp(.55rem,.82vw,.65rem);border:1px solid rgba(201,184,150,.25);color:#c9b896;background:rgba(201,184,150,.04)">R2</div>
+        <div style="padding:clamp(.25rem,.45vw,.35rem) clamp(.5rem,.8vw,.6rem);border-radius:3px;font-size:clamp(.55rem,.82vw,.65rem);border:1px solid rgba(201,184,150,.25);color:#c9b896;background:rgba(201,184,150,.04)">D1</div>
+        <div style="padding:clamp(.25rem,.45vw,.35rem) clamp(.5rem,.8vw,.6rem);border-radius:3px;font-size:clamp(.55rem,.82vw,.65rem);border:1px solid rgba(212,165,116,.25);color:#d4a574;background:rgba(212,165,116,.04)">KV cache</div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:clamp(1rem,2vw,1.5rem);margin-top:clamp(.8rem,1.5vw,1.2rem);flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:clamp(.2rem,.4vw,.3rem);font-size:clamp(.5rem,.72vw,.6rem);color:rgba(154,149,144,.5)">
+        <div style="width:clamp(6px,8px,8px);height:clamp(6px,8px,8px);border-radius:2px;border:1px solid rgba(243,128,32,.4)"></div> AI 核心层
+      </div>
+      <div style="display:flex;align-items:center;gap:clamp(.2rem,.4vw,.3rem);font-size:clamp(.5rem,.72vw,.6rem);color:rgba(154,149,144,.5)">
+        <div style="width:clamp(6px,8px,8px);height:clamp(6px,8px,8px);border-radius:2px;border:1px solid rgba(201,184,150,.3)"></div> 数据存储层
+      </div>
+      <div style="display:flex;align-items:center;gap:clamp(.2rem,.4vw,.3rem);font-size:clamp(.5rem,.72vw,.6rem);color:rgba(154,149,144,.5)">
+        <div style="width:clamp(6px,8px,8px);height:clamp(6px,8px,8px);border-radius:2px;border:1px solid rgba(232,180,184,.3)"></div> 安全入口层
+      </div>
+      <div style="display:flex;align-items:center;gap:clamp(.2rem,.4vw,.3rem);font-size:clamp(.5rem,.72vw,.6rem);color:rgba(154,149,144,.5)">
+        <div style="width:clamp(6px,8px,8px);height:clamp(6px,8px,8px);border-radius:2px;border:1px solid rgba(212,165,116,.3)"></div> 外部/缓存
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
+  <div style="position:absolute;width:clamp(280px,38vw,480px);height:clamp(280px,38vw,480px);top:-8%;left:-8%;border-radius:50%;background:rgba(232,180,184,.06);filter:blur(80px);pointer-events:none"></div>
+  <div style="position:absolute;width:clamp(200px,28vw,350px);height:clamp(200px,28vw,350px);bottom:-5%;right:5%;border-radius:50%;background:rgba(243,128,32,.05);filter:blur(80px);pointer-events:none"></div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">31</div>
+  <div style="text-align:center;position:relative;z-index:1;max-width:clamp(700px,90vw,1050px);padding:clamp(1.5rem,3vw,2.5rem)">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.8rem);color:#e8b4b8;letter-spacing:.3em;text-transform:uppercase;margin-bottom:clamp(.5rem,1.2vw,.8rem)">ENTERPRISE AI</div>
+    <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.4rem,3vw,2.4rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(.3rem,.6vw,.5rem)">企业 AI 架构：<span style="color:#e8b4b8">双向管控</span>模型</h2>
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:#9a9590;margin-bottom:clamp(.8rem,1.5vw,1.2rem)">Cloudflare 独特优势：同时控制入站访问与出站治理</div>
+
+    <!-- Outer Zero Trust Shell -->
+    <div style="border:1px dashed rgba(232,180,184,.2);border-radius:6px;padding:clamp(.8rem,1.5vw,1.2rem);margin-bottom:clamp(.6rem,1.2vw,1rem)">
+      <div style="display:flex;align-items:center;justify-content:center;gap:clamp(.3rem,.6vw,.5rem);margin-bottom:clamp(.6rem,1vw,.8rem);flex-wrap:wrap">
+        <div style="padding:clamp(.25rem,.5vw,.4rem) clamp(.5rem,.8vw,.65rem);border-radius:3px;font-size:clamp(.55rem,.82vw,.65rem);border:1px solid rgba(232,180,184,.35);color:#e8b4b8;background:rgba(232,180,184,.06)">Access</div>
+        <div style="padding:clamp(.25rem,.5vw,.4rem) clamp(.5rem,.8vw,.65rem);border-radius:3px;font-size:clamp(.55rem,.82vw,.65rem);border:1px solid rgba(232,180,184,.35);color:#e8b4b8;background:rgba(232,180,184,.06)">One Client</div>
+        <div style="padding:clamp(.25rem,.5vw,.4rem) clamp(.5rem,.8vw,.65rem);border-radius:3px;font-size:clamp(.55rem,.82vw,.65rem);border:1px solid rgba(232,180,184,.35);color:#e8b4b8;background:rgba(232,180,184,.06)">Tunnel</div>
+        <div style="font-family:'IBM Plex Sans',sans-serif;font-size:clamp(.5rem,.7vw,.6rem);color:rgba(232,180,184,.4);letter-spacing:.1em">&#8212; Zero Trust 边界 &#8212;</div>
+      </div>
+
+      <!-- Internal Flow -->
+      <div style="border:1px solid rgba(243,128,32,.12);border-radius:4px;padding:clamp(.5rem,1vw,.8rem);background:rgba(243,128,32,.02)">
+        <div style="font-family:'IBM Plex Sans',sans-serif;font-size:clamp(.5rem,.72vw,.6rem);color:rgba(243,128,32,.5);margin-bottom:clamp(.3rem,.5vw,.4rem);letter-spacing:.15em">INTERNAL FLOW</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:clamp(.2rem,.4vw,.3rem);flex-wrap:wrap">
+          <div style="padding:clamp(.2rem,.4vw,.3rem) clamp(.4rem,.7vw,.55rem);border-radius:3px;font-size:clamp(.52rem,.78vw,.62rem);color:#e8e4df;background:rgba(255,255,255,.03)">员工</div>
+          <div style="color:rgba(154,149,144,.4);font-size:clamp(.7rem,.9vw,.8rem)">&#8594;</div>
+          <div style="padding:clamp(.2rem,.4vw,.3rem) clamp(.4rem,.7vw,.55rem);border-radius:3px;font-size:clamp(.52rem,.78vw,.62rem);border:1px solid rgba(232,180,184,.3);color:#e8b4b8">Access</div>
+          <div style="color:rgba(154,149,144,.4);font-size:clamp(.7rem,.9vw,.8rem)">&#8594;</div>
+          <div style="padding:clamp(.2rem,.4vw,.3rem) clamp(.4rem,.7vw,.55rem);border-radius:3px;font-size:clamp(.52rem,.78vw,.62rem);border:1px solid rgba(232,180,184,.3);color:#e8b4b8">Tunnel</div>
+          <div style="color:rgba(154,149,144,.4);font-size:clamp(.7rem,.9vw,.8rem)">&#8594;</div>
+          <div style="padding:clamp(.2rem,.4vw,.3rem) clamp(.4rem,.7vw,.55rem);border-radius:3px;font-size:clamp(.52rem,.78vw,.62rem);border:1px solid rgba(201,184,150,.25);color:#c9b896">内部 AI 应用</div>
+          <div style="color:rgba(154,149,144,.4);font-size:clamp(.7rem,.9vw,.8rem)">&#8594;</div>
+          <div style="padding:clamp(.2rem,.4vw,.3rem) clamp(.4rem,.7vw,.55rem);border-radius:3px;font-size:clamp(.52rem,.78vw,.62rem);border:1px solid rgba(243,128,32,.3);color:#F38020">AI Gateway</div>
+          <div style="color:rgba(154,149,144,.4);font-size:clamp(.7rem,.9vw,.8rem)">&#8594;</div>
+          <div style="padding:clamp(.2rem,.4vw,.3rem) clamp(.4rem,.7vw,.55rem);border-radius:3px;font-size:clamp(.52rem,.78vw,.62rem);border:1px solid rgba(243,128,32,.3);color:#F38020">Workers AI</div>
+        </div>
+      </div>
+
+      <!-- External Flow -->
+      <div style="border:1px solid rgba(212,165,116,.12);border-radius:4px;padding:clamp(.5rem,1vw,.8rem);background:rgba(212,165,116,.02);margin-top:clamp(.4rem,.8vw,.6rem)">
+        <div style="font-family:'IBM Plex Sans',sans-serif;font-size:clamp(.5rem,.72vw,.6rem);color:rgba(212,165,116,.5);margin-bottom:clamp(.3rem,.5vw,.4rem);letter-spacing:.15em">EXTERNAL FLOW</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:clamp(.2rem,.4vw,.3rem);flex-wrap:wrap">
+          <div style="padding:clamp(.2rem,.4vw,.3rem) clamp(.4rem,.7vw,.55rem);border-radius:3px;font-size:clamp(.52rem,.78vw,.62rem);color:#e8e4df;background:rgba(255,255,255,.03)">员工</div>
+          <div style="color:rgba(154,149,144,.4);font-size:clamp(.7rem,.9vw,.8rem)">&#8594;</div>
+          <div style="padding:clamp(.2rem,.4vw,.3rem) clamp(.4rem,.7vw,.55rem);border-radius:3px;font-size:clamp(.52rem,.78vw,.62rem);border:1px solid rgba(232,180,184,.3);color:#e8b4b8">Gateway</div>
+          <div style="color:rgba(154,149,144,.4);font-size:clamp(.7rem,.9vw,.8rem)">&#8594;</div>
+          <div style="padding:clamp(.2rem,.4vw,.3rem) clamp(.4rem,.7vw,.55rem);border-radius:3px;font-size:clamp(.52rem,.78vw,.62rem);border:1px solid rgba(232,180,184,.35);color:#e8b4b8">DLP</div>
+          <div style="color:rgba(154,149,144,.4);font-size:clamp(.7rem,.9vw,.8rem)">&#8594;</div>
+          <div style="padding:clamp(.2rem,.4vw,.3rem) clamp(.4rem,.7vw,.55rem);border-radius:3px;font-size:clamp(.52rem,.78vw,.62rem);border:1px solid rgba(212,165,116,.3);color:#d4a574;background:rgba(212,165,116,.04)">External LLM</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Insight -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:clamp(.3rem,.5vw,.4rem);margin-top:clamp(.6rem,1.2vw,1rem)">
+      <div style="width:clamp(4px,.4vw,6px);height:clamp(4px,.4vw,6px);border-radius:50%;background:#e8b4b8"></div>
+      <div style="font-family:'IBM Plex Sans',sans-serif;font-size:clamp(.55rem,.82vw,.68rem);color:#e8b4b8;font-style:italic">Cloudflare 独特定位：同一平台管控「谁能进」与「什么能出」</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
+  <div style="position:absolute;width:clamp(300px,42vw,520px);height:clamp(300px,42vw,520px);top:-12%;right:-8%;border-radius:50%;background:rgba(243,128,32,.06);filter:blur(80px);pointer-events:none"></div>
+  <div style="position:absolute;width:clamp(220px,30vw,380px);height:clamp(220px,30vw,380px);bottom:-8%;left:-5%;border-radius:50%;background:rgba(201,184,150,.05);filter:blur(80px);pointer-events:none"></div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">32</div>
+  <div style="text-align:center;position:relative;z-index:1;max-width:clamp(680px,88vw,1000px);padding:clamp(1.5rem,3vw,2.5rem)">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.8rem);color:#F38020;letter-spacing:.3em;text-transform:uppercase;margin-bottom:clamp(.5rem,1.2vw,.8rem)">ORIGINAL ANALYSIS</div>
+    <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.5rem,3.2vw,2.6rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(.3rem,.6vw,.5rem)">独立优势：<span style="color:#F38020">为什么 Cloudflare 不可替代</span></h2>
+    <div style="width:clamp(60px,10vw,100px);height:1px;background:linear-gradient(90deg,transparent,#F38020,transparent);margin:0 auto clamp(.8rem,1.5vw,1.2rem)"></div>
+
+    <!-- 5 Cards -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(clamp(200px,28vw,280px),1fr));gap:clamp(.5rem,1vw,.8rem);text-align:left">
+
+      <!-- Card 1 -->
+      <div style="padding:clamp(.6rem,1vw,.8rem);background:rgba(243,128,32,.03);border:1px solid rgba(243,128,32,.15);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.8rem,1.2vw,.95rem);color:#F38020;margin-bottom:clamp(.3rem,.5vw,.4rem)">Zero Egress 护城河</div>
+        <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.55rem,.82vw,.68rem);color:#9a9590;line-height:1.6">R2 零出站 + 全球边缘 = AWS/GCP 无法复制的成本优势。当你的 AI 产出是数据而非网页时，这不仅是省钱，是商业模式级差异。</div>
+      </div>
+
+      <!-- Card 2 -->
+      <div style="padding:clamp(.6rem,1vw,.8rem);background:rgba(201,184,150,.03);border:1px solid rgba(201,184,150,.15);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.8rem,1.2vw,.95rem);color:#c9b896;margin-bottom:clamp(.3rem,.5vw,.4rem)">基础设施级模型治理</div>
+        <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.55rem,.82vw,.68rem);color:#9a9590;line-height:1.6">AI Gateway 在网络层解决多供应商路由、缓存、回退、限流与统一观测。LangChain 做不到，因为它不在流量路径上。</div>
+      </div>
+
+      <!-- Card 3 -->
+      <div style="padding:clamp(.6rem,1vw,.8rem);background:rgba(232,180,184,.03);border:1px solid rgba(232,180,184,.15);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.8rem,1.2vw,.95rem);color:#e8b4b8;margin-bottom:clamp(.3rem,.5vw,.4rem)">原生绑定消除复杂度</div>
+        <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.55rem,.82vw,.68rem);color:#9a9590;line-height:1.6">Workers &#8594; R2 / Vectorize / D1 / KV 无需 SDK 配置、网络打通或连接池管理。一个 env binding 搞定所有绑定，这是 Vercel / AWS Lambda 没有的开发体验。</div>
+      </div>
+
+      <!-- Card 4 -->
+      <div style="padding:clamp(.6rem,1vw,.8rem);background:rgba(212,165,116,.03);border:1px solid rgba(212,165,116,.15);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.8rem,1.2vw,.95rem);color:#d4a574;margin-bottom:clamp(.3rem,.5vw,.4rem)">5ms 冷启动</div>
+        <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.55rem,.82vw,.68rem);color:#9a9590;line-height:1.6">Lambda 100ms+ 冷启动无法胜任实时推理编排的「快闪」模式。Workers 的 V8 isolate 让每次请求都能以微秒级响应，这对 AI Agent 链式调用是数量级优势。</div>
+      </div>
+
+      <!-- Card 5 -->
+      <div style="padding:clamp(.6rem,1vw,.8rem);background:rgba(243,128,32,.03);border:1px solid rgba(243,128,32,.15);border-radius:4px">
+        <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.8rem,1.2vw,.95rem);color:#F38020;margin-bottom:clamp(.3rem,.5vw,.4rem)">有状态 Agent 无需 Redis</div>
+        <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.55rem,.82vw,.68rem);color:#9a9590;line-height:1.6">Durable Objects + Agents = 原生单实例状态管理。每个 Agent 自带 SQLite，无需外部状态层，无需序列化/反序列化，WebSocket 休眠唤醒一步到位。</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f;flex-direction:column;font-family:'IBM Plex Sans',sans-serif;">
+  <!-- Decorative shapes -->
+  <div style="position:absolute;width:clamp(200px,35vw,400px);height:clamp(200px,35vw,400px);top:-6%;right:3%;border-radius:50%;filter:blur(80px);background:rgba(232,180,184,.06);pointer-events:none;"></div>
+  <div style="position:absolute;width:clamp(180px,30vw,350px);height:clamp(180px,30vw,350px);bottom:-4%;left:5%;border-radius:50%;filter:blur(80px);background:rgba(212,165,116,.05);pointer-events:none;"></div>
+  <!-- Slide number -->
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em;">33</div>
+  <!-- Tag -->
+  <div style="font-size:clamp(.6rem,.9vw,.75rem);color:#e8b4b8;letter-spacing:.25em;text-transform:uppercase;margin-bottom:clamp(.6rem,1.5vw,1rem);">MY ANALYSIS</div>
+  <!-- Title -->
+  <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.6rem,3.5vw,2.8rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(1.5rem,3vw,2.5rem);text-align:center;">不足与风险：<span style="color:#e8b4b8;">清醒认识边界</span></h2>
+  <!-- Cards grid -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(clamp(240px,28vw,320px),1fr));gap:clamp(.7rem,1.2vw,1rem);max-width:clamp(700px,75vw,1100px);width:90%;position:relative;z-index:1;">
+    <!-- Card 1 -->
+    <div style="padding:clamp(.8rem,1.2vw,1.1rem) clamp(1rem,1.5vw,1.3rem);background:rgba(255,255,255,.02);border:1px solid rgba(232,180,184,.2);border-radius:4px;">
+      <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.85rem,1.2vw,1.05rem);color:#e8e4df;margin-bottom:clamp(.25rem,.5vw,.35rem);">无原生 GPU 训练</div>
+      <div style="font-weight:300;font-size:clamp(.65rem,1vw,.8rem);color:#9a9590;line-height:1.55;">始终依赖外部训练平台</div>
+    </div>
+    <!-- Card 2 -->
+    <div style="padding:clamp(.8rem,1.2vw,1.1rem) clamp(1rem,1.5vw,1.3rem);background:rgba(255,255,255,.02);border:1px solid rgba(212,165,116,.2);border-radius:4px;">
+      <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.85rem,1.2vw,1.05rem);color:#e8e4df;margin-bottom:clamp(.25rem,.5vw,.35rem);">模型选择滞后</div>
+      <div style="font-weight:300;font-size:clamp(.65rem,1vw,.8rem);color:#9a9590;line-height:1.55;">Workers AI 模型落后 HuggingFace 数月</div>
+    </div>
+    <!-- Card 3 -->
+    <div style="padding:clamp(.8rem,1.2vw,1.1rem) clamp(1rem,1.5vw,1.3rem);background:rgba(255,255,255,.02);border:1px solid rgba(232,180,184,.2);border-radius:4px;">
+      <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.85rem,1.2vw,1.05rem);color:#e8e4df;margin-bottom:clamp(.25rem,.5vw,.35rem);">供应商锁定风险</div>
+      <div style="font-weight:300;font-size:clamp(.65rem,1vw,.8rem);color:#9a9590;line-height:1.55;">原生绑定虽方便，迁移需重写数据层</div>
+    </div>
+    <!-- Card 4 -->
+    <div style="padding:clamp(.8rem,1.2vw,1.1rem) clamp(1rem,1.5vw,1.3rem);background:rgba(255,255,255,.02);border:1px solid rgba(212,165,116,.2);border-radius:4px;">
+      <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.85rem,1.2vw,1.05rem);color:#e8e4df;margin-bottom:clamp(.25rem,.5vw,.35rem);">成本预测困难</div>
+      <div style="font-weight:300;font-size:clamp(.65rem,1vw,.8rem);color:#9a9590;line-height:1.55;">Free tier 限制导致生产成本难估算</div>
+    </div>
+    <!-- Card 5 -->
+    <div style="padding:clamp(.8rem,1.2vw,1.1rem) clamp(1rem,1.5vw,1.3rem);background:rgba(255,255,255,.02);border:1px solid rgba(232,180,184,.2);border-radius:4px;">
+      <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.85rem,1.2vw,1.05rem);color:#e8e4df;margin-bottom:clamp(.25rem,.5vw,.35rem);">向量数据库不够成熟</div>
+      <div style="font-weight:300;font-size:clamp(.65rem,1vw,.8rem);color:#9a9590;line-height:1.55;">Vectorize / AI Search 功能不如 Pinecone / Weaviate</div>
+    </div>
+    <!-- Card 6 -->
+    <div style="padding:clamp(.8rem,1.2vw,1.1rem) clamp(1rem,1.5vw,1.3rem);background:rgba(255,255,255,.02);border:1px solid rgba(212,165,116,.2);border-radius:4px;">
+      <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.85rem,1.2vw,1.05rem);color:#e8e4df;margin-bottom:clamp(.25rem,.5vw,.35rem);">企业功能昂贵</div>
+      <div style="font-weight:300;font-size:clamp(.65rem,1vw,.8rem);color:#9a9590;line-height:1.55;">API Shield / Magic Transit / DLP 需 Enterprise 计划</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f;flex-direction:column;font-family:'IBM Plex Sans',sans-serif;">
+  <!-- Decorative shapes -->
+  <div style="position:absolute;width:clamp(220px,30vw,380px);height:clamp(220px,30vw,380px);top:5%;left:-3%;border-radius:50%;filter:blur(90px);background:rgba(243,128,32,.05);pointer-events:none;"></div>
+  <div style="position:absolute;width:clamp(160px,25vw,300px);height:clamp(160px,25vw,300px);bottom:2%;right:-2%;border-radius:50%;filter:blur(80px);background:rgba(201,184,150,.06);pointer-events:none;"></div>
+  <!-- Slide number -->
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em;">34</div>
+  <!-- Tag -->
+  <div style="font-size:clamp(.6rem,.9vw,.75rem);color:#c9b896;letter-spacing:.25em;text-transform:uppercase;margin-bottom:clamp(.6rem,1.5vw,1rem);">STRATEGIC RECOMMENDATION</div>
+  <!-- Title -->
+  <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.6rem,3.5vw,2.8rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(1.5rem,3vw,2.5rem);text-align:center;">战略建议：<span style="color:#c9b896;">何时用、何时不用</span></h2>
+  <!-- Three columns -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(.8rem,1.5vw,1.4rem);max-width:clamp(700px,78vw,1100px);width:90%;position:relative;z-index:1;">
+    <!-- Column 1: 推荐场景 -->
+    <div style="display:flex;flex-direction:column;gap:clamp(.5rem,.8vw,.7rem);">
+      <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.95rem,1.3vw,1.15rem);color:#6dbf7b;padding-bottom:clamp(.4rem,.6vw,.5rem);border-bottom:1px solid rgba(109,191,123,.25);margin-bottom:clamp(.2rem,.3vw,.3rem);">推荐场景</div>
+      <div style="padding:clamp(.5rem,.8vw,.65rem) clamp(.7rem,1vw,.85rem);background:rgba(109,191,123,.04);border:1px solid rgba(109,191,123,.18);border-radius:4px;font-size:clamp(.65rem,1vw,.8rem);color:#e8e4df;line-height:1.5;">MVP AI 产品</div>
+      <div style="padding:clamp(.5rem,.8vw,.65rem) clamp(.7rem,1vw,.85rem);background:rgba(109,191,123,.04);border:1px solid rgba(109,191,123,.18);border-radius:4px;font-size:clamp(.65rem,1vw,.8rem);color:#e8e4df;line-height:1.5;">全球 SaaS 低成本分发</div>
+      <div style="padding:clamp(.5rem,.8vw,.65rem) clamp(.7rem,1vw,.85rem);background:rgba(109,191,123,.04);border:1px solid rgba(109,191,123,.18);border-radius:4px;font-size:clamp(.65rem,1vw,.8rem);color:#e8e4df;line-height:1.5;">企业内部 AI 工具</div>
+      <div style="padding:clamp(.5rem,.8vw,.65rem) clamp(.7rem,1vw,.85rem);background:rgba(109,191,123,.04);border:1px solid rgba(109,191,123,.18);border-radius:4px;font-size:clamp(.65rem,1vw,.8rem);color:#e8e4df;line-height:1.5;">多租户 Agent 应用</div>
+    </div>
+    <!-- Column 2: 谨慎场景 -->
+    <div style="display:flex;flex-direction:column;gap:clamp(.5rem,.8vw,.7rem);">
+      <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.95rem,1.3vw,1.15rem);color:#e8b4b8;padding-bottom:clamp(.4rem,.6vw,.5rem);border-bottom:1px solid rgba(232,180,184,.25);margin-bottom:clamp(.2rem,.3vw,.3rem);">谨慎场景</div>
+      <div style="padding:clamp(.5rem,.8vw,.65rem) clamp(.7rem,1vw,.85rem);background:rgba(232,180,184,.04);border:1px solid rgba(232,180,184,.18);border-radius:4px;font-size:clamp(.65rem,1vw,.8rem);color:#e8e4df;line-height:1.5;">重度 ML 训练</div>
+      <div style="padding:clamp(.5rem,.8vw,.65rem) clamp(.7rem,1vw,.85rem);background:rgba(232,180,184,.04);border:1px solid rgba(232,180,184,.18);border-radius:4px;font-size:clamp(.65rem,1vw,.8rem);color:#e8e4df;line-height:1.5;">需要最新模型</div>
+      <div style="padding:clamp(.5rem,.8vw,.65rem) clamp(.7rem,1vw,.85rem);background:rgba(232,180,184,.04);border:1px solid rgba(232,180,184,.18);border-radius:4px;font-size:clamp(.65rem,1vw,.8rem);color:#e8e4df;line-height:1.5;">高吞吐量推理</div>
+      <div style="padding:clamp(.5rem,.8vw,.65rem) clamp(.7rem,1vw,.85rem);background:rgba(232,180,184,.04);border:1px solid rgba(232,180,184,.18);border-radius:4px;font-size:clamp(.65rem,1vw,.8rem);color:#e8e4df;line-height:1.5;">复杂 OLAP 分析</div>
+    </div>
+    <!-- Column 3: 推荐策略 -->
+    <div style="display:flex;flex-direction:column;gap:clamp(.5rem,.8vw,.7rem);">
+      <div style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(.95rem,1.3vw,1.15rem);color:#c9b896;padding-bottom:clamp(.4rem,.6vw,.5rem);border-bottom:1px solid rgba(201,184,150,.25);margin-bottom:clamp(.2rem,.3vw,.3rem);">推荐策略</div>
+      <div style="padding:clamp(.6rem,1vw,.8rem) clamp(.7rem,1vw,.85rem);background:rgba(201,184,150,.04);border:1px solid rgba(201,184,150,.18);border-radius:4px;font-size:clamp(.65rem,1vw,.8rem);color:#e8e4df;line-height:1.6;">
+        <div style="font-weight:500;color:#c9b896;margin-bottom:clamp(.3rem,.5vw,.4rem);font-size:clamp(.7rem,1.05vw,.85rem);">混合架构</div>
+        <div style="color:#9a9590;line-height:1.7;">CF 做边缘 / API / 存储层</div>
+        <div style="color:#9a9590;line-height:1.7;">专业平台做训练 / 推理</div>
+        <div style="color:#9a9590;line-height:1.7;">逐步扩大 CF 份额</div>
+      </div>
+      <!-- Architecture mini-diagram -->
+      <div style="display:flex;flex-direction:column;gap:clamp(.3rem,.5vw,.4rem);margin-top:clamp(.2rem,.4vw,.3rem);">
+        <div style="padding:clamp(.35rem,.6vw,.5rem) clamp(.6rem,.9vw,.7rem);border:1px solid rgba(243,128,32,.25);border-radius:3px;font-size:clamp(.6rem,.85vw,.7rem);color:#F38020;text-align:center;background:rgba(243,128,32,.04);">Cloudflare Workers</div>
+        <div style="width:1px;height:clamp(8px,1vw,12px);background:rgba(201,184,150,.2);margin:0 auto;"></div>
+        <div style="padding:clamp(.35rem,.6vw,.5rem) clamp(.6rem,.9vw,.7rem);border:1px solid rgba(201,184,150,.2);border-radius:3px;font-size:clamp(.6rem,.85vw,.7rem);color:#c9b896;text-align:center;background:rgba(201,184,150,.03);">Training / Inference Platform</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f;font-family:'IBM Plex Sans',sans-serif;">
+  <!-- Decorative blurred circles -->
+  <div style="position:absolute;width:clamp(180px,28vw,360px);height:clamp(180px,28vw,360px);top:15%;left:10%;border-radius:50%;filter:blur(100px);background:rgba(243,128,32,.07);pointer-events:none;"></div>
+  <div style="position:absolute;width:clamp(140px,22vw,280px);height:clamp(140px,22vw,280px);bottom:18%;right:12%;border-radius:50%;filter:blur(100px);background:rgba(212,165,116,.06);pointer-events:none;"></div>
+  <div style="position:absolute;width:clamp(100px,16vw,200px);height:clamp(100px,16vw,200px);top:55%;left:55%;border-radius:50%;filter:blur(90px);background:rgba(201,184,150,.05);pointer-events:none;"></div>
+  <!-- Slide number -->
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em;">35</div>
+  <!-- Centered content -->
+  <div style="text-align:center;position:relative;z-index:1;">
+    <!-- Q & A -->
+    <div style="font-family:'Cormorant',serif;font-weight:700;font-size:clamp(3.5rem,8vw,7rem);color:#e8e4df;letter-spacing:.08em;line-height:1;margin-bottom:clamp(.8rem,2vw,1.5rem);">Q &amp; A</div>
+    <!-- Subtitle -->
+    <div style="font-family:'Cormorant',serif;font-weight:400;font-size:clamp(1rem,2vw,1.6rem);color:#c9b896;letter-spacing:.15em;margin-bottom:clamp(2rem,4vw,3.5rem);">谢谢 / Questions</div>
+    <!-- Gradient divider -->
+    <div style="width:clamp(60px,12vw,140px);height:1px;background:linear-gradient(90deg,transparent,#F38020,#c9b896,transparent);margin:0 auto;margin-bottom:clamp(2rem,4vw,3.5rem);"></div>
+    <!-- Footer text -->
+    <div style="font-weight:300;font-size:clamp(.55rem,.85vw,.7rem);color:rgba(154,149,144,.45);letter-spacing:.2em;">Cloudflare AI 产品矩阵深度调研 · 2026</div>
+  </div>
+</div>
+
+<script>
+
+class SlidePresentation {
+    constructor() {
+        this.slides = document.querySelectorAll('.slide');
+        this.current = 0;
+        this.total = this.slides.length;
+        this.isScrolling = false;
+        this.scrollTimeout = null;
+        this.touchStartY = 0;
+        this.init();
+    }
+
+    init() {
+        this.createNavDots();
+        this.setupIntersectionObserver();
+        this.setupKeyboard();
+        this.setupWheel();
+        this.setupTouch();
+        this.setupToc();
+        this.updateProgress();
+    }
+
+    createNavDots() {
+        const nav = document.querySelector('.nav-dots');
+        if (!nav) return;
+        for (let i = 0; i < this.total; i++) {
+            const dot = document.createElement('button');
+            dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+            dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+            dot.addEventListener('click', () => this.goTo(i));
+            nav.appendChild(dot);
+        }
+    }
+
+    setupIntersectionObserver() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+                    const idx = Array.from(this.slides).indexOf(entry.target);
+                    if (idx !== -1) this.setCurrent(idx);
+                }
+            });
+        }, { threshold: [0.5] });
+        this.slides.forEach(s => observer.observe(s));
+    }
+
+    setupKeyboard() {
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown') {
+                e.preventDefault();
+                this.next();
+            } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+                e.preventDefault();
+                this.prev();
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                this.goTo(0);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                this.goTo(this.total - 1);
+            } else if (e.key === 't' || e.key === 'T' || e.key === 'Escape') {
+                if (e.key === 'Escape' && this._tocClose) { this._tocClose(); return; }
+                if ((e.key === 't' || e.key === 'T') && this._tocOpen) {
+                    e.preventDefault();
+                    const sidebar = document.getElementById('tocSidebar');
+                    if (sidebar && sidebar.classList.contains('open')) this._tocClose();
+                    else this._tocOpen();
+                }
+            }
+        });
+    }
+
+    setupWheel() {
+        document.addEventListener('wheel', (e) => {
+            const sidebar = document.getElementById('tocSidebar');
+            if (sidebar && sidebar.classList.contains('open') && sidebar.contains(e.target)) return;
+            e.preventDefault();
+            if (this.isScrolling) return;
+            if (e.deltaY > 20) this.next();
+            else if (e.deltaY < -20) this.prev();
+        }, { passive: false });
+    }
+
+    setupTouch() {
+        document.addEventListener('touchstart', (e) => {
+            this.touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+        document.addEventListener('touchend', (e) => {
+            const diff = this.touchStartY - e.changedTouches[0].clientY;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) this.next();
+                else this.prev();
+            }
+        }, { passive: true });
+    }
+
+    setupToc() {
+        const btn = document.getElementById('tocBtn');
+        const sidebar = document.getElementById('tocSidebar');
+        const backdrop = document.getElementById('tocBackdrop');
+        if (!btn || !sidebar || !backdrop) return;
+
+        const items = sidebar.querySelectorAll('.toc-item');
+
+        const open = () => {
+            btn.classList.add('open');
+            sidebar.classList.add('open');
+            backdrop.classList.add('open');
+            this.highlightTocItem();
+        };
+        const close = () => {
+            btn.classList.remove('open');
+            sidebar.classList.remove('open');
+            backdrop.classList.remove('open');
+        };
+        const toggle = () => sidebar.classList.contains('open') ? close() : open();
+
+        btn.addEventListener('click', toggle);
+        backdrop.addEventListener('click', close);
+
+        items.forEach(item => {
+            item.addEventListener('click', () => {
+                const idx = parseInt(item.dataset.slide);
+                if (!isNaN(idx)) { this.goTo(idx); close(); }
+            });
+        });
+
+        this._tocClose = close;
+        this._tocItems = items;
+        this._tocOpen = open;
+    }
+
+    next() {
+        if (this.current < this.total - 1) this.goTo(this.current + 1);
+    }
+
+    prev() {
+        if (this.current > 0) this.goTo(this.current - 1);
+    }
+
+    goTo(idx) {
+        if (idx < 0 || idx >= this.total || this.isScrolling) return;
+        this.isScrolling = true;
+        this.slides[idx].scrollIntoView({ behavior: 'smooth' });
+        this.setCurrent(idx);
+        clearTimeout(this.scrollTimeout);
+        this.scrollTimeout = setTimeout(() => { this.isScrolling = false; }, 800);
+    }
+
+    setCurrent(idx) {
+        this.current = idx;
+        this.updateProgress();
+        this.updateDots();
+    }
+
+    updateProgress() {
+        const bar = document.querySelector('.progress-bar');
+        if (bar) {
+            const pct = ((this.current + 1) / this.total) * 100;
+            bar.style.width = pct + '%';
+        }
+    }
+
+    updateDots() {
+        const dots = document.querySelectorAll('.nav-dot');
+        dots.forEach((d, i) => {
+            d.classList.toggle('active', i === this.current);
+        });
+        this.highlightTocItem();
+    }
+
+    highlightTocItem() {
+        if (!this._tocItems) return;
+        this._tocItems.forEach(item => {
+            item.classList.toggle('active', parseInt(item.dataset.slide) === this.current);
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => new SlidePresentation());
+
+</script>
+</body>
+</html>
