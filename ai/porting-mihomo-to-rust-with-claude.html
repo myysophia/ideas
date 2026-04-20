@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>用 Claude Code 将三万行 Go 项目移植到 Rust</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23475569'/><text x='16' y='23' text-anchor='middle' font-size='18' font-weight='bold' fill='white' font-family='sans-serif'>用</text></svg>">
+<meta name="date" content="2026-04-20">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* === THEME TOKENS === */
+    :root {
+      --bg-page: #FDFBF5;
+      --bg-section: #FFFFFF;
+      --accent-red: #E3120B;
+      --accent-red-soft: rgba(227, 18, 11, 0.08);
+      --blue-dark: #2C5F8A;
+      --blue-mid: #3A7BC8;
+      --blue-light: #5B9BD5;
+      --green-accent: #2D7A4F;
+      --green-soft: rgba(45, 122, 79, 0.08);
+      --text-primary: #1A1A1A;
+      --text-secondary: #4A4A4A;
+      --text-muted: #8A8580;
+      --border: #E5DDD0;
+      --border-light: #F0EBE3;
+      --font-display: 'Instrument Serif', 'Noto Serif SC', 'PingFang SC', 'Microsoft YaHei', Georgia, serif;
+      --font-body: 'Work Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    /* === RESET + BASE === */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+    body {
+      background: var(--bg-page);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: clamp(0.9rem, 1.2vw, 1.05rem);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+    img, svg { max-width: 100%; height: auto; display: block; }
+    a { color: var(--blue-mid); text-decoration: none; transition: color 0.2s ease; }
+    a:hover { color: var(--accent-red); }
+    code { font-family: var(--font-mono); font-size: 0.9em; background: var(--accent-red-soft); color: var(--accent-red); padding: 0.15em 0.4em; border-radius: 3px; }
+
+    /* === TYPOGRAPHY === */
+    h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 700; line-height: 1.2; color: var(--text-primary); }
+    h1 { font-size: clamp(2rem, 5vw, 3.5rem); letter-spacing: -0.02em; }
+    h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 600; border-left: 3px solid var(--accent-red); padding-left: clamp(0.75rem, 1.5vw, 1.25rem); margin-bottom: clamp(1rem, 2vw, 1.5rem); }
+    h3 { font-size: clamp(1.15rem, 2vw, 1.5rem); font-weight: 600; margin-bottom: clamp(0.6rem, 1vw, 0.875rem); }
+    p { margin-bottom: clamp(0.75rem, 1.5vw, 1.25rem); color: var(--text-secondary); }
+    strong { font-weight: 600; color: var(--text-primary); }
+    .eyebrow { font-family: var(--font-mono); font-size: clamp(0.65rem, 0.9vw, 0.8rem); text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-red); margin-bottom: clamp(0.5rem, 1vw, 0.75rem); display: block; }
+    .lede { font-size: clamp(0.95rem, 1.3vw, 1.1rem); color: var(--text-primary); font-weight: 500; line-height: 1.6; margin-bottom: clamp(1rem, 2vw, 1.5rem); }
+    .text--red { color: var(--accent-red); font-weight: 600; }
+
+    /* === LAYOUT === */
+    .container { max-width: 800px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2.5rem); }
+    .section { min-height: auto; padding: clamp(3rem, 8vw, 6rem) 0; background: var(--bg-page); }
+    .section--alt { background: var(--bg-section); }
+
+    /* === HERO === */
+    .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 4vw, 2.5rem); background: var(--bg-page); }
+    .hero h1 { max-width: clamp(20rem, 50vw, 38rem); margin-bottom: clamp(1rem, 2.5vw, 1.75rem); }
+    .hero-subtitle { font-family: var(--font-display); font-size: clamp(1rem, 1.8vw, 1.3rem); font-weight: 400; font-style: italic; color: var(--text-secondary); line-height: 1.5; max-width: clamp(18rem, 40vw, 32rem); margin-bottom: clamp(1.5rem, 3vw, 2rem); }
+    .hero-desc { max-width: 42ch; text-align: center; margin: 0 auto clamp(2rem, 4vw, 3rem); }
+
+    /* === IMAGE / CHART === */
+    .chart-container { max-width: 720px; margin: clamp(1.5rem, 3vw, 2.5rem) auto; padding: clamp(1rem, 2vw, 1.5rem); background: var(--bg-section); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03); overflow: hidden; }
+    .chart-container svg { margin: 0 auto; }
+    .zoom-hint { font-family: var(--font-mono); font-size: clamp(0.6rem, 0.75vw, 0.7rem); color: var(--text-muted); text-align: center; margin-top: clamp(0.5rem, 1vw, 0.75rem); }
+    .lightbox-trigger { cursor: zoom-in; transition: box-shadow 0.2s ease; }
+    .lightbox-trigger:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.05); }
+
+    /* === TABLE === */
+    .data-table { width: 100%; border-collapse: collapse; font-family: var(--font-body); font-size: clamp(0.8rem, 1vw, 0.9rem); margin: clamp(1rem, 2vw, 1.5rem) 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    .data-table thead th { background: var(--accent-red); color: #fff; font-weight: 600; font-size: clamp(0.7rem, 0.9vw, 0.8rem); text-transform: uppercase; letter-spacing: 0.05em; padding: clamp(0.6rem, 1.2vw, 0.85rem) clamp(0.6rem, 1.2vw, 1rem); text-align: left; white-space: nowrap; }
+    .data-table tbody td { padding: clamp(0.5rem, 1vw, 0.75rem) clamp(0.6rem, 1.2vw, 1rem); border-bottom: 1px solid var(--border-light); color: var(--text-secondary); }
+    .data-table tbody tr:nth-child(even) td { background: var(--accent-red-soft); }
+
+    /* === CHIPS === */
+    .chip-row { display: flex; flex-wrap: wrap; gap: clamp(0.4rem, 0.8vw, 0.6rem); margin: clamp(0.75rem, 1.5vw, 1rem) 0; }
+    .chip { font-family: var(--font-mono); font-size: clamp(0.65rem, 0.85vw, 0.78rem); background: var(--bg-page); border: 1px solid var(--border); color: var(--text-secondary); padding: clamp(0.25rem, 0.5vw, 0.4rem) clamp(0.6rem, 1.2vw, 0.9rem); border-radius: 4px; white-space: nowrap; transition: border-color 0.2s ease, color 0.2s ease; }
+    .chip:hover { border-color: var(--accent-red); color: var(--accent-red); background: var(--accent-red-soft); }
+    .chip-grid { display: flex; flex-wrap: wrap; gap: clamp(0.3rem, 0.6vw, 0.5rem); margin: clamp(1rem, 2vw, 1.5rem) 0; }
+
+    /* === BADGE === */
+    .badge { display: inline-block; font-family: var(--font-mono); font-size: clamp(0.65rem, 0.85vw, 0.75rem); font-weight: 600; padding: 0.15em 0.5em; border-radius: 3px; }
+    .badge--a { background: var(--accent-red-soft); color: var(--accent-red); }
+    .badge--b { background: var(--green-soft); color: var(--green-accent); }
+
+    /* === STAT GRID === */
+    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(1rem, 2vw, 1.5rem); margin: clamp(1.5rem, 3vw, 2.5rem) 0; }
+    .stat-item { text-align: center; padding: clamp(1rem, 2vw, 1.5rem); background: var(--bg-section); border: 1px solid var(--border-light); border-radius: 6px; }
+    .stat-value { font-family: var(--font-display); font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; color: var(--text-primary); line-height: 1.1; margin-bottom: clamp(0.25rem, 0.5vw, 0.4rem); display: block; }
+    .stat-label { font-family: var(--font-body); font-size: clamp(0.7rem, 0.9vw, 0.8rem); font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* === PRINCIPLE CARDS === */
+    .principle-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(0.75rem, 1.5vw, 1.25rem); margin: clamp(1.5rem, 3vw, 2.5rem) 0; }
+    .principle-card { background: var(--bg-page); border-top: 3px solid var(--accent-red); padding: clamp(1rem, 2vw, 1.5rem); border-radius: 0 0 6px 6px; border-left: 1px solid var(--border-light); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); transition: box-shadow 0.2s ease; }
+    .principle-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .principle-card__number { font-family: var(--font-mono); font-size: clamp(0.65rem, 0.85vw, 0.75rem); color: var(--accent-red); margin-bottom: clamp(0.25rem, 0.5vw, 0.4rem); }
+    .principle-card h4 { font-family: var(--font-display); font-size: clamp(0.95rem, 1.5vw, 1.15rem); font-weight: 600; color: var(--text-primary); margin-bottom: clamp(0.3rem, 0.6vw, 0.5rem); }
+    .principle-card p { font-size: clamp(0.8rem, 1vw, 0.88rem); color: var(--text-secondary); line-height: 1.55; }
+
+    /* === MEMORY === */
+    .memory-list { display: grid; gap: clamp(0.75rem, 1.5vw, 1.25rem); margin: clamp(1.5rem, 3vw, 2.5rem) 0; }
+    .memory-item { background: var(--text-primary); border-radius: 6px; overflow: hidden; }
+    .memory-item__header { display: flex; align-items: center; gap: clamp(0.4rem, 0.8vw, 0.6rem); padding: clamp(0.4rem, 0.8vw, 0.6rem) clamp(0.75rem, 1.5vw, 1rem); background: #2A2A2A; border-bottom: 1px solid #3A3A3A; }
+    .memory-item__dot { width: clamp(8px, 0.8vw, 10px); height: clamp(8px, 0.8vw, 10px); border-radius: 50%; background: var(--accent-red); }
+    .memory-item__content { padding: clamp(0.6rem, 1.2vw, 1rem); }
+    .memory-item__content strong { color: #E0E0E0; display: block; font-size: clamp(0.8rem, 1vw, 0.88rem); margin-bottom: clamp(0.2rem, 0.4vw, 0.3rem); }
+    .memory-item__content p { color: #A0A0A0; font-size: clamp(0.75rem, 0.95vw, 0.82rem); margin-bottom: 0; line-height: 1.55; }
+
+    /* === VERDICT === */
+    .verdict-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1rem, 2vw, 1.5rem); margin: clamp(1.5rem, 3vw, 2.5rem) 0; }
+    .verdict-card { padding: clamp(1rem, 2vw, 1.5rem); border-radius: 6px; }
+    .verdict-card h3 { margin-bottom: clamp(0.6rem, 1vw, 0.875rem); }
+    .verdict-card--good { background: var(--green-soft); border: 1px solid rgba(45, 122, 79, 0.2); }
+    .verdict-card--good h3 { color: var(--green-accent); }
+    .verdict-card--bad { background: var(--accent-red-soft); border: 1px solid rgba(227, 18, 11, 0.15); }
+    .verdict-card--bad h3 { color: var(--accent-red); }
+    .verdict-card ul { list-style: none; display: flex; flex-direction: column; gap: clamp(0.3rem, 0.8vw, 0.5rem); }
+    .verdict-card li { font-size: clamp(0.8rem, 1vw, 0.88rem); color: var(--text-secondary); padding-left: clamp(0.8rem, 1.2vw, 1rem); position: relative; line-height: 1.5; }
+    .verdict-card--good li::before { content: "✓"; position: absolute; left: 0; color: var(--green-accent); font-weight: 700; }
+    .verdict-card--bad li::before { content: "✗"; position: absolute; left: 0; color: var(--accent-red); font-weight: 700; }
+
+    /* === CLOSING QUOTE === */
+    .closing-quote { font-family: var(--font-display); font-size: clamp(1.1rem, 2vw, 1.5rem); font-weight: 400; font-style: italic; color: var(--text-primary); line-height: 1.5; border-left: 3px solid var(--accent-red); padding: clamp(1rem, 2vw, 1.5rem); margin-top: clamp(1.5rem, 3vw, 2.5rem); background: var(--accent-red-soft); border-radius: 0 6px 6px 0; }
+
+    /* === LIGHTBOX === */
+    .lightbox-overlay { position: fixed; inset: 0; background: rgba(10,10,10,0.92); z-index: 9999; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+    .lightbox-overlay.active { opacity: 1; pointer-events: auto; }
+    .lightbox-inner { position: relative; }
+    .lightbox-image { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 4px; background: #fff; }
+    .lightbox-close { position: fixed; top: clamp(1rem, 3vw, 2rem); right: clamp(1rem, 3vw, 2rem); width: clamp(2.5rem, 4vw, 3.5rem); height: clamp(2.5rem, 4vw, 3.5rem); background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; font-size: clamp(1.2rem, 2vw, 1.6rem); z-index: 10000; transition: background 0.2s ease; }
+    .lightbox-close:hover { background: rgba(255,255,255,0.3); }
+
+    /* === SCROLL ANIMATIONS === */
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .visible .reveal { opacity: 1; transform: translateY(0); }
+    .visible .reveal:nth-child(2) { transition-delay: 0.1s; }
+    .visible .reveal:nth-child(3) { transition-delay: 0.2s; }
+    .visible .reveal:nth-child(4) { transition-delay: 0.3s; }
+    .visible .reveal:nth-child(5) { transition-delay: 0.4s; }
+    .visible .reveal:nth-child(6) { transition-delay: 0.5s; }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 768px) {
+      .section { padding: clamp(2rem, 6vw, 3.5rem) 0; }
+      .stat-grid { gap: clamp(0.6rem, 1.5vw, 1rem); }
+      .principle-grid { gap: clamp(0.6rem, 1.5vw, 1rem); }
+    }
+    @media (max-width: 600px) {
+      .stat-grid { grid-template-columns: 1fr; }
+      .principle-grid { grid-template-columns: 1fr; }
+      .verdict-grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: clamp(1.75rem, 7vw, 2.5rem); }
+      .chip-row, .chip-grid { justify-content: center; }
+      .data-table { font-size: clamp(0.72rem, 1.5vw, 0.82rem); }
+    }
+
+    /* === REDUCED MOTION === */
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .reveal { opacity: 1; transform: none; transition: none; }
+      .lightbox-overlay, .lightbox-image { transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- === HERO === -->
+  <section class="hero">
+    <div class="container">
+      <div class="eyebrow reveal">Engineering Practice</div>
+      <h1 class="reveal">用 Claude Code 将三万行 Go 项目移植到 Rust</h1>
+      <p class="hero-subtitle reveal">Agent Team 实践与 Harness 效率优化</p>
+      <p class="hero-desc reveal">mihomo（Clash Meta）规则代理内核的 Rust 重写记录——哪些做法有效，哪些踩了坑，以及如何通过调优 harness 配置让 Claude Code 在大型项目中真正可用。</p>
+      <div class="chip-row reveal">
+        <div class="chip">31,178 行 Rust 代码</div>
+        <div class="chip">11 个 workspace crate</div>
+        <div class="chip">619 个测试函数</div>
+        <div class="chip">4 周开发周期</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === SECTION 1 · BACKGROUND === -->
+  <section class="section">
+    <div class="container">
+      <div class="eyebrow reveal">Project Overview</div>
+      <h2 class="reveal">项目背景与架构</h2>
+      <p class="reveal">mihomo（原名 Clash Meta）是一个以规则引擎为核心的代理内核，原始实现使用 Go 语言。随着功能不断膨胀，二进制体积、内存占用与运行时开销逐渐成为瓶颈——尤其是在资源受限的边缘设备上。Rust 凭借零成本抽象、无 GC 的内存模型以及严格的类型系统，成为重写的自然选择。</p>
+      <p class="reveal">重写后的 <strong>mihomo-rust</strong> 拆分为 11 个 workspace crate，总计产出 31,178 行 Rust 代码。每个 crate 职责单一：DNS 解析、路由规则、协议实现、配置解析等各自独立编译，既加速了增量构建，也让测试边界更加清晰。</p>
+      <div class="chart-container reveal">
+        <img src="porting-mihomo-to-rust-with-claude-assets/chart-mihomo-crate-breakdown.svg" class="lightbox-trigger" alt="mihomo-rust 11 个 workspace crate 的依赖关系与代码量分布">
+        <p class="zoom-hint">点击放大</p>
+      </div>
+      <div class="stat-grid reveal">
+        <div class="stat-item">
+          <span class="stat-value">11</span>
+          <span class="stat-label">Workspace Crates</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">31,178</span>
+          <span class="stat-label">Lines of Rust</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">619</span>
+          <span class="stat-label">Test Functions</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === SECTION 2 · AGENT TEAM === -->
+  <section class="section section--alt">
+    <div class="container">
+      <div class="eyebrow reveal">Agent Team Collaboration</div>
+      <h2 class="reveal">Agent Team：四个角色的分工</h2>
+      <p class="reveal">整个移植过程由四个专职 Agent 协同完成，每个角色绑定不同层级的模型以平衡成本与能力。PM 和 Engineer 使用 Sonnet——推理速度足以覆盖大量代码生成与路线图编排；Architect 使用 Opus，因为在架构决策上需要更强的长程推理；QA 则交给 Haiku，快速生成测试计划并维护 CI 健康度。</p>
+      <table class="data-table reveal">
+        <thead>
+          <tr><th>角色</th><th>模型</th><th>职责</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>PM（项目经理）</strong></td><td>Sonnet</td><td>拥有路线图、排列优先级、撰写里程碑退出标准</td></tr>
+          <tr><td><strong>Architect（架构师）</strong></td><td>Opus</td><td>编写差距分析、ADR、架构决策</td></tr>
+          <tr><td><strong>Engineer（工程师）</strong></td><td>Sonnet</td><td>实现代码、编写测试、处理 CI</td></tr>
+          <tr><td><strong>QA</strong></td><td>Haiku</td><td>编写测试计划、审查覆盖率、维护 CI 状态</td></tr>
+        </tbody>
+      </table>
+      <p class="reveal">这种模型分配策略的核心逻辑：<strong>只在真正需要深度推理的节点投入 Opus</strong>（架构决策通常影响全局，错误代价最高），其余环节用 Sonnet/Haiku 以更快的轮次速度推进。</p>
+      <div class="chart-container reveal">
+        <img src="porting-mihomo-to-rust-with-claude-assets/chart-mihomo-agent-team.svg" class="lightbox-trigger" alt="四个 Agent 角色之间的协作流程与信息传递路径">
+        <p class="zoom-hint">点击放大</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- === SECTION 3 · MILESTONES === -->
+  <section class="section">
+    <div class="container">
+      <div class="eyebrow reveal">Development Rhythm</div>
+      <h2 class="reveal">里程碑驱动的开发节奏</h2>
+      <p class="reveal">项目划分为四个里程碑，由 PM 制定退出标准。M0 与 M1 并行推进：M0 聚焦正确性修补（类型对齐、边界条件、错误处理），M1 目标是功能对齐（让用户可以完整替代 Go 版本）。M2 进入性能优化阶段，M3 则面向运维成熟度（日志、指标、可观测性）。</p>
+      <div class="chip-row reveal">
+        <div class="chip">M0 — Correctness Fixes</div>
+        <div class="chip">M1 — User-Ready</div>
+        <div class="chip">M2 — Performance</div>
+        <div class="chip">M3 — Ops Maturity</div>
+      </div>
+      <div class="chart-container reveal">
+        <img src="porting-mihomo-to-rust-with-claude-assets/chart-mihomo-dev-velocity.svg" class="lightbox-trigger" alt="四个里程碑的开发速度与 commit 密度变化">
+        <p class="zoom-hint">点击放大</p>
+      </div>
+      <p class="reveal">如上图所示，Agent Team 全面介入后 commit 密度显著提升。M0/M1 并行期间的每日提交数是初始阶段的 3.2 倍，主要得益于 Engineer 和 QA 的流水线式协作——代码实现与测试编写几乎同步进行。</p>
+    </div>
+  </section>
+
+  <!-- === SECTION 4 · SPEC WORKFLOW === -->
+  <section class="section section--alt">
+    <div class="container">
+      <div class="eyebrow reveal">Spec-Driven Development</div>
+      <h2 class="reveal">Spec 驱动开发流水线</h2>
+      <p class="reveal">Spec 是整个 Agent Team 的核心协作协议。每一份 spec 文档覆盖一个功能模块，定义了 YAML schema、结构体形状、错误类型枚举、Go/Rust 实现差异（divergences）以及对应的测试计划。Architect 编写 spec，Engineer 依据 spec 实现，QA 依据 spec 验证——三者共享同一份"接口契约"。</p>
+      <p class="reveal">整个项目共产出 40 份 spec 文档，平均每份约 200 行。Spec 不是一次性的设计文档，而是活协议——当 Engineer 在实现中发现 Go 原始行为与 spec 描述不一致时，会通过 Architect 发起 spec 修订，QA 同步更新测试基线，形成闭环。</p>
+      <div class="stat-grid reveal">
+        <div class="stat-item"><span class="stat-value">40</span><span class="stat-label">Spec Documents</span></div>
+        <div class="stat-item"><span class="stat-value">~200</span><span class="stat-label">Lines per Spec</span></div>
+        <div class="stat-item"><span class="stat-value">3</span><span class="stat-label">Agent Roles per Spec</span></div>
+      </div>
+      <div class="chart-container reveal">
+        <img src="porting-mihomo-to-rust-with-claude-assets/chart-mihomo-spec-workflow.svg" class="lightbox-trigger" alt="Spec 驱动开发流水线">
+        <p class="zoom-hint">点击放大</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- === SECTION 5 · ADR DIVERGENCE === -->
+  <section class="section">
+    <div class="container">
+      <div class="eyebrow reveal">Divergence Strategy</div>
+      <h2 class="reveal">上游分歧策略：ADR-0002</h2>
+      <p class="reveal">对上游 mihomo 的行为差异采用二分类框架，每项分歧在加载阶段即做出裁决。</p>
+      <ul class="reveal" style="list-style:none;display:flex;flex-direction:column;gap:clamp(0.3rem,0.6vw,0.5rem);margin-bottom:clamp(1rem,2vw,1.5rem);">
+        <li><strong>Class A（安全 / 隐私 / 路由意图）</strong> — 硬错误，拒绝加载，进程退出</li>
+        <li><strong>Class B（性能 / 兼容性）</strong> — 警告一次，继续运行</li>
+      </ul>
+      <table class="data-table reveal">
+        <thead><tr><th>分歧项</th><th>上游行为</th><th>Rust 实现</th><th>分类</th></tr></thead>
+        <tbody>
+          <tr><td>VMess cipher: zero</td><td>上游接受</td><td>解析时报错</td><td><span class="badge badge--a">A</span></td></tr>
+          <tr><td>alterId &gt; 0</td><td>运行废弃的 MD5 密钥推导</td><td>警告并强制为 0</td><td><span class="badge badge--b">B</span></td></tr>
+          <tr><td>sniffer peek IO 错误</td><td>静默跳过</td><td>记日志，保留原始 metadata</td><td><span class="badge badge--a">A</span></td></tr>
+          <tr><td>default-nameserver 含 tls://</td><td>接受，bootstrap 死循环</td><td>加载时报错</td><td><span class="badge badge--a">A</span></td></tr>
+        </tbody>
+      </table>
+      <div class="chart-container reveal">
+        <img src="porting-mihomo-to-rust-with-claude-assets/chart-mihomo-divergence.svg" class="lightbox-trigger" alt="ADR-0002 divergence decision framework">
+        <p class="zoom-hint">点击放大</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- === SECTION 6 · CLAUDE.md & MEMORY === -->
+  <section class="section section--alt">
+    <div class="container">
+      <div class="eyebrow reveal">CLAUDE.md & Memory</div>
+      <h2 class="reveal">Harness 效率优化</h2>
+      <p class="lede reveal">Agent Team 的效率瓶颈不在算力，在上下文质量。两套机制解决同一个问题：<strong>不要让 agent 重新发现你已经知道的事情。</strong></p>
+
+      <h3 class="reveal">CLAUDE.md 原则</h3>
+      <div class="principle-grid">
+        <div class="principle-card reveal">
+          <div class="principle-card__number">01</div>
+          <h4>只写不能从代码推断的信息</h4>
+          <p>不要列出文件路径——agent 能读文件。要写的是 trait 骨架、外部依赖的测试行为、非-obvious 的构建参数。信息密度决定 token 效率。</p>
+        </div>
+        <div class="principle-card reveal">
+          <div class="principle-card__number">02</div>
+          <h4>写清楚扩展点</h4>
+          <p>"如何添加新协议"——三行指令比一整段架构描述更有效。Agent 需要的是可执行的入口，不是可阅读的背景知识。</p>
+        </div>
+        <div class="principle-card reveal">
+          <div class="principle-card__number">03</div>
+          <h4>不要写过时的信息</h4>
+          <p>CLAUDE.md 不是变更日志。已落地的决策不需要再解释——代码本身就是文档。过时信息会误导 agent 做出已经被否决的决策。</p>
+        </div>
+      </div>
+
+      <h3 class="reveal">Memory 系统</h3>
+      <div class="memory-list">
+        <div class="memory-item reveal">
+          <div class="memory-item__header"><div class="memory-item__dot"></div><span style="font-family:var(--font-mono);font-size:clamp(0.65rem,0.8vw,0.75rem);color:#A0A0A0;">feedback / router-panic</span></div>
+          <div class="memory-item__content">
+            <strong>"不要在 router 上加 CatchPanic"</strong>
+            <p>QA 要求 panic 必须导致进程终止——这是设计意图，不是 bug。加 middleware 吞 panic 会掩盖真正的故障。</p>
+          </div>
+        </div>
+        <div class="memory-item reveal">
+          <div class="memory-item__header"><div class="memory-item__dot"></div><span style="font-family:var(--font-mono);font-size:clamp(0.65rem,0.8vw,0.75rem);color:#A0A0A0;">feedback / tokio-time</span></div>
+          <div class="memory-item__content">
+            <strong>"tokio::time::pause() 不虚拟化系统调用"</strong>
+            <p>只影响 tokio 定时器，不影响 socket IO。导致 DNS resolver 测试在 CI 中 flaky，直到写进 memory。</p>
+          </div>
+        </div>
+        <div class="memory-item reveal">
+          <div class="memory-item__header"><div class="memory-item__dot"></div><span style="font-family:var(--font-mono);font-size:clamp(0.65rem,0.8vw,0.75rem);color:#A0A0A0;">feedback / milestone-restart</span></div>
+          <div class="memory-item__content">
+            <strong>"里程碑完成时必须重启所有 teammate"</strong>
+            <p>清理过时上下文，从文件系统重新读取。不重启的 teammate 会携带两轮之前的错误假设继续生成代码。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === SECTION 7 · TESTING === -->
+  <section class="section">
+    <div class="container">
+      <div class="eyebrow reveal">Test Coverage</div>
+      <h2 class="reveal">测试是验证 Agent 工作质量的唯一可靠手段</h2>
+      <p class="lede reveal">Agent 写的代码必须被独立于 Agent 的机制验证。测试不是质量保障——测试是质量<span class="text--red">度量</span>。</p>
+      <div class="chart-container reveal">
+        <img src="porting-mihomo-to-rust-with-claude-assets/chart-mihomo-test-coverage.svg" class="lightbox-trigger" alt="Test coverage breakdown by module">
+        <p class="zoom-hint">点击放大</p>
+      </div>
+      <div class="chip-grid reveal">
+        <span class="chip">100+ 单元测试</span>
+        <span class="chip">82 API 集成测试</span>
+        <span class="chip">78 规则匹配测试</span>
+        <span class="chip">5 协议级集成测试</span>
+        <span class="chip">TProxy 端到端测试</span>
+        <span class="chip">MSRV 校验</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- === SECTION 8 · METRICS === -->
+  <section class="section section--alt">
+    <div class="container">
+      <div class="eyebrow reveal">By The Numbers</div>
+      <h2 class="reveal">数字与成本</h2>
+      <p class="lede reveal">每一行代码的成本可以量化，但产出的复利效应无法量化。</p>
+      <div class="stat-grid reveal" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="stat-item"><span class="stat-value">31,178</span><span class="stat-label">行 Rust 代码</span></div>
+        <div class="stat-item"><span class="stat-value">11</span><span class="stat-label">个 workspace crate</span></div>
+        <div class="stat-item"><span class="stat-value">106</span><span class="stat-label">次 Git commits</span></div>
+        <div class="stat-item"><span class="stat-value">40</span><span class="stat-label">份 Spec 文档</span></div>
+        <div class="stat-item"><span class="stat-value">619</span><span class="stat-label">个测试函数</span></div>
+        <div class="stat-item"><span class="stat-value">375</span><span class="stat-label">个 Cargo 依赖</span></div>
+        <div class="stat-item"><span class="stat-value">~4 周</span><span class="stat-label">开发跨度</span></div>
+        <div class="stat-item"><span class="stat-value">27</span><span class="stat-label">单日最高 commits</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === SECTION 9 · CONCLUSION === -->
+  <section class="section">
+    <div class="container">
+      <div class="eyebrow reveal">Takeaway</div>
+      <h2 class="reveal">什么时候值得用 Agent Team</h2>
+      <p class="lede reveal">Agent Team 不是银弹，它是一把适合特定场景的重型工具。</p>
+      <div class="verdict-grid">
+        <div class="verdict-card verdict-card--good reveal">
+          <h3>值得使用</h3>
+          <ul>
+            <li>项目规模大到一个上下文窗口装不下</li>
+            <li>需要不同层次的决策——架构、实现、验证</li>
+            <li>有明确的文档驱动流程（Spec → ADR → Code）</li>
+            <li>需要在里程碑之间保持一致性</li>
+          </ul>
+        </div>
+        <div class="verdict-card verdict-card--bad reveal">
+          <h3>不值得使用</h3>
+          <ul>
+            <li>小型项目（&lt; 5K 行），单个 agent 足够</li>
+            <li>探索性原型开发，结构化流程是负担</li>
+            <li>没有测试基础设施的项目——无法验证输出质量</li>
+          </ul>
+        </div>
+      </div>
+      <blockquote class="closing-quote reveal">
+        Claude Code 改变的不是 "AI 能不能写代码"，而是 "AI 写的代码能不能被工程化地验证和集成"。
+      </blockquote>
+    </div>
+  </section>
+
+  <script>
+  (function () {
+    'use strict';
+
+    /* === SCROLL ANIMATION === */
+    class ScrollAnimation {
+      constructor() {
+        this.observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (!entry.isIntersecting) return;
+              const el = entry.target;
+              el.classList.add('visible');
+              el.querySelectorAll('.reveal').forEach((child, i) => {
+                child.style.transitionDelay = `${i * 80}ms`;
+                void child.offsetWidth;
+                child.classList.add('visible');
+              });
+              this.observer.unobserve(el);
+            });
+          },
+          { threshold: 0.08 }
+        );
+        document.querySelectorAll('.section, .hero').forEach((el) => this.observer.observe(el));
+      }
+    }
+
+    /* === LIGHTBOX === */
+    class Lightbox {
+      constructor() {
+        this.overlay = document.createElement('div');
+        this.overlay.className = 'lightbox-overlay';
+        this.overlay.setAttribute('role', 'dialog');
+
+        this.image = document.createElement('img');
+        this.image.className = 'lightbox-image';
+
+        this.closeBtn = document.createElement('button');
+        this.closeBtn.className = 'lightbox-close';
+        this.closeBtn.setAttribute('aria-label', 'Close');
+        this.closeBtn.innerHTML = '&times;';
+
+        this.overlay.appendChild(this.image);
+        this.overlay.appendChild(this.closeBtn);
+        document.body.appendChild(this.overlay);
+
+        this.overlay.addEventListener('click', (e) => {
+          if (e.target === this.overlay || e.target === this.image) this.close();
+        });
+        this.closeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.close();
+        });
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') this.close();
+        });
+
+        document.querySelectorAll('.lightbox-trigger').forEach((trigger) => {
+          trigger.style.cursor = 'zoom-in';
+          trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            const src = trigger.currentSrc || trigger.getAttribute('src');
+            if (src) this.open(src);
+          });
+        });
+      }
+
+      open(src) {
+        if (this._timeout) clearTimeout(this._timeout);
+        this.image.src = '';
+        this.image.src = src;
+        this.overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+
+      close() {
+        this.overlay.classList.remove('active');
+        document.body.style.overflow = '';
+        this._timeout = setTimeout(() => { this.image.src = ''; }, 300);
+      }
+    }
+
+    new ScrollAnimation();
+    new Lightbox();
+  })();
+  </script>
+</body>
+</html>

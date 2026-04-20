@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 440" font-family="-apple-system, system-ui, 'PingFang SC', sans-serif">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#2C5F8A"/><stop offset="100%" stop-color="#3A7BC8"/></linearGradient>
+    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#3A7BC8"/><stop offset="100%" stop-color="#5B9BD5"/></linearGradient>
+    <linearGradient id="g3" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#5B9BD5"/><stop offset="100%" stop-color="#7FB5E0"/></linearGradient>
+  </defs>
+
+  <rect width="720" height="440" fill="#FFF1E0"/>
+  <rect x="0" y="0" width="720" height="4" fill="#E3120B"/>
+  <rect x="50" y="16" width="80" height="16" rx="1" fill="#E3120B"/>
+  <text x="54" y="28" font-size="10" font-weight="600" fill="#FFF">STRUCTURE</text>
+
+  <text x="50" y="52" font-size="18" font-weight="700" fill="#1A1A1A">Crate architecture: 31,178 lines across 11 crates</text>
+  <text x="50" y="70" font-size="12" fill="#666">各 crate 代码量（行）与源文件数 | 按代码量降序排列</text>
+
+  <!-- Chart: horizontal bars -->
+  <!-- x=180-650, y=88-400, 11 bars, bar height=22, gap=6 -->
+  <!-- max value = 9797, scale: 470px per 9797 -->
+
+  <!-- mihomo-proxy: 9797 lines, 27 files -->
+  <text x="175" y="104" font-size="11" fill="#1A1A1A" text-anchor="end" font-weight="600">mihomo-proxy</text>
+  <rect x="180" y="90" width="470" height="22" fill="#2C5F8A" rx="2"/>
+  <text x="656" y="105" font-size="10" fill="#666">9,797</text>
+  <text x="190" y="105" font-size="9" fill="#FFF" font-weight="500">27 files | SS, Trojan, VLESS, Groups</text>
+
+  <!-- mihomo-transport: 5983, 17 files -->
+  <text x="175" y="132" font-size="11" fill="#1A1A1A" text-anchor="end" font-weight="600">mihomo-transport</text>
+  <rect x="180" y="118" width="287" height="22" fill="#3A6B9F" rx="2"/>
+  <text x="472" y="133" font-size="10" fill="#666">5,983</text>
+  <text x="190" y="133" font-size="9" fill="#FFF" font-weight="500">17 files | TLS, WS, gRPC, H2</text>
+
+  <!-- mihomo-config: 4008, 10 files -->
+  <text x="175" y="160" font-size="11" fill="#1A1A1A" text-anchor="end" font-weight="600">mihomo-config</text>
+  <rect x="180" y="146" width="192" height="22" fill="#4A7DB4" rx="2"/>
+  <text x="377" y="161" font-size="10" fill="#666">4,008</text>
+  <text x="190" y="161" font-size="9" fill="#FFF" font-weight="500">10 files | YAML 解析</text>
+
+  <!-- mihomo-api: 3229, 4 files -->
+  <text x="175" y="188" font-size="11" fill="#1A1A1A" text-anchor="end" font-weight="600">mihomo-api</text>
+  <rect x="180" y="174" width="155" height="22" fill="#5B8FC9" rx="2"/>
+  <text x="340" y="189" font-size="10" fill="#666">3,229</text>
+  <text x="190" y="189" font-size="9" fill="#FFF" font-weight="500">4 files | REST API</text>
+
+  <!-- mihomo-rules: 2723, 21 files -->
+  <text x="175" y="216" font-size="11" fill="#1A1A1A" text-anchor="end" font-weight="600">mihomo-rules</text>
+  <rect x="180" y="202" width="131" height="22" fill="#6BA1D4" rx="2"/>
+  <text x="316" y="217" font-size="10" fill="#666">2,723</text>
+  <text x="190" y="217" font-size="9" fill="#FFF" font-weight="500">21 files</text>
+
+  <!-- mihomo-common: 1419, 12 files -->
+  <text x="175" y="244" font-size="11" fill="#1A1A1A" text-anchor="end" font-weight="600">mihomo-common</text>
+  <rect x="180" y="230" width="68" height="22" fill="#7BB3DF" rx="2"/>
+  <text x="253" y="245" font-size="10" fill="#666">1,419</text>
+
+  <!-- mihomo-listener: 1352, 8 files -->
+  <text x="175" y="272" font-size="11" fill="#1A1A1A" text-anchor="end" font-weight="600">mihomo-listener</text>
+  <rect x="180" y="258" width="65" height="22" fill="#8BBEE5" rx="2"/>
+  <text x="250" y="273" font-size="10" fill="#666">1,352</text>
+
+  <!-- mihomo-dns: 873, 5 files -->
+  <text x="175" y="300" font-size="11" fill="#1A1A1A" text-anchor="end" font-weight="600">mihomo-dns</text>
+  <rect x="180" y="286" width="42" height="22" fill="#9BC9EB" rx="2"/>
+  <text x="227" y="301" font-size="10" fill="#666">873</text>
+
+  <!-- mihomo-tunnel: 813, 8 files -->
+  <text x="175" y="328" font-size="11" fill="#1A1A1A" text-anchor="end" font-weight="600">mihomo-tunnel</text>
+  <rect x="180" y="314" width="39" height="22" fill="#ABD4F0" rx="2"/>
+  <text x="224" y="329" font-size="10" fill="#666">813</text>
+
+  <!-- mihomo-app: 783, 3 files -->
+  <text x="175" y="356" font-size="11" fill="#1A1A1A" text-anchor="end" font-weight="600">mihomo-app</text>
+  <rect x="180" y="342" width="38" height="22" fill="#BBDFF5" rx="2"/>
+  <text x="223" y="357" font-size="10" fill="#666">783</text>
+
+  <!-- mihomo-trie: 198, 2 files -->
+  <text x="175" y="384" font-size="11" fill="#1A1A1A" text-anchor="end" font-weight="600">mihomo-trie</text>
+  <rect x="180" y="370" width="10" height="22" fill="#CCEAFF" rx="2"/>
+  <text x="195" y="385" font-size="10" fill="#666">198</text>
+
+  <!-- Summary bar at bottom -->
+  <line x1="50" y1="405" x2="690" y2="405" stroke="#D4C5B0" stroke-width="0.5"/>
+  <text x="50" y="425" font-size="10" fill="#888">117 source files | 375 dependencies | 619 test functions</text>
+  <text x="690" y="425" font-size="10" fill="#888" text-anchor="end">Total: 31,178 LOC</text>
+</svg>

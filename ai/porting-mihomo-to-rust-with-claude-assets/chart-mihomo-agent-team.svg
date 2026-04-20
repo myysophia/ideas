@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 520" font-family="-apple-system, system-ui, 'PingFang SC', sans-serif">
+  <rect width="720" height="520" fill="#FFF1E0"/>
+  <rect x="0" y="0" width="720" height="4" fill="#E3120B"/>
+  <rect x="50" y="16" width="98" height="16" rx="1" fill="#E3120B"/>
+  <text x="54" y="28" font-size="10" font-weight="600" fill="#FFF">AGENT TEAM</text>
+
+  <text x="50" y="54" font-size="18" font-weight="700" fill="#1A1A1A">Four-role agent team: information flow</text>
+  <text x="50" y="72" font-size="12" fill="#666">四角色 Agent Team 协作模式与信息流向 | 文件系统作为共享状态</text>
+
+  <!-- PM Box -->
+  <rect x="50" y="95" width="150" height="90" rx="6" fill="#FFF" stroke="#4A90D9" stroke-width="2"/>
+  <rect x="50" y="95" width="150" height="26" rx="6" fill="#4A90D9"/>
+  <rect x="50" y="110" width="150" height="11" fill="#4A90D9"/>
+  <text x="125" y="113" font-size="12" font-weight="700" fill="#FFF" text-anchor="middle">PM</text>
+  <text x="125" y="138" font-size="10" fill="#666" text-anchor="middle">Sonnet</text>
+  <text x="125" y="153" font-size="9" fill="#888" text-anchor="middle">路线图 | 优先级</text>
+  <text x="125" y="166" font-size="9" fill="#888" text-anchor="middle">退出标准 | 状态跟踪</text>
+
+  <!-- Architect Box -->
+  <rect x="285" y="95" width="150" height="90" rx="6" fill="#FFF" stroke="#E3120B" stroke-width="2"/>
+  <rect x="285" y="95" width="150" height="26" rx="6" fill="#E3120B"/>
+  <rect x="285" y="110" width="150" height="11" fill="#E3120B"/>
+  <text x="360" y="113" font-size="12" font-weight="700" fill="#FFF" text-anchor="middle">Architect</text>
+  <text x="360" y="138" font-size="10" fill="#666" text-anchor="middle">Opus</text>
+  <text x="360" y="153" font-size="9" fill="#888" text-anchor="middle">ADR | 差距分析</text>
+  <text x="360" y="166" font-size="9" fill="#888" text-anchor="middle">架构决策 | 方案审查</text>
+
+  <!-- Engineer Box -->
+  <rect x="520" y="95" width="150" height="90" rx="6" fill="#FFF" stroke="#2CA02C" stroke-width="2"/>
+  <rect x="520" y="95" width="150" height="26" rx="6" fill="#2CA02C"/>
+  <rect x="520" y="110" width="150" height="11" fill="#2CA02C"/>
+  <text x="595" y="113" font-size="12" font-weight="700" fill="#FFF" text-anchor="middle">Engineer</text>
+  <text x="595" y="138" font-size="10" fill="#666" text-anchor="middle">Sonnet</text>
+  <text x="595" y="153" font-size="9" fill="#888" text-anchor="middle">实现代码 | 编写测试</text>
+  <text x="595" y="166" font-size="9" fill="#888" text-anchor="middle">CI 修复 | 重构</text>
+
+  <!-- QA Box -->
+  <rect x="285" y="210" width="150" height="90" rx="6" fill="#FFF" stroke="#FF7F0E" stroke-width="2"/>
+  <rect x="285" y="210" width="150" height="26" rx="6" fill="#FF7F0E"/>
+  <rect x="285" y="225" width="150" height="11" fill="#FF7F0E"/>
+  <text x="360" y="228" font-size="12" font-weight="700" fill="#FFF" text-anchor="middle">QA</text>
+  <text x="360" y="253" font-size="10" fill="#666" text-anchor="middle">Haiku</text>
+  <text x="360" y="268" font-size="9" fill="#888" text-anchor="middle">测试计划 | CI 状态</text>
+  <text x="360" y="281" font-size="9" fill="#888" text-anchor="middle">覆盖率审查 | 验证</text>
+
+  <!-- Arrows: PM -> Architect -->
+  <line x1="200" y1="130" x2="280" y2="130" stroke="#999" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+  <text x="240" y="123" font-size="8" fill="#888" text-anchor="middle">vision.md</text>
+
+  <!-- Arrows: Architect -> PM -->
+  <line x1="280" y1="150" x2="200" y2="150" stroke="#999" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+  <text x="240" y="163" font-size="8" fill="#888" text-anchor="middle">gap-analysis.md</text>
+
+  <!-- Arrows: Architect -> Engineer -->
+  <line x1="435" y1="130" x2="515" y2="130" stroke="#999" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+  <text x="475" y="123" font-size="8" fill="#888" text-anchor="middle">ADR + specs</text>
+
+  <!-- Arrows: PM -> Engineer (diagonal) -->
+  <line x1="175" y1="185" x2="540" y2="185" stroke="#999" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrowhead)"/>
+  <text x="360" y="198" font-size="8" fill="#888" text-anchor="middle">roadmap.md (优先级 + 排序)</text>
+
+  <!-- Arrows: QA -> Engineer -->
+  <line x1="435" y1="245" x2="595" y2="185" stroke="#999" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+  <text x="530" y="220" font-size="8" fill="#888" text-anchor="middle">test-plan.md</text>
+
+  <!-- Arrows: Architect -> QA -->
+  <line x1="360" y1="185" x2="360" y2="205" stroke="#999" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+  <text x="380" y="200" font-size="8" fill="#888">ADR-0002</text>
+
+  <!-- Arrowhead marker -->
+  <defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#999"/>
+    </marker>
+  </defs>
+
+  <!-- File system shared state -->
+  <rect x="50" y="320" width="620" height="180" rx="8" fill="#F5EDE0" stroke="#D4C5B0" stroke-width="1"/>
+  <text x="70" y="343" font-size="12" font-weight="700" fill="#1A1A1A">Shared File System (docs/)</text>
+  <text x="620" y="343" font-size="10" fill="#888" text-anchor="end">Agent 间的唯一通信通道</text>
+
+  <!-- File boxes -->
+  <rect x="70" y="355" width="130" height="55" rx="4" fill="#FFF" stroke="#4A90D9" stroke-width="1"/>
+  <text x="135" y="372" font-size="9" font-weight="600" fill="#4A90D9" text-anchor="middle">PM owns</text>
+  <text x="135" y="386" font-size="8" fill="#666" text-anchor="middle">vision.md</text>
+  <text x="135" y="398" font-size="8" fill="#666" text-anchor="middle">roadmap.md</text>
+
+  <rect x="220" y="355" width="130" height="55" rx="4" fill="#FFF" stroke="#E3120B" stroke-width="1"/>
+  <text x="285" y="372" font-size="9" font-weight="600" fill="#E3120B" text-anchor="middle">Architect owns</text>
+  <text x="285" y="386" font-size="8" fill="#666" text-anchor="middle">adr/*.md</text>
+  <text x="285" y="398" font-size="8" fill="#666" text-anchor="middle">gap-analysis.md</text>
+
+  <rect x="370" y="355" width="130" height="55" rx="4" fill="#FFF" stroke="#FF7F0E" stroke-width="1"/>
+  <text x="435" y="372" font-size="9" font-weight="600" fill="#FF7F0E" text-anchor="middle">QA owns</text>
+  <text x="435" y="386" font-size="8" fill="#666" text-anchor="middle">*-test-plan.md</text>
+  <text x="435" y="398" font-size="8" fill="#666" text-anchor="middle">ci-status.md</text>
+
+  <rect x="520" y="355" width="130" height="55" rx="4" fill="#FFF" stroke="#2CA02C" stroke-width="1"/>
+  <text x="585" y="372" font-size="9" font-weight="600" fill="#2CA02C" text-anchor="middle">共享</text>
+  <text x="585" y="386" font-size="8" fill="#666" text-anchor="middle">specs/*.md (40 份)</text>
+  <text x="585" y="398" font-size="8" fill="#666" text-anchor="middle">CLAUDE.md + Memory</text>
+
+  <!-- Bottom note -->
+  <text x="70" y="430" font-size="9" fill="#888">原则：ADR 决定架构（不可协商）→ Spec 填充细节（可讨论）→ Test Plan 验证 Spec</text>
+  <text x="70" y="445" font-size="9" fill="#888">里程碑边界：shutdown 并 respawn 所有 agent，从文件系统重新加载状态</text>
+
+  <!-- Vertical connector lines from role boxes to file system -->
+  <line x1="125" y1="185" x2="125" y2="320" stroke="#4A90D9" stroke-width="1" stroke-dasharray="3,3" opacity="0.4"/>
+  <line x1="360" y1="300" x2="360" y2="320" stroke="#E3120B" stroke-width="1" stroke-dasharray="3,3" opacity="0.4"/>
+  <line x1="595" y1="185" x2="595" y2="320" stroke="#2CA02C" stroke-width="1" stroke-dasharray="3,3" opacity="0.4"/>
+</svg>

@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" font-family="-apple-system, system-ui, 'PingFang SC', sans-serif">
+  <defs>
+    <linearGradient id="barFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4A90D9" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#4A90D9" stop-opacity="0.5"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="720" height="420" fill="#FFF1E0"/>
+  <rect x="0" y="0" width="720" height="4" fill="#E3120B"/>
+  <rect x="50" y="16" width="62" height="16" rx="1" fill="#E3120B"/>
+  <text x="54" y="28" font-size="10" font-weight="600" fill="#FFF">VELOCITY</text>
+
+  <!-- Title -->
+  <text x="50" y="52" font-size="18" font-weight="700" fill="#1A1A1A">Development velocity: commits per active day</text>
+  <text x="50" y="70" font-size="12" fill="#666">mihomo-rust 项目每日 commit 数量 | 2026 年 Rust 移植阶段</text>
+
+  <!-- Chart area: x=60-690, y=90-340 -->
+  <!-- Only showing 2026 data: Feb 21, Feb 28, Mar 17, Mar 24, Mar 25, Mar 27, Mar 28, Apr 8, Apr 11, Apr 12 -->
+  <!-- 10 bars, bar width = 40, gap = 22, total = 620 -->
+  <!-- Y range: 0-30, scale: 340=0, 90=30, each unit = 8.33px -->
+
+  <!-- Y-axis gridlines -->
+  <line x1="60" y1="340" x2="690" y2="340" stroke="#D4C5B0" stroke-width="0.5"/>
+  <text x="54" y="344" font-size="10" fill="#888" text-anchor="end">0</text>
+  <line x1="60" y1="290" x2="690" y2="290" stroke="#D4C5B0" stroke-width="0.5" stroke-dasharray="3,3"/>
+  <text x="54" y="294" font-size="10" fill="#888" text-anchor="end">6</text>
+  <line x1="60" y1="240" x2="690" y2="240" stroke="#D4C5B0" stroke-width="0.5" stroke-dasharray="3,3"/>
+  <text x="54" y="244" font-size="10" fill="#888" text-anchor="end">12</text>
+  <line x1="60" y1="190" x2="690" y2="190" stroke="#D4C5B0" stroke-width="0.5" stroke-dasharray="3,3"/>
+  <text x="54" y="194" font-size="10" fill="#888" text-anchor="end">18</text>
+  <line x1="60" y1="140" x2="690" y2="140" stroke="#D4C5B0" stroke-width="0.5" stroke-dasharray="3,3"/>
+  <text x="54" y="144" font-size="10" fill="#888" text-anchor="end">24</text>
+  <line x1="60" y1="90" x2="690" y2="90" stroke="#D4C5B0" stroke-width="0.5" stroke-dasharray="3,3"/>
+  <text x="54" y="94" font-size="10" fill="#888" text-anchor="end">30</text>
+
+  <!-- Bars: each unit = (340-90)/30 = 8.33px -->
+  <!-- Feb 21: 4 commits -->
+  <rect x="72" y="306.7" width="40" height="33.3" fill="url(#barFill)" rx="2"/>
+  <text x="92" y="300" font-size="10" fill="#4A90D9" font-weight="600" text-anchor="middle">4</text>
+  <text x="92" y="356" font-size="9" fill="#666" text-anchor="middle">2/21</text>
+
+  <!-- Feb 28: 4 commits -->
+  <rect x="134" y="306.7" width="40" height="33.3" fill="url(#barFill)" rx="2"/>
+  <text x="154" y="300" font-size="10" fill="#4A90D9" font-weight="600" text-anchor="middle">4</text>
+  <text x="154" y="356" font-size="9" fill="#666" text-anchor="middle">2/28</text>
+
+  <!-- Mar 17: 7 commits -->
+  <rect x="196" y="281.7" width="40" height="58.3" fill="url(#barFill)" rx="2"/>
+  <text x="216" y="275" font-size="10" fill="#4A90D9" font-weight="600" text-anchor="middle">7</text>
+  <text x="216" y="356" font-size="9" fill="#666" text-anchor="middle">3/17</text>
+
+  <!-- Mar 24: 1 -->
+  <rect x="258" y="331.7" width="40" height="8.3" fill="url(#barFill)" rx="2"/>
+  <text x="278" y="326" font-size="10" fill="#4A90D9" font-weight="600" text-anchor="middle">1</text>
+  <text x="278" y="356" font-size="9" fill="#666" text-anchor="middle">3/24</text>
+
+  <!-- Mar 25: 1 -->
+  <rect x="320" y="331.7" width="40" height="8.3" fill="url(#barFill)" rx="2"/>
+  <text x="340" y="326" font-size="10" fill="#4A90D9" font-weight="600" text-anchor="middle">1</text>
+  <text x="340" y="356" font-size="9" fill="#666" text-anchor="middle">3/25</text>
+
+  <!-- Mar 27: 4 -->
+  <rect x="382" y="306.7" width="40" height="33.3" fill="url(#barFill)" rx="2"/>
+  <text x="402" y="300" font-size="10" fill="#4A90D9" font-weight="600" text-anchor="middle">4</text>
+  <text x="402" y="356" font-size="9" fill="#666" text-anchor="middle">3/27</text>
+
+  <!-- Mar 28: 4 -->
+  <rect x="444" y="306.7" width="40" height="33.3" fill="url(#barFill)" rx="2"/>
+  <text x="464" y="300" font-size="10" fill="#4A90D9" font-weight="600" text-anchor="middle">4</text>
+  <text x="464" y="356" font-size="9" fill="#666" text-anchor="middle">3/28</text>
+
+  <!-- Apr 8: 27 commits - highlight -->
+  <rect x="506" y="115" width="40" height="225" fill="#E3120B" rx="2" opacity="0.85"/>
+  <text x="526" y="108" font-size="11" fill="#E3120B" font-weight="700" text-anchor="middle">27</text>
+  <text x="526" y="356" font-size="9" fill="#E3120B" font-weight="600" text-anchor="middle">4/8</text>
+
+  <!-- Apr 11: 14 -->
+  <rect x="568" y="223.3" width="40" height="116.7" fill="url(#barFill)" rx="2"/>
+  <text x="588" y="217" font-size="10" fill="#4A90D9" font-weight="600" text-anchor="middle">14</text>
+  <text x="588" y="356" font-size="9" fill="#666" text-anchor="middle">4/11</text>
+
+  <!-- Apr 12: 14 -->
+  <rect x="630" y="223.3" width="40" height="116.7" fill="url(#barFill)" rx="2"/>
+  <text x="650" y="217" font-size="10" fill="#4A90D9" font-weight="600" text-anchor="middle">14</text>
+  <text x="650" y="356" font-size="9" fill="#666" text-anchor="middle">4/12</text>
+
+  <!-- Annotations -->
+  <line x1="190" y1="370" x2="190" y2="380" stroke="#999" stroke-width="0.5"/>
+  <line x1="500" y1="370" x2="500" y2="380" stroke="#999" stroke-width="0.5"/>
+  <text x="130" y="392" font-size="10" fill="#888" text-anchor="middle">v0.2.0</text>
+  <text x="130" y="403" font-size="9" fill="#aaa" text-anchor="middle">Web UI + 服务管理</text>
+  <text x="560" y="392" font-size="10" fill="#888" text-anchor="middle">M0+M1 sprint</text>
+  <text x="560" y="403" font-size="9" fill="#aaa" text-anchor="middle">Agent Team 全面介入</text>
+
+  <!-- Arrow annotation for Apr 8 -->
+  <line x1="526" y1="100" x2="620" y2="82" stroke="#E3120B" stroke-width="0.8"/>
+  <text x="622" y="80" font-size="9" fill="#E3120B" font-weight="600">M0 sweep + 6 specs</text>
+  <text x="622" y="91" font-size="9" fill="#E3120B">+ simple-obfs + v2ray-plugin</text>
+</svg>

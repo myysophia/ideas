@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 320" font-family="-apple-system, system-ui, 'PingFang SC', sans-serif">
+  <rect width="720" height="320" fill="#FFF1E0"/>
+  <rect x="0" y="0" width="720" height="4" fill="#E3120B"/>
+  <rect x="50" y="16" width="76" height="16" rx="1" fill="#E3120B"/>
+  <text x="54" y="28" font-size="10" font-weight="600" fill="#FFF">ADR-0002</text>
+
+  <text x="50" y="52" font-size="18" font-weight="700" fill="#1A1A1A">Upstream divergence policy: two-class decision framework</text>
+  <text x="50" y="70" font-size="12" fill="#666">上游分歧策略：二分类决策框架 | 移植项目的核心设计原则</text>
+
+  <!-- Class A box -->
+  <rect x="50" y="90" width="300" height="200" rx="8" fill="#FFF" stroke="#E3120B" stroke-width="2"/>
+  <rect x="50" y="90" width="300" height="30" rx="8" fill="#E3120B"/>
+  <rect x="50" y="108" width="300" height="12" fill="#E3120B"/>
+  <text x="200" y="110" font-size="14" font-weight="700" fill="#FFF" text-anchor="middle">Class A: Hard Error</text>
+
+  <text x="70" y="138" font-size="10" font-weight="600" fill="#E3120B">安全 / 隐私 / 路由意图</text>
+  <text x="70" y="155" font-size="9" fill="#666">用户以为得到 X，实际得到更不安全的 Y</text>
+
+  <line x1="70" y1="165" x2="330" y2="165" stroke="#f0d0d0" stroke-width="0.5"/>
+
+  <circle cx="80" cy="182" r="3" fill="#E3120B"/>
+  <text x="90" y="186" font-size="9" fill="#444">VMess cipher: zero → 明文传输</text>
+
+  <circle cx="80" cy="202" r="3" fill="#E3120B"/>
+  <text x="90" y="206" font-size="9" fill="#444">sniffer peek IO 错误 → 静默跳过</text>
+
+  <circle cx="80" cy="222" r="3" fill="#E3120B"/>
+  <text x="90" y="226" font-size="9" fill="#444">default-nameserver 含 tls:// → bootstrap 死循环</text>
+
+  <circle cx="80" cy="242" r="3" fill="#E3120B"/>
+  <text x="90" y="246" font-size="9" fill="#444">skip-cert-verify 无显式确认 → 静默关闭验证</text>
+
+  <text x="70" y="272" font-size="9" font-weight="600" fill="#E3120B">处置：解析时拒绝加载</text>
+  <text x="70" y="284" font-size="8" fill="#888">错误信息必须同时说明上游行为和拒绝原因</text>
+
+  <!-- Class B box -->
+  <rect x="370" y="90" width="300" height="200" rx="8" fill="#FFF" stroke="#FF7F0E" stroke-width="2"/>
+  <rect x="370" y="90" width="300" height="30" rx="8" fill="#FF7F0E"/>
+  <rect x="370" y="108" width="300" height="12" fill="#FF7F0E"/>
+  <text x="520" y="110" font-size="14" font-weight="700" fill="#FFF" text-anchor="middle">Class B: Warn Once</text>
+
+  <text x="390" y="138" font-size="10" font-weight="600" fill="#FF7F0E">性能 / 兼容性 / 废弃路径</text>
+  <text x="390" y="155" font-size="9" fill="#666">流量到达正确目的地，只是走了更慢的路</text>
+
+  <line x1="390" y1="165" x2="650" y2="165" stroke="#ffe0c0" stroke-width="0.5"/>
+
+  <circle cx="400" cy="182" r="3" fill="#FF7F0E"/>
+  <text x="410" y="186" font-size="9" fill="#444">alterId > 0 → 废弃 MD5 密钥推导</text>
+
+  <circle cx="400" cy="202" r="3" fill="#FF7F0E"/>
+  <text x="410" y="206" font-size="9" fill="#444">未知 cipher → 回退到 auto</text>
+
+  <circle cx="400" cy="222" r="3" fill="#FF7F0E"/>
+  <text x="410" y="226" font-size="9" fill="#444">mux: enabled 在 server 端 → 忽略</text>
+
+  <circle cx="400" cy="242" r="3" fill="#FF7F0E"/>
+  <text x="410" y="246" font-size="9" fill="#444">废弃字段别名 → 合成新格式</text>
+
+  <text x="390" y="272" font-size="9" font-weight="600" fill="#FF7F0E">处置：警告一次，继续运行</text>
+  <text x="390" y="284" font-size="8" fill="#888">警告信息推荐替代配置</text>
+
+  <!-- Bottom rule of thumb -->
+  <rect x="50" y="296" width="620" height="18" rx="4" fill="#f0e8d8"/>
+  <text x="360" y="309" font-size="9" fill="#666" text-anchor="middle">Rule of Thumb：不确定时选 Class A（硬错误）—— 响亮的失败可恢复，静默的降级不可恢复</text>
+</svg>

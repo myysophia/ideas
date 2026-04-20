@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 410" font-family="-apple-system, system-ui, 'PingFang SC', sans-serif">
+  <rect width="720" height="410" fill="#FFF1E0"/>
+  <rect x="0" y="0" width="720" height="4" fill="#E3120B"/>
+  <rect x="50" y="16" width="72" height="16" rx="1" fill="#E3120B"/>
+  <text x="54" y="28" font-size="10" font-weight="600" fill="#FFF">TESTING</text>
+
+  <text x="50" y="52" font-size="18" font-weight="700" fill="#1A1A1A">Test infrastructure: 619 test functions across 5 layers</text>
+  <text x="50" y="70" font-size="12" fill="#666">测试基础设施分层概览 | 每层的测试数量与覆盖范围</text>
+
+  <!-- Pyramid / funnel chart -->
+  <!-- Layer 1: Unit tests (widest) -->
+  <polygon points="100,340 620,340 580,290 140,290" fill="#2C5F8A" opacity="0.85"/>
+  <text x="360" y="323" font-size="13" font-weight="700" fill="#FFF" text-anchor="middle">Unit Tests — 408 functions</text>
+  <text x="360" y="336" font-size="9" fill="#dde8f0" text-anchor="middle">规则匹配 | DNS 缓存 | 配置解析 | Trie | 统计 | 通用类型</text>
+
+  <!-- Layer 2: Async tests -->
+  <polygon points="140,285 580,285 545,235 175,235" fill="#3A7BC8" opacity="0.85"/>
+  <text x="360" y="268" font-size="13" font-weight="700" fill="#FFF" text-anchor="middle">Async Tests — 211 functions</text>
+  <text x="360" y="281" font-size="9" fill="#dde8f0" text-anchor="middle">API 路由 | 传输层握手 | 代理连接 | 隧道转发</text>
+
+  <!-- Layer 3: Integration tests -->
+  <polygon points="175,230 545,230 510,180 210,180" fill="#5B9BD5" opacity="0.85"/>
+  <text x="360" y="213" font-size="13" font-weight="700" fill="#FFF" text-anchor="middle">Integration Tests — 24 suites</text>
+  <text x="360" y="226" font-size="9" fill="#dde8f0" text-anchor="middle">Trojan | SS | v2ray-plugin | VLESS | boring-TLS | API (82 cases)</text>
+
+  <!-- Layer 4: E2E tests -->
+  <polygon points="210,175 510,175 480,130 240,130" fill="#7FB5E0" opacity="0.85"/>
+  <text x="360" y="158" font-size="12" font-weight="700" fill="#FFF" text-anchor="middle">E2E Tests</text>
+  <text x="360" y="171" font-size="9" fill="#dde8f0" text-anchor="middle">Docker TProxy (QEMU) | ECH 握手 (C13-C15)</text>
+
+  <!-- Layer 5: CI -->
+  <polygon points="240,125 480,125 455,90 265,90" fill="#B8D4E8" opacity="0.9"/>
+  <text x="360" y="112" font-size="12" font-weight="700" fill="#2C5F8A" text-anchor="middle">CI: 5 jobs</text>
+
+  <!-- Right side annotations -->
+  <line x1="625" y1="315" x2="645" y2="315" stroke="#2C5F8A" stroke-width="2"/>
+  <text x="650" y="319" font-size="9" fill="#666">cargo test --lib</text>
+
+  <line x1="585" y1="260" x2="645" y2="260" stroke="#3A7BC8" stroke-width="2"/>
+  <text x="650" y="264" font-size="9" fill="#666">#[tokio::test]</text>
+
+  <line x1="550" y1="205" x2="645" y2="205" stroke="#5B9BD5" stroke-width="2"/>
+  <text x="650" y="209" font-size="9" fill="#666">cargo test --test &lt;name&gt;</text>
+
+  <line x1="515" y1="152" x2="645" y2="152" stroke="#7FB5E0" stroke-width="2"/>
+  <text x="650" y="156" font-size="9" fill="#666">Docker + real servers</text>
+
+  <line x1="485" y1="107" x2="645" y2="107" stroke="#B8D4E8" stroke-width="2"/>
+  <text x="650" y="111" font-size="9" fill="#666">lint | test | tproxy | msrv | macos</text>
+
+  <!-- Bottom stats -->
+  <line x1="50" y1="360" x2="690" y2="360" stroke="#D4C5B0" stroke-width="0.5"/>
+
+  <rect x="55" y="370" width="12" height="12" rx="2" fill="#2CA02C"/>
+  <text x="72" y="380" font-size="10" fill="#1A1A1A" font-weight="600">100% CI pass rate</text>
+  <text x="240" y="380" font-size="10" fill="#666">on 2026-04-11: 100 unit + 82 API integration</text>
+
+  <text x="55" y="400" font-size="9" fill="#888">Agent 产出的代码必须通过完整测试套件才能合并——"看起来正确" 不等于 "运行正确"</text>
+</svg>

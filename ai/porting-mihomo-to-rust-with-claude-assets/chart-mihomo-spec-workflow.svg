@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 340" font-family="-apple-system, system-ui, 'PingFang SC', sans-serif">
+  <defs>
+    <marker id="arrow2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#666"/>
+    </marker>
+    <marker id="arrowRed" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#E3120B"/>
+    </marker>
+  </defs>
+
+  <rect width="720" height="340" fill="#FFF1E0"/>
+  <rect x="0" y="0" width="720" height="4" fill="#E3120B"/>
+  <rect x="50" y="16" width="82" height="16" rx="1" fill="#E3120B"/>
+  <text x="54" y="28" font-size="10" font-weight="600" fill="#FFF">WORKFLOW</text>
+
+  <text x="50" y="52" font-size="18" font-weight="700" fill="#1A1A1A">Spec-driven development pipeline</text>
+  <text x="50" y="70" font-size="12" fill="#666">Spec 驱动开发流水线 | 以 Transport Layer (M1.A) 为例</text>
+
+  <!-- Phase boxes -->
+  <!-- Phase 1: Gap Analysis -->
+  <rect x="30" y="95" width="120" height="65" rx="5" fill="#FFF" stroke="#E3120B" stroke-width="1.5"/>
+  <text x="90" y="113" font-size="10" font-weight="700" fill="#E3120B" text-anchor="middle">1. Gap Analysis</text>
+  <text x="90" y="128" font-size="8" fill="#666" text-anchor="middle">Architect</text>
+  <text x="90" y="142" font-size="8" fill="#888" text-anchor="middle">对比上游 Go 代码</text>
+  <text x="90" y="153" font-size="8" fill="#888" text-anchor="middle">→ gap-analysis.md</text>
+
+  <!-- Phase 2: ADR -->
+  <rect x="170" y="95" width="120" height="65" rx="5" fill="#FFF" stroke="#E3120B" stroke-width="1.5"/>
+  <text x="230" y="113" font-size="10" font-weight="700" fill="#E3120B" text-anchor="middle">2. ADR</text>
+  <text x="230" y="128" font-size="8" fill="#666" text-anchor="middle">Architect</text>
+  <text x="230" y="142" font-size="8" fill="#888" text-anchor="middle">不可协商的决策</text>
+  <text x="230" y="153" font-size="8" fill="#888" text-anchor="middle">→ ADR-0001</text>
+
+  <!-- Phase 3: Roadmap -->
+  <rect x="310" y="95" width="120" height="65" rx="5" fill="#FFF" stroke="#4A90D9" stroke-width="1.5"/>
+  <text x="370" y="113" font-size="10" font-weight="700" fill="#4A90D9" text-anchor="middle">3. Roadmap</text>
+  <text x="370" y="128" font-size="8" fill="#666" text-anchor="middle">PM</text>
+  <text x="370" y="142" font-size="8" fill="#888" text-anchor="middle">拆分 4 个有序任务</text>
+  <text x="370" y="153" font-size="8" fill="#888" text-anchor="middle">→ M1.A-1 ~ A-4</text>
+
+  <!-- Phase 4: Spec -->
+  <rect x="450" y="95" width="120" height="65" rx="5" fill="#FFF" stroke="#4A90D9" stroke-width="1.5"/>
+  <text x="510" y="113" font-size="10" font-weight="700" fill="#4A90D9" text-anchor="middle">4. Spec</text>
+  <text x="510" y="128" font-size="8" fill="#666" text-anchor="middle">PM + Architect review</text>
+  <text x="510" y="142" font-size="8" fill="#888" text-anchor="middle">YAML / Struct / Error</text>
+  <text x="510" y="153" font-size="8" fill="#888" text-anchor="middle">→ transport-layer.md</text>
+
+  <!-- Phase 5: Implement -->
+  <rect x="590" y="95" width="100" height="65" rx="5" fill="#FFF" stroke="#2CA02C" stroke-width="1.5"/>
+  <text x="640" y="113" font-size="10" font-weight="700" fill="#2CA02C" text-anchor="middle">5. Code</text>
+  <text x="640" y="128" font-size="8" fill="#666" text-anchor="middle">Engineer</text>
+  <text x="640" y="142" font-size="8" fill="#888" text-anchor="middle">按 spec 实现</text>
+  <text x="640" y="153" font-size="8" fill="#888" text-anchor="middle">→ 5,983 LOC</text>
+
+  <!-- Arrows between phases -->
+  <line x1="150" y1="127" x2="165" y2="127" stroke="#666" stroke-width="1.2" marker-end="url(#arrow2)"/>
+  <line x1="290" y1="127" x2="305" y2="127" stroke="#666" stroke-width="1.2" marker-end="url(#arrow2)"/>
+  <line x1="430" y1="127" x2="445" y2="127" stroke="#666" stroke-width="1.2" marker-end="url(#arrow2)"/>
+  <line x1="570" y1="127" x2="585" y2="127" stroke="#666" stroke-width="1.2" marker-end="url(#arrow2)"/>
+
+  <!-- QA track (parallel) -->
+  <rect x="450" y="185" width="120" height="55" rx="5" fill="#FFF" stroke="#FF7F0E" stroke-width="1.5"/>
+  <text x="510" y="203" font-size="10" font-weight="700" fill="#FF7F0E" text-anchor="middle">Test Plan</text>
+  <text x="510" y="218" font-size="8" fill="#666" text-anchor="middle">QA</text>
+  <text x="510" y="232" font-size="8" fill="#888" text-anchor="middle">→ *-test-plan.md</text>
+
+  <rect x="590" y="185" width="100" height="55" rx="5" fill="#FFF" stroke="#FF7F0E" stroke-width="1.5"/>
+  <text x="640" y="203" font-size="10" font-weight="700" fill="#FF7F0E" text-anchor="middle">Verify</text>
+  <text x="640" y="218" font-size="8" fill="#666" text-anchor="middle">QA</text>
+  <text x="640" y="232" font-size="8" fill="#888" text-anchor="middle">CI green?</text>
+
+  <!-- Arrows for QA track -->
+  <line x1="510" y1="160" x2="510" y2="180" stroke="#FF7F0E" stroke-width="1.2" marker-end="url(#arrowRed)"/>
+  <line x1="570" y1="212" x2="585" y2="212" stroke="#FF7F0E" stroke-width="1.2" marker-end="url(#arrowRed)"/>
+  <line x1="640" y1="160" x2="640" y2="180" stroke="#FF7F0E" stroke-width="1.2" marker-end="url(#arrowRed)"/>
+
+  <!-- Example output: Transport Layer -->
+  <line x1="50" y1="265" x2="690" y2="265" stroke="#D4C5B0" stroke-width="0.5"/>
+  <text x="50" y="285" font-size="11" font-weight="700" fill="#1A1A1A">实例：Transport Layer (M1.A)</text>
+
+  <!-- Timeline -->
+  <line x1="50" y1="300" x2="690" y2="300" stroke="#999" stroke-width="1.5"/>
+
+  <!-- Milestone dots -->
+  <circle cx="90" cy="300" r="5" fill="#E3120B"/>
+  <text x="90" y="320" font-size="8" fill="#666" text-anchor="middle">ADR-0001</text>
+  <text x="90" y="330" font-size="7" fill="#aaa" text-anchor="middle">架构决策</text>
+
+  <circle cx="200" cy="300" r="5" fill="#4A90D9"/>
+  <text x="200" y="320" font-size="8" fill="#666" text-anchor="middle">A-1: TLS</text>
+  <text x="200" y="330" font-size="7" fill="#aaa" text-anchor="middle">迁移 Trojan</text>
+
+  <circle cx="310" cy="300" r="5" fill="#4A90D9"/>
+  <text x="310" y="320" font-size="8" fill="#666" text-anchor="middle">A-2: WS</text>
+  <text x="310" y="330" font-size="7" fill="#aaa" text-anchor="middle">迁移 v2ray-plugin</text>
+
+  <circle cx="420" cy="300" r="5" fill="#4A90D9"/>
+  <text x="420" y="320" font-size="8" fill="#666" text-anchor="middle">A-3: gRPC</text>
+  <text x="420" y="330" font-size="7" fill="#aaa" text-anchor="middle">手写 gun 帧</text>
+
+  <circle cx="530" cy="300" r="5" fill="#4A90D9"/>
+  <text x="530" y="320" font-size="8" fill="#666" text-anchor="middle">A-4: H2</text>
+  <text x="530" y="330" font-size="7" fill="#aaa" text-anchor="middle">+ HTTPUpgrade</text>
+
+  <circle cx="620" cy="300" r="5" fill="#2CA02C"/>
+  <text x="620" y="320" font-size="8" fill="#2CA02C" font-weight="600" text-anchor="middle">VLESS 解锁</text>
+  <text x="620" y="330" font-size="7" fill="#aaa" text-anchor="middle">M1.B-2 开始</text>
+
+  <!-- Unlock arrow -->
+  <path d="M 320,295 Q 470,275 610,295" fill="none" stroke="#2CA02C" stroke-width="1" stroke-dasharray="4,2" marker-end="url(#arrow2)"/>
+  <text x="470" y="280" font-size="7" fill="#2CA02C" text-anchor="middle">A-2 完成即可开始 VLESS</text>
+</svg>
