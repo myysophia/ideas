@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>codebase-to-course · 团队分享</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23d4a054'/><text x='16' y='23' text-anchor='middle' font-size='18' font-weight='bold' fill='white' font-family='sans-serif'>c</text></svg>">
+<meta name="date" content="2026-04-20">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* === THEME TOKENS === */
+    :root {
+      --bg: #0d0d0d;
+      --bg-surface: #1a1a1a;
+      --bg-elevated: #252525;
+      --accent: #d4a054;
+      --accent-warm: #c4704a;
+      --accent-soft: rgba(212, 160, 84, 0.15);
+      --text: #f0ece4;
+      --text-secondary: #8a8580;
+      --text-muted: #5a5550;
+      --border: rgba(212, 160, 84, 0.12);
+      --border-soft: rgba(240, 236, 228, 0.08);
+      --card-bg: rgba(26, 26, 26, 0.85);
+      --card-bg-light: rgba(240, 236, 228, 0.06);
+      --shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+      --font-display: 'Bricolage Grotesque', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --title-size: clamp(1.5rem, 5vw, 4rem);
+      --h2-size: clamp(1.25rem, 3.5vw, 2.5rem);
+      --h3-size: clamp(1rem, 2.5vw, 1.75rem);
+      --body-size: clamp(0.75rem, 1.5vw, 1.125rem);
+      --small-size: clamp(0.65rem, 1vw, 0.875rem);
+      --slide-padding: clamp(1rem, 4vw, 4rem);
+      --content-gap: clamp(0.5rem, 2vw, 2rem);
+      --element-gap: clamp(0.25rem, 1vw, 1rem);
+      --card-padding: clamp(0.75rem, 2vw, 1.5rem);
+      --card-radius: clamp(0.5rem, 1vw, 0.75rem);
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --duration-normal: 0.6s;
+    }
+
+    /* === RESET + BASE === */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: var(--body-size);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    ul, ol { list-style: none; }
+    code { font-family: var(--font-mono); font-size: 0.94em; }
+
+    /* === VIEWPORT BASE === */
+    html, body { height: 100%; overflow-x: hidden; }
+    html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+    .slide {
+      width: 100vw; height: 100vh; height: 100dvh;
+      overflow: hidden; scroll-snap-align: start;
+      display: flex; flex-direction: column; position: relative;
+    }
+    .slide-content {
+      flex: 1; display: flex; flex-direction: column; justify-content: center;
+      max-height: 100%; overflow: hidden; padding: var(--slide-padding);
+    }
+    .card, .container, .content-box { max-width: min(90vw, 1000px); max-height: min(80vh, 700px); }
+    .feature-list, .bullet-list { gap: clamp(0.4rem, 1vh, 1rem); }
+    .feature-list li, .bullet-list li { font-size: var(--body-size); line-height: 1.4; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: clamp(0.5rem, 1.5vw, 1rem); }
+    img, .image-container { max-width: 100%; max-height: min(50vh, 400px); object-fit: contain; }
+
+    /* === SLIDE BACKGROUND === */
+    .slide {
+      background: var(--bg);
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(212, 160, 84, 0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(196, 112, 74, 0.03) 0%, transparent 40%);
+    }
+
+    /* === TYPOGRAPHY === */
+    h1, h2, h3 {
+      font-family: var(--font-display);
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    h1 { font-size: var(--title-size); letter-spacing: -0.02em; }
+    h2 { font-size: var(--h2-size); letter-spacing: -0.01em; max-width: 16ch; }
+    h3 { font-size: var(--h3-size); color: var(--accent); }
+    p { font-family: var(--font-body); color: var(--text-secondary); line-height: 1.6; }
+    strong { font-weight: 700; color: var(--text); }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: var(--small-size);
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: var(--element-gap);
+    }
+    .dek {
+      margin-top: var(--content-gap);
+      font-size: var(--body-size);
+      line-height: 1.5;
+      color: var(--text-secondary);
+      max-width: 38ch;
+    }
+
+    /* === TOC SLIDE === */
+    .toc-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--element-gap);
+      margin-top: var(--content-gap);
+    }
+    .toc-item {
+      display: flex;
+      align-items: baseline;
+      gap: clamp(0.4rem, 1vw, 0.75rem);
+      padding: clamp(0.3rem, 0.8vw, 0.5rem) clamp(0.5rem, 1.2vw, 0.75rem);
+      border-radius: clamp(0.3rem, 0.5vw, 0.5rem);
+      transition: color 0.3s ease, transform 0.3s ease, background 0.3s ease;
+      cursor: default;
+    }
+    .toc-item:hover {
+      color: var(--accent);
+      transform: translateX(clamp(0.25rem, 0.5vw, 0.5rem));
+      background: var(--accent-soft);
+    }
+    .toc-num {
+      font-family: var(--font-mono);
+      font-weight: 500;
+      font-size: var(--small-size);
+      color: var(--accent);
+      min-width: clamp(1.5rem, 3vw, 2rem);
+    }
+    .toc-item strong {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(0.75rem, 1.2vw, 1rem);
+      color: var(--text);
+    }
+    .toc-desc {
+      font-size: var(--small-size);
+      color: var(--text-muted);
+    }
+
+    /* === CARDS === */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: var(--card-padding);
+      backdrop-filter: blur(10px);
+      transition: border-color 0.3s ease, transform 0.3s ease;
+    }
+    .card:hover {
+      border-color: var(--accent);
+      transform: translateY(calc(-1 * clamp(0.1rem, 0.3vw, 0.25rem)));
+    }
+    .card h3 { margin-bottom: var(--element-gap); }
+    .card p { color: var(--text-secondary); }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(0.5rem, 1.5vw, 1.5rem);
+      margin-top: var(--content-gap);
+    }
+    .card-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: var(--card-padding);
+    }
+
+    /* === BULLET / MINI LISTS === */
+    .bullet-list, .mini-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.3rem, 0.8vw, 0.5rem);
+    }
+    .bullet-list li::before, .mini-list li::before {
+      content: "→";
+      color: var(--accent);
+      margin-right: clamp(0.3rem, 0.5vw, 0.5rem);
+      font-size: var(--small-size);
+    }
+    .bullet-list li, .mini-list li {
+      font-size: var(--body-size);
+      line-height: 1.45;
+      color: var(--text-secondary);
+    }
+
+    /* === TIMELINE === */
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: clamp(0.5rem, 1.2vw, 0.9rem);
+      margin-top: var(--content-gap);
+    }
+    .timeline-step {
+      border-radius: var(--card-radius);
+      padding: var(--card-padding);
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      transition: border-color 0.3s ease;
+    }
+    .timeline-step:hover { border-color: var(--accent); }
+    .step-num {
+      font-family: var(--font-mono);
+      font-size: var(--small-size);
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 0.14em;
+      margin-bottom: var(--element-gap);
+    }
+    .timeline-step h3 { color: var(--text); }
+    .timeline-step p { color: var(--text-secondary); margin-top: 0.3rem; }
+
+    /* === PATH COMPARISON === */
+    .path-compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(0.5rem, 2vw, 2rem);
+      margin-top: var(--content-gap);
+    }
+    .path-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: var(--card-padding);
+    }
+    .path-box h3 { margin-bottom: var(--element-gap); }
+    .path-box em {
+      display: block;
+      margin-top: 0.5rem;
+      font-style: normal;
+      font-size: var(--small-size);
+      color: var(--text-muted);
+    }
+
+    /* === DIAGRAM LAYOUT === */
+    .diagram-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(240px, 0.5fr);
+      gap: clamp(0.75rem, 2vw, 1.5rem);
+      margin-top: var(--content-gap);
+      align-items: start;
+    }
+    .diagram-shell {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: var(--card-padding);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+    .diagram-shell img {
+      max-width: 100%;
+      max-height: min(60vh, 500px);
+      object-fit: contain;
+      display: block;
+    }
+    .zoom-hint {
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: var(--small-size);
+      color: var(--text-muted);
+      margin-top: clamp(0.2rem, 0.5vw, 0.4rem);
+    }
+    .aside-stack {
+      display: grid;
+      gap: clamp(0.5rem, 1vw, 0.75rem);
+    }
+    .aside-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: var(--card-padding);
+    }
+    .aside-card strong {
+      color: var(--accent);
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+    .aside-card p { color: var(--text-secondary); }
+
+    /* === ASSET GRID === */
+    .asset-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: clamp(0.5rem, 1.5vw, 1rem);
+      margin-top: var(--content-gap);
+    }
+    .asset-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: var(--card-padding);
+    }
+    .asset-card strong {
+      font-family: var(--font-mono);
+      font-size: var(--h3-size);
+      color: var(--accent);
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+    .asset-card p { color: var(--text-secondary); }
+
+    /* === RISK CARDS === */
+    .risk-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(0.5rem, 1.5vw, 1rem);
+      margin-top: var(--content-gap);
+    }
+    .risk-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: var(--card-padding);
+    }
+    .risk-card strong { color: var(--text); display: block; margin-bottom: 0.3rem; }
+    .risk-card p { color: var(--text-secondary); }
+
+    /* === CHIPS === */
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: clamp(0.25rem, 0.8vw, 0.5rem);
+      margin-top: var(--content-gap);
+    }
+    .chip {
+      font-family: var(--font-mono);
+      font-size: var(--small-size);
+      color: var(--accent);
+      border: 1px solid var(--border);
+      border-radius: clamp(0.25rem, 0.5vw, 0.5rem);
+      padding: clamp(0.25rem, 0.6vw, 0.4rem) clamp(0.5rem, 1vw, 0.75rem);
+      background: var(--accent-soft);
+      transition: border-color 0.3s ease, background 0.3s ease;
+    }
+    .chip:hover { border-color: var(--accent); background: rgba(212, 160, 84, 0.25); }
+
+    /* === CLOSING LAYOUT === */
+    .closing-layout {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: clamp(0.75rem, 2vw, 1.5rem);
+      margin-top: var(--content-gap);
+      align-items: start;
+    }
+    .closing-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: var(--card-padding);
+    }
+    .quote {
+      font-family: var(--font-display);
+      font-size: clamp(1.1rem, 2.4vw, 1.8rem);
+      line-height: 1.15;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    /* === LIGHTBOX === */
+    .lightbox-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(13, 13, 13, 0.88);
+      backdrop-filter: blur(12px);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    .lightbox-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .lightbox-content {
+      max-width: min(90vw, 1200px);
+      max-height: min(85vh, 800px);
+      border-radius: var(--card-radius);
+      background: var(--bg-surface);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .lightbox-content img {
+      max-width: 100%;
+      max-height: min(85vh, 800px);
+      object-fit: contain;
+      display: block;
+    }
+    .lightbox-close {
+      position: fixed;
+      top: clamp(0.75rem, 2vw, 1.5rem);
+      right: clamp(0.75rem, 2vw, 1.5rem);
+      width: clamp(2rem, 3vw, 2.5rem);
+      height: clamp(2rem, 3vw, 2.5rem);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      color: var(--text);
+      font-size: var(--body-size);
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+    .lightbox-close:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* === PROGRESS BAR + NAV DOTS === */
+    .progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: clamp(2px, 0.3vw, 3px);
+      background: linear-gradient(to right, var(--accent-warm), var(--accent));
+      z-index: 1000;
+      transition: width 0.3s ease;
+    }
+    .nav-dots {
+      position: fixed;
+      right: clamp(0.5rem, 1.5vw, 1rem);
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.25rem, 0.5vw, 0.5rem);
+      z-index: 1000;
+    }
+    .nav-dot {
+      width: clamp(6px, 0.5vw, 8px);
+      height: clamp(6px, 0.5vw, 8px);
+      border-radius: 50%;
+      background: var(--text-muted);
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s ease, transform 0.3s ease;
+    }
+    .nav-dot.active { background: var(--accent); transform: scale(1.3); }
+    .nav-dot:hover { background: var(--accent); }
+
+    /* === SLIDE COUNTER + KEYBOARD HINT === */
+    .slide-counter {
+      position: fixed;
+      bottom: clamp(0.5rem, 1.5vw, 1rem);
+      right: clamp(0.5rem, 1.5vw, 1rem);
+      font-family: var(--font-mono);
+      font-size: var(--small-size);
+      color: var(--text-muted);
+      z-index: 1000;
+    }
+    .keyboard-hint {
+      position: fixed;
+      bottom: clamp(0.5rem, 1.5vw, 1rem);
+      left: clamp(0.5rem, 1.5vw, 1rem);
+      font-family: var(--font-mono);
+      font-size: var(--small-size);
+      color: var(--text-muted);
+      z-index: 1000;
+    }
+
+    /* === ANIMATIONS === */
+    .reveal {
+      opacity: 0;
+      transform: translateY(clamp(1rem, 2vw, 2rem));
+      transition: opacity var(--duration-normal) var(--ease-out-expo),
+                  transform var(--duration-normal) var(--ease-out-expo);
+    }
+    .slide.visible .reveal {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* Stagger via --stagger custom property */
+    .reveal { transition-delay: calc(var(--stagger, 0) * 0.08s + 0.06s); }
+    /* Fallback nth-child staggering */
+    .slide.visible .reveal:nth-child(1) { transition-delay: 0.06s; }
+    .slide.visible .reveal:nth-child(2) { transition-delay: 0.12s; }
+    .slide.visible .reveal:nth-child(3) { transition-delay: 0.18s; }
+    .slide.visible .reveal:nth-child(4) { transition-delay: 0.24s; }
+    .slide.visible .reveal:nth-child(5) { transition-delay: 0.3s; }
+    .slide.visible .reveal:nth-child(6) { transition-delay: 0.36s; }
+    .slide.visible .reveal:nth-child(7) { transition-delay: 0.42s; }
+    .slide.visible .reveal:nth-child(8) { transition-delay: 0.48s; }
+    .slide.visible .reveal:nth-child(9) { transition-delay: 0.54s; }
+    .slide.visible .reveal:nth-child(10) { transition-delay: 0.6s; }
+
+    /* === RESPONSIVE BREAKPOINTS === */
+    @media (max-height: 700px) {
+      :root {
+        --slide-padding: clamp(0.75rem, 3vw, 2rem);
+        --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+        --title-size: clamp(1.25rem, 4.5vw, 2.5rem);
+        --h2-size: clamp(1rem, 3vw, 1.75rem);
+      }
+    }
+    @media (max-height: 600px) {
+      :root {
+        --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem);
+        --content-gap: clamp(0.3rem, 1vw, 0.75rem);
+        --title-size: clamp(1.1rem, 4vw, 2rem);
+        --body-size: clamp(0.7rem, 1.2vw, 0.95rem);
+      }
+      .nav-dots, .keyboard-hint, .decorative { display: none; }
+    }
+    @media (max-height: 500px) {
+      :root {
+        --slide-padding: clamp(0.4rem, 2vw, 1rem);
+        --title-size: clamp(1rem, 3.5vw, 1.5rem);
+        --h2-size: clamp(0.9rem, 2.5vw, 1.25rem);
+        --body-size: clamp(0.65rem, 1vw, 0.85rem);
+      }
+    }
+    @media (max-width: 600px) {
+      :root { --title-size: clamp(1.25rem, 7vw, 2.5rem); }
+      .grid, .card-grid, .asset-grid { grid-template-columns: 1fr 1fr; }
+      .path-compare, .closing-layout, .diagram-layout { grid-template-columns: 1fr; }
+      .toc-list { grid-template-columns: 1fr; }
+      .timeline { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* === REDUCED MOTION === */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+      }
+      html { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="progress-bar" id="progressBar"></div>
+  <nav class="nav-dots" id="navDots" aria-label="Slide navigation"></nav>
+  <div class="slide-counter" id="slideCounter">01 / 11</div>
+  <div class="keyboard-hint">↑ ↓ / Space / PageDown 切换</div>
+
+  <!-- === SLIDE 1 · TITLE === -->
+  <section class="slide" data-title="定位">
+    <div class="slide-content">
+      <div class="eyebrow reveal">codebase-to-course · team share</div>
+      <h1 class="reveal">把一个 Skill 变成一套可讲、可复用、可迁移的课程工厂</h1>
+      <p class="dek reveal">这份 deck 不是用户教程，而是给团队解释 <code>codebase-to-course</code> 为什么这样设计、复杂路径如何扩展，以及它能否复制到别的教学生成器。</p>
+      <div class="chip-row reveal">
+        <div class="chip">输入：本地目录 / GitHub / 当前项目</div>
+        <div class="chip">核心：分析 → 教学抽象 → 组装</div>
+        <div class="chip">复杂仓库：briefs + subagents</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === SLIDE 2 · TOC === -->
+  <section class="slide" data-title="目录">
+    <div class="slide-content">
+      <div class="eyebrow reveal">Table of Contents</div>
+      <h2 class="reveal">十个章节，一条从定位到迁移的完整叙事线</h2>
+      <div class="toc-list">
+        <div class="toc-item reveal" style="--stagger:1"><span class="toc-num">01</span><strong>定位</strong><span class="toc-desc">为什么要做这个 skill</span></div>
+        <div class="toc-item reveal" style="--stagger:2"><span class="toc-num">02</span><strong>用户与哲学</strong><span class="toc-desc">它教什么、怎么教</span></div>
+        <div class="toc-item reveal" style="--stagger:3"><span class="toc-num">03</span><strong>输入入口</strong><span class="toc-desc">三种仓库入口</span></div>
+        <div class="toc-item reveal" style="--stagger:4"><span class="toc-num">04</span><strong>分析与设计</strong><span class="toc-desc">Phase 1-2 的理解路径</span></div>
+        <div class="toc-item reveal" style="--stagger:5"><span class="toc-num">05</span><strong>简单路径</strong><span class="toc-desc">小仓库的顺序写作</span></div>
+        <div class="toc-item reveal" style="--stagger:6"><span class="toc-num">06</span><strong>复杂路径</strong><span class="toc-desc">briefs + subagents 并行</span></div>
+        <div class="toc-item reveal" style="--stagger:7"><span class="toc-num">07</span><strong>执行架构图</strong><span class="toc-desc">全流程分层图</span></div>
+        <div class="toc-item reveal" style="--stagger:8"><span class="toc-num">08</span><strong>引用资产</strong><span class="toc-desc">references 标准库</span></div>
+        <div class="toc-item reveal" style="--stagger:9"><span class="toc-num">09</span><strong>取舍与风险</strong><span class="toc-desc">三个风险面</span></div>
+        <div class="toc-item reveal" style="--stagger:10"><span class="toc-num">10</span><strong>如何复用</strong><span class="toc-desc">迁移与分叉策略</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === SLIDE 3 · AUDIENCE & PHILOSOPHY === -->
+  <section class="slide" data-title="用户与哲学">
+    <div class="slide-content">
+      <div class="eyebrow reveal">Who & Why</div>
+      <h2 class="reveal">它不是在教"怎么写代码"，而是在教"怎么理解自己已经做出来的东西"</h2>
+      <p class="dek reveal"><code>codebase-to-course</code> 把传统 CS 教学反过来：先有产品体验，再把体验背后的系统拆开。对团队来说，这意味着它天然适合做"代码库讲解层"，而不是"教学内容编辑器"。</p>
+      <div class="card-grid">
+        <div class="card reveal">
+          <h3>Build First</h3>
+          <p>用户先感受到功能，再理解底层。课程从他们已经知道的体验开始，而不是从抽象术语开始。</p>
+        </div>
+        <div class="card reveal">
+          <h3>Show, Don't Tell</h3>
+          <p>大量交互、图示、代码翻译块替代长文。内容形态本身就是设计约束的一部分。</p>
+        </div>
+        <div class="card reveal">
+          <h3>Practical Payoff</h3>
+          <p>每个模块都要回到真实收益：更会指挥 AI、更会排查问题、更会做取舍。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === SLIDE 4 · INPUTS === -->
+  <section class="slide" data-title="输入入口">
+    <div class="slide-content">
+      <div class="eyebrow reveal">Inputs & Triggers</div>
+      <h2 class="reveal">三种仓库入口，一套统一的理解起点</h2>
+      <p class="dek reveal">这个 skill 的第一件事不是问用户"你的产品做什么"，而是自己去看仓库。输入接口被压成三类，但后续分析路径保持一致。</p>
+      <div class="card-grid">
+        <div class="card reveal">
+          <h3>本地目录</h3>
+          <ul class="mini-list">
+            <li>适合已经在磁盘上的项目</li>
+            <li>直接进入代码分析</li>
+            <li>不需要额外拉取</li>
+          </ul>
+        </div>
+        <div class="card reveal">
+          <h3>GitHub 链接</h3>
+          <ul class="mini-list">
+            <li>先 clone 到临时目录</li>
+            <li>再走同样的分析流程</li>
+            <li>把"远程仓库"变成本地上下文</li>
+          </ul>
+        </div>
+        <div class="card reveal">
+          <h3>当前项目</h3>
+          <ul class="mini-list">
+            <li>适合直接在仓库里触发</li>
+            <li>零额外参数</li>
+            <li>最短路径进入执行</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === SLIDE 5 · PHASE 1-2 === -->
+  <section class="slide" data-title="分析与设计">
+    <div class="slide-content">
+      <div class="eyebrow reveal">Phase 1 → Phase 2</div>
+      <h2 class="reveal">先做代码理解，再做教学抽象，中间不跳步</h2>
+      <div class="timeline">
+        <div class="timeline-step reveal">
+          <div class="step-num">01</div>
+          <h3>读关键文件</h3>
+          <p>README、入口文件、UI、服务层，先回答"这个东西到底在干嘛"</p>
+        </div>
+        <div class="timeline-step reveal">
+          <div class="step-num">02</div>
+          <h3>追数据流</h3>
+          <p>找角色、API、外部依赖、缓存与错误处理，形成系统心智图</p>
+        </div>
+        <div class="timeline-step reveal">
+          <div class="step-num">03</div>
+          <h3>规划模块</h3>
+          <p>把代码理解转译成 4-6 个教学模块，而不是文件清单</p>
+        </div>
+        <div class="timeline-step reveal">
+          <div class="step-num">04</div>
+          <h3>绑定实际收益</h3>
+          <p>每个模块都必须回答：学完之后，用户能更好地做什么</p>
+        </div>
+      </div>
+      <ul class="bullet-list reveal">
+        <li>模块不是固定模板，而是一套"目的菜单"</li>
+        <li>少而强的模块优先于多而薄的模块</li>
+        <li>必须包含代码翻译、quiz、互动元素和 glossary</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- === SLIDE 6 · SIMPLE PATH === -->
+  <section class="slide" data-title="简单路径">
+    <div class="slide-content">
+      <div class="eyebrow reveal">Simple Codebase Path</div>
+      <h2 class="reveal">简单仓库：共享前置步骤之后，顺序写模块就够了</h2>
+      <p class="dek reveal">当代码库单一、入口清晰、模块数不高时，skill 不会急着并行。它先复制固定资产，再顺序写每个模块 HTML。</p>
+      <div class="path-compare">
+        <div class="path-box reveal">
+          <h3>共享前置步骤</h3>
+          <ul class="mini-list">
+            <li>复制 <code>styles.css</code>、<code>main.js</code></li>
+            <li>复制 <code>_footer.html</code> 与 <code>build.sh</code></li>
+            <li>定制 <code>_base.html</code> 的标题、主题色、nav dots</li>
+          </ul>
+          <em>这些资产从 references 直接拷贝，不重写。</em>
+        </div>
+        <div class="path-box reveal">
+          <h3>顺序写模块</h3>
+          <ul class="mini-list">
+            <li>逐个产出 <code>modules/01..0N.html</code></li>
+            <li>每个文件只写 <code>&lt;section class="module"&gt;</code></li>
+            <li>最后由 <code>build.sh</code> 组装成 <code>index.html</code></li>
+          </ul>
+          <em>顺序路径的稳定性高，适合小型项目和单一主题。</em>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === SLIDE 7 · COMPLEX PATH === -->
+  <section class="slide" data-title="复杂路径">
+    <div class="slide-content">
+      <div class="eyebrow reveal">Complex Codebase Path</div>
+      <h2 class="reveal">复杂仓库的关键不是"多线程写"，而是先做 briefs 这个上下文压缩层</h2>
+      <p class="dek reveal">真正支撑 subagents 的不是代理本身，而是 Phase 2.5 先把代码片段、互动要求、前后衔接写成 brief。</p>
+      <div class="card-grid">
+        <div class="card reveal">
+          <h3>Phase 2.5 · Briefs</h3>
+          <p>先预抽代码、教学弧线和互动元素，避免后续 agent 再去读完整仓库。</p>
+        </div>
+        <div class="card reveal">
+          <h3>Subagents</h3>
+          <p>按批次最多 3 个 agent 并行写模块，只拿 brief 和必要 references。</p>
+        </div>
+        <div class="card reveal">
+          <h3>Consistency Check</h3>
+          <p>回到主上下文统一检查过渡、nav dots、语气和重复解释问题。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === SLIDE 8 · EXECUTION ARCHITECTURE === -->
+  <section class="slide" data-title="执行架构图">
+    <div class="slide-content">
+      <div class="eyebrow reveal">Execution Architecture</div>
+      <h2 class="reveal">把整个 skill 看成一张分层执行图</h2>
+      <div class="diagram-layout">
+        <div class="diagram-shell reveal">
+          <img src="codebase-to-course-execution-architecture.svg" alt="codebase-to-course 执行架构图" class="lightbox-trigger" />
+          <p class="zoom-hint">点击图片放大查看</p>
+        </div>
+        <div class="aside-stack">
+          <div class="aside-card reveal">
+            <strong>层次清晰</strong>
+            <p>输入层、理解层、构建路径层、产物层被明确切开，方便解释职责边界。</p>
+          </div>
+          <div class="aside-card reveal">
+            <strong>复杂分叉显性化</strong>
+            <p>真正的分叉不是在"写 HTML"，而是在"是否需要先把上下文压成 brief"。</p>
+          </div>
+          <div class="aside-card reveal">
+            <strong>团队复用价值</strong>
+            <p>这张图可以直接迁移为别的 skill 的执行骨架，只需替换中间抽象层与最终产物层。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === SLIDE 9 · REFERENCES === -->
+  <section class="slide" data-title="引用资产">
+    <div class="slide-content">
+      <div class="eyebrow reveal">References as Standard Library</div>
+      <h2 class="reveal">真正稳定产物质量的，不只是流程，而是 references 这层"标准库"</h2>
+      <div class="asset-grid">
+        <div class="asset-card reveal">
+          <strong>content-philosophy</strong>
+          <p>定义内容密度、比喻策略、quiz 设计、tooltip 原则，约束"教什么、怎么讲"</p>
+        </div>
+        <div class="asset-card reveal">
+          <strong>interactive-elements</strong>
+          <p>规定代码翻译、群聊动画、数据流图和交互题的 HTML 模式，约束"如何互动"</p>
+        </div>
+        <div class="asset-card reveal">
+          <strong>styles.css + main.js</strong>
+          <p>作为运行时资产直接复用，不让 agent 每次重新生成 boilerplate</p>
+        </div>
+        <div class="asset-card reveal">
+          <strong>_base + build.sh</strong>
+          <p>负责装配壳子、导航与最终拼装，把内容写作和页面运行拆成两件事</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === SLIDE 10 · RISKS === -->
+  <section class="slide" data-title="取舍与风险">
+    <div class="slide-content">
+      <div class="eyebrow reveal">Tradeoffs & Risks</div>
+      <h2 class="reveal">它的强项很鲜明，但也有三个不能忽视的风险面</h2>
+      <div class="risk-grid">
+        <div class="risk-card reveal">
+          <strong>前置分析一旦偏了，后面都精美地偏</strong>
+          <p>课程质量高度依赖 Phase 1 的理解正确性。分析错了，后续所有互动都是"漂亮的误导"。</p>
+        </div>
+        <div class="risk-card reveal">
+          <strong>并行提速依赖 briefs 质量</strong>
+          <p>brief 不清楚，就会出现语气漂移、内容重复、模块断裂。并行不是白捡的效率。</p>
+        </div>
+        <div class="risk-card reveal">
+          <strong>对外描述与真实实现有轻微偏差</strong>
+          <p>README 更像"单 HTML 无依赖"，但 SKILL 实际是目录式构建，而且字体仍依赖 CDN。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === SLIDE 11 · REUSE === -->
+  <section class="slide" data-title="如何复用">
+    <div class="slide-content">
+      <div class="eyebrow reveal">Reuse & Adaptation</div>
+      <h2 class="reveal">如果团队要把它迁移成别的"教学生成器"，优先改的是抽象层，不是样式层</h2>
+      <div class="closing-layout">
+        <div class="closing-box reveal">
+          <div class="quote">先改 <code>SKILL.md</code> 与内容哲学，再改视觉与装配</div>
+          <div class="chip-row">
+            <div class="chip">教什么：改用户假设与模块弧线</div>
+            <div class="chip">怎么讲：改 references 里的内容规则</div>
+            <div class="chip">怎么跑：最后再碰样式与 build 方式</div>
+          </div>
+        </div>
+        <div class="card-panel reveal">
+          <h3>团队结论</h3>
+          <ul class="mini-list">
+            <li>它最值得复用的是"理解 → 教学抽象 → 装配"的三段式结构</li>
+            <li>复杂仓库支持并行，靠的不是 agent 数量，而是上下文压缩设计</li>
+            <li>如果以后做中文版、行业版或内部培训版，应该从内容层开始分叉</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    /* === SLIDE PRESENTATION CONTROLLER + LIGHTBOX === */
+    class SlidePresentation {
+      constructor() {
+        this.slides = Array.from(document.querySelectorAll('.slide'));
+        this.navDotsContainer = document.getElementById('navDots');
+        this.progressBar = document.getElementById('progressBar');
+        this.slideCounter = document.getElementById('slideCounter');
+        this.currentSlide = 0;
+        this.wheelLocked = false;
+        this.touchStartY = 0;
+        this.touchStartX = 0;
+        this.totalSlides = this.slides.length;
+        this.lightboxOpen = false;
+
+        this.setupNavDots();
+        this.setupIntersectionObserver();
+        this.setupKeyboardNav();
+        this.setupTouchNav();
+        this.setupWheelNav();
+        this.setupLightbox();
+        this.updateProgress();
+      }
+
+      setupIntersectionObserver() {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+              const index = this.slides.indexOf(entry.target);
+              if (index !== -1) {
+                this.currentSlide = index;
+                this.updateProgress();
+              }
+            }
+          });
+        }, { threshold: 0.45 });
+        this.slides.forEach((slide) => observer.observe(slide));
+      }
+
+      setupKeyboardNav() {
+        document.addEventListener('keydown', (event) => {
+          if (this.lightboxOpen) {
+            if (event.key === 'Escape') { this.closeLightbox(); event.preventDefault(); }
+            return;
+          }
+          if (['ArrowDown', 'PageDown', ' ', 'ArrowRight'].includes(event.key)) {
+            event.preventDefault();
+            this.scrollToSlide(this.currentSlide + 1);
+          }
+          if (['ArrowUp', 'PageUp', 'ArrowLeft'].includes(event.key)) {
+            event.preventDefault();
+            this.scrollToSlide(this.currentSlide - 1);
+          }
+          if (event.key === 'Home') { event.preventDefault(); this.scrollToSlide(0); }
+          if (event.key === 'End') { event.preventDefault(); this.scrollToSlide(this.totalSlides - 1); }
+        });
+      }
+
+      setupTouchNav() {
+        document.addEventListener('touchstart', (event) => {
+          if (this.lightboxOpen) return;
+          this.touchStartY = event.changedTouches[0].clientY;
+          this.touchStartX = event.changedTouches[0].clientX;
+        }, { passive: true });
+        document.addEventListener('touchend', (event) => {
+          if (this.lightboxOpen) return;
+          const deltaY = this.touchStartY - event.changedTouches[0].clientY;
+          const deltaX = this.touchStartX - event.changedTouches[0].clientX;
+          if (Math.abs(deltaY) < 50 || Math.abs(deltaX) > Math.abs(deltaY)) return;
+          if (deltaY > 0) this.scrollToSlide(this.currentSlide + 1);
+          if (deltaY < 0) this.scrollToSlide(this.currentSlide - 1);
+        }, { passive: true });
+      }
+
+      setupWheelNav() {
+        window.addEventListener('wheel', (event) => {
+          if (this.lightboxOpen) return;
+          if (this.wheelLocked || Math.abs(event.deltaY) < 24) return;
+          this.wheelLocked = true;
+          if (event.deltaY > 0) this.scrollToSlide(this.currentSlide + 1);
+          if (event.deltaY < 0) this.scrollToSlide(this.currentSlide - 1);
+          setTimeout(() => { this.wheelLocked = false; }, 700);
+        }, { passive: true });
+      }
+
+      setupNavDots() {
+        this.navDotsContainer.innerHTML = '';
+        this.slides.forEach((slide, index) => {
+          const button = document.createElement('button');
+          button.className = 'nav-dot';
+          button.type = 'button';
+          button.title = slide.dataset.title || `Slide ${index + 1}`;
+          button.setAttribute('aria-label', slide.dataset.title || `Slide ${index + 1}`);
+          button.addEventListener('click', () => this.scrollToSlide(index));
+          this.navDotsContainer.appendChild(button);
+        });
+      }
+
+      scrollToSlide(index) {
+        const safeIndex = Math.max(0, Math.min(index, this.totalSlides - 1));
+        this.slides[safeIndex].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      updateProgress() {
+        const percent = ((this.currentSlide + 1) / this.totalSlides) * 100;
+        this.progressBar.style.width = `${percent}%`;
+        this.slideCounter.textContent = `${String(this.currentSlide + 1).padStart(2, '0')} / ${String(this.totalSlides).padStart(2, '0')}`;
+        const dots = this.navDotsContainer.children;
+        for (let i = 0; i < dots.length; i++) {
+          dots[i].classList.toggle('active', i === this.currentSlide);
+        }
+      }
+
+      /* --- Lightbox --- */
+      setupLightbox() {
+        this.lightboxOverlay = document.createElement('div');
+        this.lightboxOverlay.className = 'lightbox-overlay';
+        this.lightboxOverlay.setAttribute('role', 'dialog');
+        this.lightboxOverlay.setAttribute('aria-label', 'Image viewer');
+
+        this.lightboxImage = document.createElement('img');
+        this.lightboxImage.className = 'lightbox-content';
+        this.lightboxOverlay.appendChild(this.lightboxImage);
+
+        this.lightboxClose = document.createElement('button');
+        this.lightboxClose.className = 'lightbox-close';
+        this.lightboxClose.type = 'button';
+        this.lightboxClose.setAttribute('aria-label', 'Close image viewer');
+        this.lightboxClose.textContent = '×';
+        this.lightboxOverlay.appendChild(this.lightboxClose);
+
+        document.body.appendChild(this.lightboxOverlay);
+
+        this.lightboxOverlay.addEventListener('click', (e) => {
+          if (e.target === this.lightboxOverlay) this.closeLightbox();
+        });
+        this.lightboxClose.addEventListener('click', () => this.closeLightbox());
+
+        document.querySelectorAll('.lightbox-trigger').forEach((img) => {
+          img.style.cursor = 'zoom-in';
+          img.addEventListener('click', () => this.openLightbox(img.src, img.alt));
+        });
+      }
+
+      openLightbox(src, alt) {
+        this.lightboxImage.src = src;
+        this.lightboxImage.alt = alt || '';
+        this.lightboxOverlay.classList.add('active');
+        this.lightboxOpen = true;
+      }
+
+      closeLightbox() {
+        this.lightboxOverlay.classList.remove('active');
+        setTimeout(() => { this.lightboxImage.src = ''; }, 300);
+        this.lightboxOpen = false;
+      }
+    }
+
+    new SlidePresentation();
+  </script>
+</body>
+</html>
