@@ -5,7 +5,7 @@ const matter = require('gray-matter');
 const CryptoJS = require('crypto-js');
 
 // 配置
-const EXCLUDED_DIRS = ['node_modules', '.git', 'dist', '_templates', '_content', '.history', 'docs'];
+const EXCLUDED_DIRS = ['node_modules', '.git', 'dist', '_templates', '_content', '.history', 'docs', '.claude-design'];
 const TEMPLATE_PATH = '_templates/article.html';
 const OUTPUT_DIR = 'dist';
 
@@ -60,13 +60,13 @@ function processFile(filePath) {
   let date = '';
   let content = '';
   let description = '';
-  let tag = '';
+  let tags = [];
   let password = '';
   let needsPassword = false;
-  
-  // 从目录名提取 tag（对所有文件类型通用，支持多级目录）
+
+  // 从目录路径提取 tags（每级目录为一个独立 tag）
   const pathParts = relativePath.split(path.sep);
-  tag = pathParts.slice(0, -1).join('/');
+  tags = pathParts.slice(0, -1);
   
   if (ext === '.md') {
     // 处理 Markdown 文件
@@ -77,6 +77,12 @@ function processFile(filePath) {
     date = normalizeDateValue(parsed.data.date) || extractDateFromFilename(filePath);
     description = parsed.data.description || '';
     password = parsed.data.password || '';
+
+    // 合并 frontmatter 中的 tags
+    if (parsed.data.tags) {
+      const extraTags = Array.isArray(parsed.data.tags) ? parsed.data.tags : parsed.data.tags.split(',').map(t => t.trim()).filter(Boolean);
+      tags = [...new Set([...tags, ...extraTags])];
+    }
     
     // 检查是否需要密码保护
     if (password) {
@@ -106,6 +112,13 @@ function processFile(filePath) {
     // 提取描述（用于首页列表）
     const descMatch = fileContent.match(/<meta name="description" content="(.*?)"/i);
     description = descMatch ? descMatch[1] : '';
+
+    // 合并 meta 中的 tags
+    const tagsMeta = fileContent.match(/<meta\s+name=["']tags["']\s+content=["'](.*?)["']/i);
+    if (tagsMeta) {
+      const extraTags = tagsMeta[1].split(',').map(t => t.trim()).filter(Boolean);
+      tags = [...new Set([...tags, ...extraTags])];
+    }
     
     // 检查是否有密码保护
     const passwordMatch = fileContent.match(/<meta name="password" content="(.*?)"/i);
@@ -192,7 +205,7 @@ function processFile(filePath) {
       date: date || '',
       url: '/' + relativePath,
       description: description || extractFirstParagraph(fileContent),
-      tag: tag
+      tags
     });
     
     return; // 直接返回，不需要后续的模板处理
@@ -275,7 +288,7 @@ function processFile(filePath) {
       date: date || '',
       url: '/' + relativePath.replace(/\.md$/, '.html'),
       description: description || extractFirstParagraph(content),
-      tag: tag
+      tags
     });
   }
 }
@@ -364,11 +377,12 @@ function generateIndex() {
   
   let articlesHtml = '';
   for (const article of articles) {
-    const tagHtml = article.tag ? `<span class="tag">${article.tag}</span>` : '';
+    const tagStr = article.tags.join(',');
+    const tagHtml = article.tags.map(t => `<span class="tag">${t}</span>`).join('');
     const year = article.date ? article.date.split('-')[0] : '';
-    
+
     articlesHtml += `
-    <article class="article-item" data-tag="${article.tag || ''}" data-year="${year}">
+    <article class="article-item" data-tag="${tagStr}" data-year="${year}">
       <h2><a href="${article.url}">${article.title}</a></h2>
       <div class="meta">
         ${article.date ? `<time datetime="${article.date}">${article.date}</time>` : ''}
@@ -378,9 +392,9 @@ function generateIndex() {
     </article>
     `;
   }
-  
+
   // 收集所有唯一的 tags 和年份
-  const allTags = [...new Set(articles.map(a => a.tag).filter(Boolean))].sort();
+  const allTags = [...new Set(articles.flatMap(a => a.tags))].sort();
   const allYears = [...new Set(articles.map(a => {
     if (!a.date) return null;
     return a.date.split('-')[0];
@@ -620,47 +634,48 @@ function generateIndex() {
     ${articlesHtml}
   </main>
   <script>
-    // 简单的筛选功能
-    let currentTag = 'all';
+    let selectedTags = new Set();
     let currentYear = 'all';
 
     function updateFilters() {
       const articles = document.querySelectorAll('.article-item');
-      
+
       articles.forEach(article => {
-        const articleTag = article.dataset.tag;
+        const articleTags = article.dataset.tag.split(',');
         const articleYear = article.dataset.year;
-        
-        const tagMatch = currentTag === 'all' || articleTag === currentTag;
+        const tagMatch = selectedTags.size === 0 || articleTags.some(t => selectedTags.has(t));
         const yearMatch = currentYear === 'all' || articleYear === currentYear;
-        
-        if (tagMatch && yearMatch) {
-          article.classList.remove('hidden');
-        } else {
-          article.classList.add('hidden');
-        }
+        article.classList.toggle('hidden', !(tagMatch && yearMatch));
       });
     }
 
-    // 绑定筛选按钮
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const filterType = e.target.dataset.filterType;
         const filterValue = e.target.dataset.filterValue;
-        
-        // 更新按钮状态
-        document.querySelectorAll(\`[data-filter-type="\${filterType}"]\`).forEach(b => {
-          b.classList.remove('active');
-        });
-        e.target.classList.add('active');
-        
-        // 更新筛选条件
+
         if (filterType === 'tag') {
-          currentTag = filterValue;
+          if (filterValue === 'all') {
+            selectedTags.clear();
+            document.querySelectorAll('[data-filter-type="tag"]').forEach(b => b.classList.remove('active'));
+          } else {
+            if (selectedTags.has(filterValue)) {
+              selectedTags.delete(filterValue);
+              e.target.classList.remove('active');
+            } else {
+              selectedTags.add(filterValue);
+              e.target.classList.add('active');
+            }
+            // 更新"全部"按钮状态
+            const allBtn = document.querySelector('[data-filter-type="tag"][data-filter-value="all"]');
+            allBtn.classList.toggle('active', selectedTags.size === 0);
+          }
         } else if (filterType === 'year') {
+          document.querySelectorAll('[data-filter-type="year"]').forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
           currentYear = filterValue;
         }
-        
+
         updateFilters();
       });
     });
