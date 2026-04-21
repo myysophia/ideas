@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloudflare 智能体五层架构 — Agents Week 2026</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23475569'/><text x='16' y='23' text-anchor='middle' font-size='18' font-weight='bold' fill='white' font-family='sans-serif'>C</text></svg>">
+<meta name="date" content="2026-04-21">
+
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=syne@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* === RESET & BASE === */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow-x: hidden; }
+html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+
+/* === CSS VARIABLES === */
+:root {
+    --bg-primary: #0a0f1c;
+    --bg-secondary: #111832;
+    --text-primary: #e0e6f0;
+    --text-secondary: #8a92a6;
+    --text-dim: #5a6275;
+    --accent-blue: #4d7cff;
+    --accent-orange: #F48120;
+    --accent-gold: #c9b896;
+    --accent-cyan: #00ffcc;
+    --card-bg: rgba(255,255,255,0.04);
+    --card-border: rgba(255,255,255,0.08);
+    --title-size: clamp(1.5rem, 5vw, 4rem);
+    --h2-size: clamp(1.25rem, 3.5vw, 2.5rem);
+    --h3-size: clamp(1rem, 2.5vw, 1.75rem);
+    --body-size: clamp(0.75rem, 1.5vw, 1.125rem);
+    --small-size: clamp(0.65rem, 1vw, 0.875rem);
+    --slide-padding: clamp(1rem, 4vw, 4rem);
+    --content-gap: clamp(0.5rem, 2vw, 2rem);
+    --element-gap: clamp(0.25rem, 1vw, 1rem);
+}
+
+body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-weight: 400;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* === VIEWPORT FITTING === */
+html, body { height: 100%; overflow-x: hidden; }
+html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+.slide {
+    width: 100vw; height: 100vh; height: 100dvh;
+    overflow: hidden; scroll-snap-align: start;
+    display: flex; flex-direction: column; position: relative;
+}
+.slide-content {
+    flex: 1; display: flex; flex-direction: column;
+    justify-content: center; max-height: 100%; overflow: hidden;
+    padding: var(--slide-padding);
+}
+.card, .container, .content-box { max-width: min(90vw, 1000px); max-height: min(80vh, 700px); }
+.feature-list, .bullet-list { gap: clamp(0.4rem, 1vh, 1rem); }
+.feature-list li, .bullet-list li { font-size: var(--body-size); line-height: 1.4; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: clamp(0.5rem, 1.5vw, 1rem); }
+img, .image-container { max-width: 100%; max-height: min(50vh, 400px); object-fit: contain; }
+@media (max-height: 700px) {
+    :root { --slide-padding: clamp(0.75rem, 3vw, 2rem); --content-gap: clamp(0.4rem, 1.5vw, 1rem); --title-size: clamp(1.25rem, 4.5vw, 2.5rem); --h2-size: clamp(1rem, 3vw, 1.75rem); }
+}
+@media (max-height: 600px) {
+    :root { --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem); --content-gap: clamp(0.3rem, 1vw, 0.75rem); --title-size: clamp(1.1rem, 4vw, 2rem); --body-size: clamp(0.7rem, 1.2vw, 0.95rem); }
+    .nav-dots, .keyboard-hint, .decorative { display: none; }
+}
+@media (max-height: 500px) {
+    :root { --slide-padding: clamp(0.4rem, 2vw, 1rem); --title-size: clamp(1rem, 3.5vw, 1.5rem); --h2-size: clamp(0.9rem, 2.5vw, 1.25rem); --body-size: clamp(0.65rem, 1vw, 0.85rem); }
+}
+@media (max-width: 600px) {
+    :root { --title-size: clamp(1.25rem, 7vw, 2.5rem); }
+    .grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; }
+    html { scroll-behavior: auto; }
+}
+
+/* === BACKGROUND EFFECTS === */
+.bg-grid {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-image:
+        linear-gradient(rgba(77,124,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(77,124,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    z-index: 0;
+    pointer-events: none;
+    animation: gridDrift 30s linear infinite;
+}
+@keyframes gridDrift {
+    0% { transform: translate(0, 0); }
+    50% { transform: translate(30px, 30px); }
+    100% { transform: translate(0, 0); }
+}
+.glow-orb {
+    position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+    filter: blur(120px);
+}
+.glow-orb-blue {
+    width: 500px; height: 500px; top: -100px; left: -150px;
+    background: rgba(77, 124, 255, 0.08);
+}
+.glow-orb-orange {
+    width: 400px; height: 400px; bottom: -80px; right: -100px;
+    background: rgba(244, 129, 32, 0.06);
+}
+.glow-orb-cyan {
+    width: 300px; height: 300px; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 255, 204, 0.03);
+}
+
+/* === REVEAL ANIMATIONS === */
+.reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.slide.visible .reveal {
+    opacity: 1;
+    transform: translateY(0);
+}
+.slide.visible .reveal:nth-child(1) { transition-delay: 0.1s; }
+.slide.visible .reveal:nth-child(2) { transition-delay: 0.2s; }
+.slide.visible .reveal:nth-child(3) { transition-delay: 0.3s; }
+.slide.visible .reveal:nth-child(4) { transition-delay: 0.4s; }
+.slide.visible .reveal:nth-child(5) { transition-delay: 0.5s; }
+.slide.visible .reveal:nth-child(6) { transition-delay: 0.6s; }
+
+/* Title slide dramatic entrance */
+.slide-title .reveal {
+    transform: scale(0.95) translateY(20px);
+    filter: blur(5px);
+}
+.slide-title.visible .reveal {
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+}
+
+/* === TYPOGRAPHY & UTILITIES === */
+.gradient-text {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-orange));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.tag {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(0.55rem, 0.9vw, 0.75rem);
+    letter-spacing: 0.25em;
+    color: var(--accent-cyan);
+    border: 1px solid rgba(0,255,204,0.3);
+    padding: 0.4em 1.2em;
+    border-radius: 2px;
+    text-transform: uppercase;
+}
+.divider {
+    width: 60px; height: 2px;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-orange));
+    margin: clamp(0.8rem, 2vh, 1.5rem) auto;
+}
+.slide-title-label {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: var(--h2-size);
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+.slide-subtitle {
+    font-size: var(--body-size);
+    color: var(--text-secondary);
+    margin-top: var(--element-gap);
+}
+
+/* === SPLIT LAYOUT === */
+.split-layout {
+    display: flex;
+    gap: var(--content-gap);
+    align-items: center;
+    flex: 1;
+    min-height: 0;
+}
+.split-layout .image-col {
+    flex: 1.1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.split-layout .image-col img {
+    max-height: min(55vh, 380px);
+    width: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+.split-layout .text-col {
+    flex: 0.9;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* === BULLET LIST === */
+.bullet-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.4rem, 1vh, 1rem);
+}
+.bullet-list li {
+    font-size: var(--body-size);
+    line-height: 1.5;
+    color: var(--text-secondary);
+    padding-left: clamp(0.8rem, 1.5vw, 1.2rem);
+    position: relative;
+}
+.bullet-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent-blue);
+}
+
+/* === PRINCIPLE CARDS (Slide 2) === */
+.principle-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(0.5rem, 1.5vw, 1rem);
+    max-width: min(90vw, 1000px);
+    width: 100%;
+}
+@media (max-width: 700px) {
+    .principle-grid { grid-template-columns: 1fr; }
+}
+.principle-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: clamp(0.8rem, 1.5vw, 1.5rem);
+    transition: border-color 0.3s ease;
+}
+.principle-card:hover {
+    border-color: rgba(77,124,255,0.3);
+}
+.principle-number {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(0.65rem, 1vw, 0.8rem);
+    color: var(--accent-blue);
+    letter-spacing: 0.1em;
+    margin-bottom: var(--element-gap);
+}
+.principle-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: var(--h3-size);
+    margin-bottom: var(--element-gap);
+    color: var(--text-primary);
+}
+.principle-card p {
+    font-size: var(--body-size);
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* === DIAGRAM SLIDE (Slide 3) === */
+.diagram-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.diagram-container img {
+    max-height: min(65vh, 520px);
+    width: auto;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+/* === DATA FLOW DIAGRAM (Slide 9) === */
+.flow-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: clamp(0.3rem, 0.8vw, 0.6rem);
+    max-width: min(95vw, 1100px);
+    width: 100%;
+}
+.flow-box {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 0.6em 1.2em;
+    font-size: var(--body-size);
+    color: var(--text-primary);
+    white-space: nowrap;
+    text-align: center;
+}
+.flow-box.highlight {
+    border-color: var(--accent-blue);
+    background: rgba(77,124,255,0.08);
+}
+.flow-arrow {
+    font-family: 'Space Mono', monospace;
+    color: var(--text-dim);
+    font-size: var(--body-size);
+    flex-shrink: 0;
+}
+.flow-diamond {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5em 1em;
+    font-size: var(--small-size);
+    color: var(--accent-orange);
+    font-family: 'Space Mono', monospace;
+    border: 1px solid rgba(244,129,32,0.3);
+    transform: none;
+    border-radius: 4px;
+    background: rgba(244,129,32,0.06);
+}
+.flow-insight {
+    margin-top: clamp(1rem, 2vh, 2rem);
+    font-size: var(--small-size);
+    color: var(--text-dim);
+    text-align: center;
+    max-width: min(90vw, 800px);
+    line-height: 1.6;
+    padding: 0 clamp(0.5rem, 2vw, 2rem);
+}
+.flow-insight strong {
+    color: var(--accent-cyan);
+    font-weight: 500;
+}
+
+/* === HORIZONTAL CAPABILITIES (Slide 10) === */
+.capability-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(0.5rem, 1.2vw, 1rem);
+    max-width: min(90vw, 1000px);
+    width: 100%;
+}
+@media (max-width: 700px) {
+    .capability-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+    .capability-grid { grid-template-columns: 1fr; }
+}
+.capability-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: clamp(0.6rem, 1.2vw, 1.2rem);
+    border-top: 4px solid var(--text-dim);
+    transition: border-color 0.3s ease, transform 0.2s ease;
+}
+.capability-card:hover {
+    transform: translateY(-2px);
+}
+.capability-card.accent-blue { border-top-color: var(--accent-blue); }
+.capability-card.accent-green { border-top-color: #34d399; }
+.capability-card.accent-purple { border-top-color: #a78bfa; }
+.capability-card.accent-orange { border-top-color: var(--accent-orange); }
+.capability-card.accent-gold { border-top-color: var(--accent-gold); }
+.capability-card.accent-gray { border-top-color: var(--text-dim); }
+.capability-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: clamp(0.75rem, 1.3vw, 0.95rem);
+    margin-bottom: var(--element-gap);
+    color: var(--text-primary);
+}
+.capability-card p {
+    font-size: var(--small-size);
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* === ASSESSMENT COLUMNS (Slide 11) === */
+.assessment-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(0.5rem, 1.5vw, 1rem);
+    max-width: min(90vw, 1000px);
+    width: 100%;
+}
+@media (max-width: 600px) {
+    .assessment-grid { grid-template-columns: 1fr; }
+}
+.assessment-col {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: clamp(0.8rem, 1.5vw, 1.5rem);
+    border-top: 4px solid;
+}
+.assessment-col.advantage { border-top-color: #34d399; }
+.assessment-col.challenge { border-top-color: var(--accent-orange); }
+.assessment-col h3 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: var(--h3-size);
+    margin-bottom: var(--content-gap);
+}
+.assessment-col.advantage h3 { color: #34d399; }
+.assessment-col.challenge h3 { color: var(--accent-orange); }
+.assessment-col ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.4rem, 1vh, 0.8rem);
+}
+.assessment-col li {
+    font-size: var(--body-size);
+    color: var(--text-secondary);
+    line-height: 1.5;
+    padding-left: 1rem;
+    position: relative;
+}
+.assessment-col.advantage li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0.5em;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #34d399;
+}
+.assessment-col.challenge li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0.5em;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent-orange);
+}
+
+/* === KEY TAKEAWAYS (Slide 12) === */
+.takeaway-quote {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1rem, 2.5vw, 1.5rem);
+    line-height: 1.5;
+    color: var(--accent-blue);
+    text-align: center;
+    max-width: min(85vw, 800px);
+    padding: 0 clamp(0.5rem, 2vw, 2rem);
+    font-style: italic;
+}
+.takeaway-summary {
+    margin-top: clamp(1rem, 2vh, 2rem);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(0.4rem, 1vh, 0.8rem);
+    max-width: min(85vw, 700px);
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+.takeaway-summary li {
+    font-size: var(--body-size);
+    color: var(--text-secondary);
+    line-height: 1.5;
+    text-align: center;
+    list-style: none;
+    position: relative;
+    padding-left: 1.2rem;
+}
+.takeaway-summary li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0.55em;
+    width: 8px; height: 2px;
+    background: var(--accent-orange);
+}
+
+/* === PROGRESS BAR === */
+.progress-bar {
+    position: fixed; top: 0; left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-orange));
+    z-index: 1000;
+    transition: width 0.3s ease;
+    width: 0;
+}
+
+/* === NAV DOTS === */
+.nav-dots {
+    position: fixed;
+    right: clamp(0.5rem, 2vw, 1.5rem);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.3rem, 0.8vh, 0.6rem);
+}
+.nav-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+.nav-dot.active {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    transform: scale(1.3);
+}
+.nav-dot:hover {
+    border-color: rgba(255,255,255,0.5);
+}
+
+/* === INLINE EDITING === */
+.edit-hotzone {
+    position: fixed; top: 0; left: 0;
+    width: 80px; height: 80px;
+    z-index: 1100;
+}
+.edit-toggle {
+    position: fixed;
+    top: 12px; left: 12px;
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    z-index: 1101;
+    transition: all 0.2s ease;
+}
+.edit-toggle:hover {
+    background: var(--accent-blue);
+    color: white;
+    border-color: var(--accent-blue);
+}
+.edit-hotzone:hover ~ .edit-toggle,
+.edit-toggle:hover {
+    display: flex;
+}
+.editing-mode [contenteditable="true"] {
+    outline: 2px dashed rgba(77,124,255,0.4);
+    outline-offset: 2px;
+    cursor: text;
+}
+.editing-mode [contenteditable="true"]:focus {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+.edit-toolbar {
+    position: fixed;
+    bottom: clamp(0.5rem, 2vh, 1.5rem);
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    gap: 0.5rem;
+    z-index: 1101;
+    background: var(--bg-secondary);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    align-items: center;
+}
+.edit-toolbar.visible {
+    display: flex;
+}
+.edit-toolbar button {
+    padding: 0.35em 0.8em;
+    font-size: var(--small-size);
+    font-family: 'IBM Plex Sans', sans-serif;
+    border-radius: 4px;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+.edit-toolbar button:hover {
+    background: var(--accent-blue);
+    color: white;
+    border-color: var(--accent-blue);
+}
+.edit-status {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent-cyan);
+    letter-spacing: 0.1em;
+    padding: 0 0.5rem;
+}
+.edit-toast {
+    position: fixed;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: var(--bg-secondary);
+    border: 1px solid var(--accent-blue);
+    border-radius: 8px;
+    padding: 0.5em 1.2em;
+    font-size: var(--small-size);
+    color: var(--accent-cyan);
+    z-index: 1200;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+.edit-toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+/* === LIGHTBOX === */
+.lightbox {
+    position: fixed; inset: 0;
+    background: rgba(5, 8, 18, 0.92);
+    backdrop-filter: blur(8px);
+    z-index: 2000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    cursor: zoom-out;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.lightbox.open {
+    display: flex;
+    opacity: 1;
+}
+.lightbox img {
+    max-width: 95vw;
+    max-height: 92vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 16px 64px rgba(0,0,0,0.6);
+    cursor: default;
+    transform: scale(0.95);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.lightbox.open img {
+    transform: scale(1);
+}
+.lightbox-close {
+    position: absolute;
+    top: clamp(0.5rem, 2vh, 1.5rem);
+    right: clamp(0.5rem, 2vw, 1.5rem);
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06);
+    color: var(--text-secondary);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 2001;
+}
+.lightbox-close:hover {
+    background: rgba(255,255,255,0.12);
+    color: white;
+    border-color: rgba(255,255,255,0.3);
+}
+.diagram-container img,
+.split-layout .image-col img {
+    cursor: zoom-in;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.diagram-container img:hover,
+.split-layout .image-col img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 32px rgba(77,124,255,0.15);
+}
+</style>
+</head>
+<body>
+
+<!-- === BACKGROUND EFFECTS === -->
+<div class="bg-grid"></div>
+<div class="glow-orb glow-orb-blue"></div>
+<div class="glow-orb glow-orb-orange"></div>
+<div class="glow-orb glow-orb-cyan"></div>
+
+<!-- === PROGRESS BAR === -->
+<div class="progress-bar"></div>
+
+<!-- === NAV DOTS === -->
+<div class="nav-dots"></div>
+
+<!-- === EDIT TOOLS === -->
+<div class="edit-hotzone" id="editHotzone"></div>
+<button class="edit-toggle" id="editToggle" aria-label="Toggle edit mode">&#9998;</button>
+<div class="edit-toolbar" id="editToolbar">
+    <span class="edit-status">EDIT MODE</span>
+    <button id="saveBtn">&#128190; Ctrl+S Save</button>
+    <button id="exportBtn">&#8595; Export HTML</button>
+    <button id="editOffBtn">&#10005; Exit</button>
+</div>
+<div class="edit-toast" id="editToast"></div>
+<div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
+    <img id="lightboxImg" src="" alt="">
+</div>
+
+<!-- ========================================= -->
+<!-- SLIDE 1: TITLE -->
+<!-- ========================================= -->
+<section class="slide slide-title" id="slide-1">
+    <div class="slide-content" style="text-align:center; justify-content:center; align-items:center;">
+        <span class="reveal tag">Agents Week 2026</span>
+        <h1 class="reveal" style="font-family:'Syne',sans-serif; font-weight:800; font-size:var(--title-size); line-height:1.1; margin:clamp(0.5rem,2vh,1.5rem) 0;">
+            Cloudflare<br><span class="gradient-text">智能体五层架构</span>
+        </h1>
+        <p class="reveal" style="font-size:clamp(0.85rem,1.8vw,1.2rem); color:var(--text-secondary); max-width:600px;">
+            从 Workspace 到 Sandbox — 逐级授权的智能体运行时策略
+        </p>
+        <div class="reveal divider"></div>
+        <p class="reveal" style="font-size:var(--small-size); color:var(--text-dim); letter-spacing:0.15em; margin-top:clamp(0.5rem,1.5vh,1rem);">
+            技术研究报告 · 五层执行能力梯子 (Tier 0–4)
+        </p>
+    </div>
+</section>
+
+<!-- ========================================= -->
+<!-- SLIDE 2: CORE PHILOSOPHY -->
+<!-- ========================================= -->
+<section class="slide" id="slide-2">
+    <div class="slide-content" style="align-items:center;">
+        <h2 class="reveal slide-title-label" style="text-align:center;">核心理念</h2>
+        <p class="reveal slide-subtitle" style="text-align:center; max-width:600px;">默认不给电脑，只给最小可用能力</p>
+        <div class="reveal principle-grid" style="margin-top:var(--content-gap);">
+            <div class="principle-card">
+                <div class="principle-number">01</div>
+                <h3>最小可用</h3>
+                <p>智能体在 Tier 0 (文件工作区) 就应该能完成大量工作</p>
+            </div>
+            <div class="principle-card">
+                <div class="principle-number">02</div>
+                <h3>按需升级</h3>
+                <p>更高层不是替代低层，而是在任务需要时叠加</p>
+            </div>
+            <div class="principle-card">
+                <div class="principle-number">03</div>
+                <h3>三维控制</h3>
+                <p>成本、安全、性能同时优化，而非只选其一</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================= -->
+<!-- SLIDE 3: FIVE LAYERS OVERVIEW -->
+<!-- ========================================= -->
+<section class="slide" id="slide-3">
+    <div class="slide-content" style="align-items:center;">
+        <h2 class="reveal slide-title-label" style="text-align:center;">五层执行能力梯子</h2>
+        <div class="reveal diagram-container">
+            <img src=".claude-design/diagrams/overall-architecture.png" alt="五层架构总览" loading="lazy">
+        </div>
+    </div>
+</section>
+
+<!-- ========================================= -->
+<!-- SLIDE 4: TIER 0 WORKSPACE -->
+<!-- ========================================= -->
+<section class="slide" id="slide-4">
+    <div class="slide-content">
+        <div style="margin-bottom:var(--element-gap);">
+            <span class="reveal tag" style="font-size:clamp(0.5rem,0.7vw,0.65rem);">// 持久化工作区</span>
+            <h2 class="reveal slide-title-label">Tier 0: Workspace</h2>
+        </div>
+        <div class="reveal split-layout">
+            <div class="image-col">
+                <img src=".claude-design/diagrams/tier0-workspace.png" alt="Tier 0 Workspace 架构" loading="lazy">
+            </div>
+            <div class="text-col">
+                <ul class="bullet-list">
+                    <li>可持久化的虚拟文件系统 (DO SQLite)</li>
+                    <li>工具集: read / write / edit / list / find / grep / delete</li>
+                    <li>不执行代码，不直接联网</li>
+                    <li>整个五层中的最小公共状态平面</li>
+                    <li>与 Artifacts 互补: 会话级 vs 版本化协作</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================= -->
+<!-- SLIDE 5: TIER 1 DYNAMIC WORKER -->
+<!-- ========================================= -->
+<section class="slide" id="slide-5">
+    <div class="slide-content">
+        <div style="margin-bottom:var(--element-gap);">
+            <span class="reveal tag" style="font-size:clamp(0.5rem,0.7vw,0.65rem);">// 运行时代码执行</span>
+            <h2 class="reveal slide-title-label">Tier 1: Dynamic Worker</h2>
+        </div>
+        <div class="reveal split-layout">
+            <div class="image-col">
+                <img src=".claude-design/diagrams/tier1-dynamic-worker.png" alt="Tier 1 Dynamic Worker 架构" loading="lazy">
+            </div>
+            <div class="text-col">
+                <ul class="bullet-list">
+                    <li>V8 Isolate 沙箱，启动几毫秒，内存几 MB</li>
+                    <li>Capability-based Security: 按需授权，非默认给权</li>
+                    <li>globalOutbound 可设为 null，完全断网</li>
+                    <li>Durable Object Facets: 受监管的持久化子实例</li>
+                    <li>比典型容器快 ~100 倍</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================= -->
+<!-- SLIDE 6: TIER 2 npm -->
+<!-- ========================================= -->
+<section class="slide" id="slide-6">
+    <div class="slide-content">
+        <div style="margin-bottom:var(--element-gap);">
+            <span class="reveal tag" style="font-size:clamp(0.5rem,0.7vw,0.65rem);">// 生态扩展</span>
+            <h2 class="reveal slide-title-label">Tier 2: npm 依赖层</h2>
+        </div>
+        <div class="reveal split-layout">
+            <div class="image-col">
+                <img src=".claude-design/diagrams/tier2-npm-bundling.png" alt="Tier 2 npm Bundling 架构" loading="lazy">
+            </div>
+            <div class="text-col">
+                <ul class="bullet-list">
+                    <li>worker-bundler + esbuild 运行时打包 npm 包</li>
+                    <li>仍运行在 Tier 1 沙箱内，不换执行器</li>
+                    <li>让模型写出的程序能接入现成 JS 生态</li>
+                    <li>风险: 供应链治理 / bundle 冷路径延迟 / 版本漂移</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================= -->
+<!-- SLIDE 7: TIER 3 BROWSER RUN -->
+<!-- ========================================= -->
+<section class="slide" id="slide-7">
+    <div class="slide-content">
+        <div style="margin-bottom:var(--element-gap);">
+            <span class="reveal tag" style="font-size:clamp(0.5rem,0.7vw,0.65rem);">// 浏览器能力层</span>
+            <h2 class="reveal slide-title-label">Tier 3: Browser Run</h2>
+        </div>
+        <div class="reveal split-layout">
+            <div class="image-col">
+                <img src=".claude-design/diagrams/tier3-browser-run.png" alt="Tier 3 Browser Run 架构" loading="lazy">
+            </div>
+            <div class="text-col">
+                <ul class="bullet-list">
+                    <li>CDP (Chrome DevTools Protocol) 驱动 headless browser</li>
+                    <li>当目标服务没有 MCP 或 API 时的兜底方案</li>
+                    <li>Live View + Human in the Loop (MFA/CAPTCHA)</li>
+                    <li>默认每次新会话，无 cookie/登录状态继承</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================= -->
+<!-- SLIDE 8: TIER 4 SANDBOX -->
+<!-- ========================================= -->
+<section class="slide" id="slide-8">
+    <div class="slide-content">
+        <div style="margin-bottom:var(--element-gap);">
+            <span class="reveal tag" style="font-size:clamp(0.5rem,0.7vw,0.65rem);">// 完整计算机环境</span>
+            <h2 class="reveal slide-title-label">Tier 4: Sandbox</h2>
+        </div>
+        <div class="reveal split-layout">
+            <div class="image-col">
+                <img src=".claude-design/diagrams/tier4-sandbox.png" alt="Tier 4 Sandbox 架构" loading="lazy">
+            </div>
+            <div class="text-col">
+                <ul class="bullet-list">
+                    <li>Workers + DO + Containers，每个 sandbox 独立 VM</li>
+                    <li>真实终端、进程管理、后台服务、Preview URL</li>
+                    <li>与 Workspace 双向同步</li>
+                    <li>安全: 文件/进程/网络/资源配额四维隔离</li>
+                    <li>成本最高，但能力最完整</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================= -->
+<!-- SLIDE 9: DATA FLOW -->
+<!-- ========================================= -->
+<section class="slide" id="slide-9">
+    <div class="slide-content" style="align-items:center;">
+        <h2 class="reveal slide-title-label" style="text-align:center;">数据与请求流向</h2>
+        <div class="reveal flow-diagram" style="margin-top:var(--content-gap);">
+            <div class="flow-box">用户请求</div>
+            <span class="flow-arrow">&rarr;</span>
+            <div class="flow-box">Agent Turn</div>
+            <span class="flow-arrow">&rarr;</span>
+            <div class="flow-box">组装上下文</div>
+            <span class="flow-arrow">&rarr;</span>
+            <div class="flow-box highlight">模型推理</div>
+            <span class="flow-arrow">&rarr;</span>
+            <div class="flow-diamond">需要哪层?</div>
+            <span class="flow-arrow">&rarr;</span>
+            <div class="flow-box" style="color:var(--accent-blue); font-family:'Space Mono',monospace;">Tier 0-4</div>
+            <span class="flow-arrow">&rarr;</span>
+            <div class="flow-box">结果回写</div>
+        </div>
+        <p class="reveal flow-insight">
+            <strong>智能体主循环先做规划，再做分层升级，而不是默认在最重环境里执行所有动作。</strong>
+        </p>
+    </div>
+</section>
+
+<!-- ========================================= -->
+<!-- SLIDE 10: HORIZONTAL CAPABILITIES -->
+<!-- ========================================= -->
+<section class="slide" id="slide-10">
+    <div class="slide-content" style="align-items:center;">
+        <h2 class="reveal slide-title-label" style="text-align:center;">横向配套能力</h2>
+        <div class="reveal capability-grid" style="margin-top:var(--content-gap);">
+            <div class="capability-card accent-blue">
+                <h3>AI Gateway / Workers AI</h3>
+                <p>统一推理层、模型目录、自动 failover</p>
+            </div>
+            <div class="capability-card accent-green">
+                <h3>Agent Memory</h3>
+                <p>FTS5 + 向量检索 + HyDE，长期交互记忆</p>
+            </div>
+            <div class="capability-card accent-purple">
+                <h3>AI Search</h3>
+                <p>混合检索 + RRF 融合，agent 原生搜索</p>
+            </div>
+            <div class="capability-card accent-orange">
+                <h3>Access / Mesh</h3>
+                <p>Managed OAuth + 私网接入，agent 一等身份</p>
+            </div>
+            <div class="capability-card accent-gold">
+                <h3>MCP Portal</h3>
+                <p>工具发现、DLP、审计、最小暴露</p>
+            </div>
+            <div class="capability-card accent-gray">
+                <h3>Workflows</h3>
+                <p>50K 并发实例，耐久调度控制面</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================= -->
+<!-- SLIDE 11: ENGINEERING ASSESSMENT -->
+<!-- ========================================= -->
+<section class="slide" id="slide-11">
+    <div class="slide-content" style="align-items:center;">
+        <h2 class="reveal slide-title-label" style="text-align:center;">工程与产品评估</h2>
+        <div class="reveal assessment-grid" style="margin-top:var(--content-gap);">
+            <div class="assessment-col advantage">
+                <h3>优势</h3>
+                <ul>
+                    <li>平均成本压在低层，极端能力放在高层</li>
+                    <li>安全设计前移到能力授予模型</li>
+                    <li>执行/推理/检索/记忆/身份/安全统一平台</li>
+                    <li>已验证: 3683 活跃用户, 241 亿 tokens routed</li>
+                </ul>
+            </div>
+            <div class="assessment-col challenge">
+                <h3>挑战</h3>
+                <ul>
+                    <li>升层策略: 什么条件允许进入 Tier 3-4?</li>
+                    <li>Tier 2 供应链治理需企业侧补充</li>
+                    <li>多状态面: Workspace/Memory/Search/Artifacts/Sandbox</li>
+                    <li>状态分类与治理边界需前置设计</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ========================================= -->
+<!-- SLIDE 12: KEY TAKEAWAYS -->
+<!-- ========================================= -->
+<section class="slide" id="slide-12">
+    <div class="slide-content" style="align-items:center; text-align:center;">
+        <h2 class="reveal slide-title-label" style="text-align:center;">核心结论</h2>
+        <blockquote class="reveal takeaway-quote" style="margin-top:var(--content-gap);">
+            能用文件就别上代码，能用受限代码就别上生态依赖，能用 API 就别开浏览器，能不开完整电脑就不要给完整电脑
+        </blockquote>
+        <ul class="reveal takeaway-summary">
+            <li>最适合: 长生命周期、多用户、多租户、需要强隔离的在线智能体平台</li>
+            <li>核心价值: 把"能力升级"做成产品化的决策路径</li>
+            <li>关键前提: 明确升层策略、状态分类和治理边界</li>
+        </ul>
+    </div>
+</section>
+
+<!-- ========================================= -->
+<!-- JAVASCRIPT -->
+<!-- ========================================= -->
+<script>
+/* === SLIDE PRESENTATION === */
+class SlidePresentation {
+    constructor() {
+        this.slides = document.querySelectorAll('.slide');
+        this.currentSlide = 0;
+        this.init();
+    }
+
+    init() {
+        this.setupIntersectionObserver();
+        this.setupKeyboardNav();
+        this.setupTouchNav();
+        this.setupWheelNav();
+        this.setupProgressBar();
+        this.setupNavDots();
+    }
+
+    setupIntersectionObserver() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    this.currentSlide = [...this.slides].indexOf(entry.target);
+                    this.updateProgress();
+                    this.updateDots();
+                }
+            });
+        }, { threshold: 0.3 });
+        this.slides.forEach(s => observer.observe(s));
+    }
+
+    setupKeyboardNav() {
+        document.addEventListener('keydown', (e) => {
+            if (editMode && editMode.isActive) return;
+            const key = e.key;
+            if (key === 'ArrowDown' || key === ' ' || key === 'PageDown') {
+                e.preventDefault(); this.goToSlide(this.currentSlide + 1);
+            } else if (key === 'ArrowUp' || key === 'PageUp') {
+                e.preventDefault(); this.goToSlide(this.currentSlide - 1);
+            } else if (key === 'Home') {
+                e.preventDefault(); this.goToSlide(0);
+            } else if (key === 'End') {
+                e.preventDefault(); this.goToSlide(this.slides.length - 1);
+            }
+        });
+    }
+
+    setupTouchNav() {
+        let startY = 0;
+        document.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; }, { passive: true });
+        document.addEventListener('touchend', (e) => {
+            const diff = startY - e.changedTouches[0].clientY;
+            if (Math.abs(diff) > 50) {
+                diff > 0 ? this.goToSlide(this.currentSlide + 1) : this.goToSlide(this.currentSlide - 1);
+            }
+        }, { passive: true });
+    }
+
+    setupWheelNav() {
+        let lastWheel = 0;
+        document.addEventListener('wheel', (e) => {
+            const now = Date.now();
+            if (now - lastWheel < 800) return;
+            lastWheel = now;
+            e.deltaY > 0 ? this.goToSlide(this.currentSlide + 1) : this.goToSlide(this.currentSlide - 1);
+        }, { passive: true });
+    }
+
+    goToSlide(index) {
+        if (index < 0 || index >= this.slides.length) return;
+        this.slides[index].scrollIntoView({ behavior: 'smooth' });
+    }
+
+    setupProgressBar() {
+        this.bar = document.querySelector('.progress-bar');
+    }
+
+    updateProgress() {
+        if (!this.bar) return;
+        const pct = ((this.currentSlide + 1) / this.slides.length) * 100;
+        this.bar.style.width = pct + '%';
+    }
+
+    setupNavDots() {
+        const nav = document.querySelector('.nav-dots');
+        if (!nav) return;
+        this.slides.forEach((_, i) => {
+            const dot = document.createElement('button');
+            dot.className = 'nav-dot';
+            dot.setAttribute('aria-label', 'Slide ' + (i + 1));
+            dot.addEventListener('click', () => this.goToSlide(i));
+            nav.appendChild(dot);
+        });
+        this.dots = nav.querySelectorAll('.nav-dot');
+    }
+
+    updateDots() {
+        if (!this.dots) return;
+        this.dots.forEach((d, i) => d.classList.toggle('active', i === this.currentSlide));
+    }
+}
+
+/* === INLINE EDITING === */
+const editMode = {
+    isActive: false,
+    hotzone: null,
+    toolbar: null,
+    toast: null,
+    hotzoneTimeout: null,
+    editableSelectors: 'h1, h2, h3, p, li, span, blockquote',
+
+    init() {
+        this.hotzone = document.getElementById('editHotzone');
+        this.toolbar = document.getElementById('editToolbar');
+        this.toast = document.getElementById('editToast');
+        if (!this.hotzone) return;
+
+        // JS-based hover with 400ms delay (NOT CSS ~ sibling)
+        this.hotzone.addEventListener('mouseenter', () => {
+            this.hotzoneTimeout = setTimeout(() => {
+                document.getElementById('editToggle').style.display = 'flex';
+            }, 400);
+        });
+        this.hotzone.addEventListener('mouseleave', () => {
+            clearTimeout(this.hotzoneTimeout);
+            if (!this.isActive) {
+                document.getElementById('editToggle').style.display = 'none';
+            }
+        });
+
+        document.getElementById('editToggle').addEventListener('click', () => this.toggle());
+        document.getElementById('saveBtn').addEventListener('click', () => this.save());
+        document.getElementById('exportBtn').addEventListener('click', () => this.exportHTML());
+        document.getElementById('editOffBtn').addEventListener('click', () => this.toggle(false));
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'e' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                // Only toggle if not editing an element
+                if (document.activeElement && document.activeElement.getAttribute('contenteditable') === 'true') return;
+                if (!document.activeElement || document.activeElement === document.body) {
+                    this.toggle();
+                }
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                if (this.isActive) this.save();
+            }
+        });
+
+        // Load saved content
+        this.load();
+    },
+
+    toggle(forceState) {
+        this.isActive = typeof forceState === 'boolean' ? forceState : !this.isActive;
+        document.body.classList.toggle('editing-mode', this.isActive);
+        document.getElementById('editToggle').style.display = this.isActive ? 'flex' : 'none';
+        this.toolbar.classList.toggle('visible', this.isActive);
+
+        const editables = document.querySelectorAll(this.editableSelectors);
+        editables.forEach(el => {
+            if (this.isActive) {
+                el.setAttribute('contenteditable', 'true');
+            } else {
+                el.removeAttribute('contenteditable');
+            }
+        });
+    },
+
+    save() {
+        const editables = document.querySelectorAll(this.editableSelectors);
+        const data = {};
+        editables.forEach(el => {
+            const id = el.closest('[id]') ? el.closest('[id]').id + '-' : '';
+            const idx = [...el.parentNode.children].indexOf(el);
+            data[id + idx] = el.innerHTML;
+        });
+        localStorage.setItem('cloudflare-slide-edits', JSON.stringify(data));
+        this.showToast('已保存到本地存储');
+    },
+
+    load() {
+        const saved = localStorage.getItem('cloudflare-slide-edits');
+        if (!saved) return;
+        try {
+            const data = JSON.parse(saved);
+            const editables = document.querySelectorAll(this.editableSelectors);
+            editables.forEach(el => {
+                const id = el.closest('[id]') ? el.closest('[id]').id + '-' : '';
+                const idx = [...el.parentNode.children].indexOf(el);
+                const key = id + idx;
+                if (data[key] !== undefined) {
+                    el.innerHTML = data[key];
+                }
+            });
+        } catch (e) { /* ignore corrupt data */ }
+    },
+
+    exportHTML() {
+        // Temporarily disable editing to get clean HTML
+        const wasActive = this.isActive;
+        if (wasActive) {
+            document.querySelectorAll(this.editableSelectors).forEach(el => el.removeAttribute('contenteditable'));
+            document.body.classList.remove('editing-mode');
+        }
+
+        // Remove editing UI elements
+        const hotzone = document.getElementById('editHotzone');
+        const toggle = document.getElementById('editToggle');
+        const toolbar = document.getElementById('editToolbar');
+        const toast = document.getElementById('editToast');
+        const bar = document.querySelector('.progress-bar');
+        const dots = document.querySelector('.nav-dots');
+
+        hotzone.style.display = 'none';
+        toggle.style.display = 'none';
+        toolbar.style.display = 'none';
+        toast.style.display = 'none';
+        bar.style.display = 'none';
+        dots.style.display = 'none';
+
+        const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'cloudflare-five-layer-architecture.html';
+        a.click();
+        URL.revokeObjectURL(url);
+
+        // Restore editing UI
+        hotzone.style.display = '';
+        toggle.style.display = '';
+        toolbar.style.display = '';
+        toast.style.display = '';
+        bar.style.display = '';
+        dots.style.display = '';
+        if (wasActive) {
+            this.toggle(true);
+        }
+
+        this.showToast('已导出 HTML 文件');
+    },
+
+    showToast(msg) {
+        if (!this.toast) return;
+        this.toast.textContent = msg;
+        this.toast.classList.add('show');
+        setTimeout(() => this.toast.classList.remove('show'), 2000);
+    }
+};
+
+/* === INITIALIZATION === */
+document.addEventListener('DOMContentLoaded', () => {
+    new SlidePresentation();
+    editMode.init();
+
+    // === LIGHTBOX ===
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const lightboxClose = document.getElementById('lightboxClose');
+
+    document.querySelectorAll('.diagram-container img, .split-layout .image-col img').forEach(img => {
+        img.addEventListener('click', (e) => {
+            e.stopPropagation();
+            lightboxImg.src = img.src;
+            lightboxImg.alt = img.alt;
+            lightbox.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        });
+    });
+
+    function closeLightbox() {
+        lightbox.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    lightboxClose.addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', (e) => {
+        if (e.target === lightbox) closeLightbox();
+    });
+    lightboxImg.addEventListener('click', (e) => e.stopPropagation());
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox();
+    });
+});
+</script>
+</body>
+</html>

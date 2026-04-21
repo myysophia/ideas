@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600">
+  <style>
+    text { font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#16a34a"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#F48120"/>
+    </marker>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="108%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+  <!-- Background -->
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text x="480" y="30" text-anchor="middle" fill="#111827" font-size="18" font-weight="600">Tier 1: Dynamic Worker — 运行时代码执行</text>
+
+  <!-- Cloudflare Brand Badge -->
+  <circle cx="48" cy="26" r="16" fill="#F48120"/>
+  <text x="48" y="31" text-anchor="middle" fill="#ffffff" font-size="9" font-weight="700">CF</text>
+  <text x="72" y="31" fill="#F48120" font-size="13" font-weight="600">Workers AI</text>
+
+  <!-- ===== Agent Hexagon (150, 70) ===== -->
+  <polygon points="150,34 181.2,52 181.2,88 150,106 118.8,88 118.8,52" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="150" y="75" text-anchor="middle" fill="#111827" font-size="13" font-weight="600">Agent</text>
+
+  <!-- ===== Code Snippet (rect with folded corner, 540, 50) ===== -->
+  <path d="M 540,50 L 728,50 L 740,62 L 740,100 L 540,100 Z" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.5" filter="url(#shadow)"/>
+  <path d="M 728,50 L 728,62 L 740,62" fill="#dcfce7" stroke="#bbf7d0" stroke-width="1"/>
+  <text x="640" y="72" text-anchor="middle" fill="#6b7280" font-size="11">📄 LLM 生成的 JS 代码</text>
+  <text x="640" y="90" text-anchor="middle" fill="#111827" font-size="11" font-family="monospace">const handler = { ... }</text>
+
+  <!-- ===== V8 Isolate Sandbox Container (180, 120, 530, 300) ===== -->
+  <rect x="180" y="120" width="530" height="300" rx="12" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5" stroke-dasharray="8,4" filter="url(#shadow)"/>
+  <text x="196" y="142" fill="#2563eb" font-size="12" font-weight="600" letter-spacing="0.06em">V8 ISOLATE SANDBOX</text>
+
+  <!-- Dynamic Worker box (double border) -->
+  <rect x="220" y="158" width="400" height="50" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" filter="url(#shadow)"/>
+  <rect x="223" y="161" width="394" height="44" rx="6" fill="none" stroke="#2563eb" stroke-width="0.8" opacity="0.4"/>
+  <text x="420" y="178" text-anchor="middle" fill="#2563eb" font-size="13" font-weight="600">Dynamic Worker</text>
+  <text x="420" y="196" text-anchor="middle" fill="#6b7280" font-size="11">Agent 绑定 / Active Signal</text>
+
+  <!-- Worker Loader box -->
+  <rect x="220" y="228" width="180" height="44" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.2"/>
+  <text x="310" y="254" text-anchor="middle" fill="#111827" font-size="13" font-weight="600">Worker Loader</text>
+
+  <!-- globalOutbound: null badge (red tint, pill shape) -->
+  <rect x="420" y="228" width="200" height="44" rx="22" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.2"/>
+  <text x="520" y="248" text-anchor="middle" fill="#dc2626" font-size="12" font-weight="600">globalOutbound</text>
+  <text x="520" y="264" text-anchor="middle" fill="#dc2626" font-size="11">null (无网络出口)</text>
+
+  <!-- Red X mark for Network Access blocked -->
+  <line x1="636" y1="240" x2="656" y2="260" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="656" y1="240" x2="636" y2="260" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round"/>
+  <rect x="660" y="242" width="48" height="18" rx="3" fill="#fef2f2" opacity="0.95"/>
+  <text x="684" y="255" text-anchor="middle" fill="#dc2626" font-size="11" font-weight="600">Block</text>
+
+  <!-- Facet (子 DO) box -->
+  <rect x="220" y="290" width="400" height="55" rx="8" fill="#faf5ff" stroke="#ede9fe" stroke-width="1.5"/>
+  <text x="420" y="313" text-anchor="middle" fill="#7c3aed" font-size="13" font-weight="600">Facet (子 Durable Object)</text>
+  <text x="420" y="332" text-anchor="middle" fill="#6b7280" font-size="12">独立 SQLite 实例</text>
+
+  <!-- Internal arrows -->
+  <!-- Worker Loader -> Dynamic Worker -->
+  <line x1="310" y1="228" x2="310" y2="208" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <rect x="316" y="212" width="36" height="18" rx="3" fill="#ffffff" opacity="0.95"/>
+  <text x="334" y="225" text-anchor="middle" fill="#16a34a" font-size="12">加载</text>
+
+  <!-- ===== Capability Bindings Column (right side, x=760) ===== -->
+  <rect x="760" y="158" width="170" height="44" rx="8" fill="#fff7ed" stroke="#fed7aa" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="845" y="184" text-anchor="middle" fill="#F48120" font-size="13" font-weight="600">自定义 Bindings</text>
+
+  <rect x="760" y="218" width="170" height="44" rx="8" fill="#fff7ed" stroke="#fed7aa" stroke-width="1.5"/>
+  <text x="845" y="244" text-anchor="middle" fill="#F48120" font-size="13" font-weight="600">RPC / Cap'n Proto</text>
+
+  <rect x="760" y="278" width="170" height="44" rx="8" fill="#fff7ed" stroke="#fed7aa" stroke-width="1.5"/>
+  <text x="845" y="304" text-anchor="middle" fill="#F48120" font-size="13" font-weight="600">DO Facets</text>
+
+  <!-- ===== Arrows ===== -->
+  <!-- Agent -> Dynamic Worker (blue) -->
+  <line x1="181" y1="70" x2="220" y2="183" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <rect x="170" y="118" width="36" height="18" rx="3" fill="#ffffff" opacity="0.95"/>
+  <text x="188" y="131" text-anchor="middle" fill="#2563eb" font-size="12">调用</text>
+
+  <!-- Code -> Worker Loader (blue, L-shaped) -->
+  <path d="M 640,100 L 640,210 L 400,210 L 400,228" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <rect x="480" y="198" width="36" height="18" rx="3" fill="#ffffff" opacity="0.95"/>
+  <text x="498" y="211" text-anchor="middle" fill="#2563eb" font-size="12">注入</text>
+
+  <!-- Bindings -> Worker (orange dashed) -->
+  <line x1="760" y1="180" x2="620" y2="180" stroke="#F48120" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-orange)"/>
+  <rect x="668" y="163" width="36" height="18" rx="3" fill="#ffffff" opacity="0.95"/>
+  <text x="686" y="176" text-anchor="middle" fill="#F48120" font-size="12">绑定</text>
+
+  <!-- ===== Bottom Performance Badges ===== -->
+  <rect x="240" y="445" width="130" height="34" rx="17" fill="#dcfce7" stroke="#16a34a" stroke-width="1.2"/>
+  <text x="305" y="467" text-anchor="middle" fill="#16a34a" font-size="13" font-weight="600">启动: 几毫秒</text>
+
+  <rect x="395" y="445" width="120" height="34" rx="17" fill="#dbeafe" stroke="#2563eb" stroke-width="1.2"/>
+  <text x="455" y="467" text-anchor="middle" fill="#2563eb" font-size="13" font-weight="600">内存: 几 MB</text>
+
+  <rect x="540" y="445" width="150" height="34" rx="17" fill="#fff7ed" stroke="#F48120" stroke-width="1.2"/>
+  <text x="615" y="467" text-anchor="middle" fill="#F48120" font-size="13" font-weight="600">比容器快 ~100x</text>
+
+  <!-- ===== Summary Box ===== -->
+  <rect x="200" y="496" width="560" height="36" rx="8" fill="#f9fafb" stroke="#d1d5db" stroke-width="1"/>
+  <text x="480" y="519" text-anchor="middle" fill="#6b7280" font-size="12">V8 Isolate 沙箱隔离 | 无网络出口 | Agent 绑定生命周期 | DO Facet 独立存储</text>
+
+  <!-- ===== Legend ===== -->
+  <g transform="translate(200, 555)">
+    <line x1="0" y1="8" x2="30" y2="8" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+    <text x="36" y="12" fill="#6b7280" font-size="12">代码/调用流</text>
+    <line x1="140" y1="8" x2="170" y2="8" stroke="#F48120" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-orange)"/>
+    <text x="176" y="12" fill="#6b7280" font-size="12">能力绑定</text>
+    <line x1="280" y1="8" x2="310" y2="8" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+    <text x="316" y="12" fill="#6b7280" font-size="12">加载</text>
+    <line x1="370" y1="2" x2="384" y2="16" stroke="#dc2626" stroke-width="2" stroke-linecap="round"/>
+    <line x1="384" y1="2" x2="370" y2="16" stroke="#dc2626" stroke-width="2" stroke-linecap="round"/>
+    <text x="392" y="12" fill="#6b7280" font-size="12">网络阻断</text>
+  </g>
+</svg>

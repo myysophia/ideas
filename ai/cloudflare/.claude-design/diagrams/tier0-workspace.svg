@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600">
+  <style>
+    text { font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#16a34a"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#F48120"/>
+    </marker>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="108%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+  <!-- Background -->
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text x="480" y="30" text-anchor="middle" fill="#111827" font-size="18" font-weight="600">Tier 0: Workspace — 持久化工作区</text>
+
+  <!-- Cloudflare Brand Badge -->
+  <circle cx="48" cy="26" r="16" fill="#F48120"/>
+  <text x="48" y="31" text-anchor="middle" fill="#ffffff" font-size="9" font-weight="700">CF</text>
+  <text x="72" y="31" fill="#F48120" font-size="13" font-weight="600">Workers AI</text>
+
+  <!-- ===== Agent Hexagon (480, 70) ===== -->
+  <polygon points="480,34 511.2,52 511.2,88 480,106 448.8,88 448.8,52" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="480" y="66" text-anchor="middle" fill="#111827" font-size="13" font-weight="600">Agent</text>
+  <text x="480" y="82" text-anchor="middle" fill="#6b7280" font-size="11">/ Think</text>
+
+  <!-- ===== Arrow: Agent -> Workspace (blue) ===== -->
+  <line x1="480" y1="106" x2="480" y2="118" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <rect x="490" y="100" width="52" height="18" rx="3" fill="#ffffff" opacity="0.95"/>
+  <text x="516" y="113" text-anchor="middle" fill="#2563eb" font-size="12">工具调用</text>
+
+  <!-- ===== Workspace Container (200, 120, 560, 330) ===== -->
+  <rect x="200" y="122" width="560" height="330" rx="12" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="220" y="146" fill="#16a34a" font-size="12" font-weight="600" letter-spacing="0.06em">WORKSPACE</text>
+
+  <!-- Tool boxes row (y=160) -->
+  <rect x="216" y="158" width="70" height="46" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.2"/>
+  <text x="251" y="176" text-anchor="middle" font-size="14">⚙</text>
+  <text x="251" y="194" text-anchor="middle" fill="#111827" font-size="12">read</text>
+
+  <rect x="292" y="158" width="70" height="46" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.2"/>
+  <text x="327" y="176" text-anchor="middle" font-size="14">⚙</text>
+  <text x="327" y="194" text-anchor="middle" fill="#111827" font-size="12">write</text>
+
+  <rect x="368" y="158" width="70" height="46" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.2"/>
+  <text x="403" y="176" text-anchor="middle" font-size="14">⚙</text>
+  <text x="403" y="194" text-anchor="middle" fill="#111827" font-size="12">edit</text>
+
+  <rect x="444" y="158" width="70" height="46" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.2"/>
+  <text x="479" y="176" text-anchor="middle" font-size="14">⚙</text>
+  <text x="479" y="194" text-anchor="middle" fill="#111827" font-size="12">list</text>
+
+  <rect x="520" y="158" width="70" height="46" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.2"/>
+  <text x="555" y="176" text-anchor="middle" font-size="14">⚙</text>
+  <text x="555" y="194" text-anchor="middle" fill="#111827" font-size="12">find</text>
+
+  <rect x="596" y="158" width="70" height="46" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.2"/>
+  <text x="631" y="176" text-anchor="middle" font-size="14">⚙</text>
+  <text x="631" y="194" text-anchor="middle" fill="#111827" font-size="12">grep</text>
+
+  <rect x="672" y="158" width="70" height="46" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.2"/>
+  <text x="707" y="176" text-anchor="middle" font-size="14">⚙</text>
+  <text x="707" y="194" text-anchor="middle" fill="#111827" font-size="12">delete</text>
+
+  <!-- ===== Arrows: Tools -> Storage ===== -->
+  <!-- Tools -> DO SQLite (green solid) -->
+  <line x1="340" y1="204" x2="340" y2="278" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <rect x="348" y="232" width="36" height="18" rx="3" fill="#ffffff" opacity="0.95"/>
+  <text x="366" y="245" text-anchor="middle" fill="#16a34a" font-size="12">读写</text>
+
+  <!-- Tools -> R2 (green dashed) -->
+  <line x1="620" y1="204" x2="620" y2="278" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-green)"/>
+  <rect x="628" y="232" width="36" height="18" rx="3" fill="#ffffff" opacity="0.95"/>
+  <text x="646" y="245" text-anchor="middle" fill="#16a34a" font-size="12">溢出</text>
+
+  <!-- ===== DO SQLite Cylinder (cx=340, top=280) ===== -->
+  <ellipse cx="340" cy="280" rx="60" ry="16" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <rect x="280" y="280" width="120" height="70" fill="#dcfce7" stroke="none"/>
+  <line x1="280" y1="280" x2="280" y2="350" stroke="#16a34a" stroke-width="1.5"/>
+  <line x1="400" y1="280" x2="400" y2="350" stroke="#16a34a" stroke-width="1.5"/>
+  <ellipse cx="340" cy="350" rx="60" ry="16" fill="#bbf7d0" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="340" y="322" text-anchor="middle" fill="#111827" font-size="11" font-weight="600">Durable Object</text>
+  <text x="340" y="340" text-anchor="middle" fill="#6b7280" font-size="11">SQLite</text>
+  <!-- Label below cylinder -->
+  <text x="340" y="384" text-anchor="middle" fill="#16a34a" font-size="12" font-weight="600">主存储</text>
+
+  <!-- ===== R2 Cylinder (cx=620, top=280) ===== -->
+  <ellipse cx="620" cy="280" rx="55" ry="14" fill="#fed7aa" stroke="#F48120" stroke-width="1.5"/>
+  <rect x="565" y="280" width="110" height="70" fill="#fed7aa" stroke="none"/>
+  <line x1="565" y1="280" x2="565" y2="350" stroke="#F48120" stroke-width="1.5"/>
+  <line x1="675" y1="280" x2="675" y2="350" stroke="#F48120" stroke-width="1.5"/>
+  <ellipse cx="620" cy="350" rx="55" ry="14" fill="#fdba74" stroke="#F48120" stroke-width="1.5"/>
+  <text x="620" y="320" text-anchor="middle" fill="#111827" font-size="12" font-weight="600">R2</text>
+  <text x="620" y="338" text-anchor="middle" fill="#6b7280" font-size="11">Spillover</text>
+  <!-- Label below cylinder -->
+  <text x="620" y="384" text-anchor="middle" fill="#F48120" font-size="12" font-weight="600">溢出存储</text>
+
+  <!-- ===== Key Properties Box (200, 472, 560, 65) ===== -->
+  <rect x="200" y="472" width="560" height="65" rx="8" fill="#fff7ed" stroke="#fed7aa" stroke-width="1.2"/>
+  <text x="480" y="494" text-anchor="middle" fill="#F48120" font-size="11" font-weight="600" letter-spacing="0.06em">KEY PROPERTIES</text>
+  <text x="480" y="516" text-anchor="middle" fill="#111827" font-size="13">不执行代码 | 不直接联网 | 天然可审计 | 与 Agent 实例强绑定</text>
+
+  <!-- ===== Legend ===== -->
+  <g transform="translate(200, 555)">
+    <line x1="0" y1="8" x2="30" y2="8" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+    <text x="36" y="12" fill="#6b7280" font-size="12">Agent 调用</text>
+    <line x1="140" y1="8" x2="170" y2="8" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+    <text x="176" y="12" fill="#6b7280" font-size="12">存储读写</text>
+    <line x1="280" y1="8" x2="310" y2="8" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-green)"/>
+    <text x="316" y="12" fill="#6b7280" font-size="12">溢出 (R2)</text>
+  </g>
+</svg>

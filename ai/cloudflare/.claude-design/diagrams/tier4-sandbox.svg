@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600">
+  <style>
+    text { font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+  </style>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#059669"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#F48120"/>
+    </marker>
+    <filter id="shadow-sm">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#000" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="960" height="600" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text x="480" y="28" text-anchor="middle" fill="#111827" font-size="18" font-weight="600">Tier 4: Sandbox — 完整计算机环境</text>
+
+  <!-- Agent Hexagon at (480, 55) -->
+  <polygon points="480,30 508.6,44.5 508.6,73.5 480,88 451.4,73.5 451.4,44.5" fill="#fff7ed" stroke="#F48120" stroke-width="2"/>
+  <text x="480" y="65" text-anchor="middle" fill="#F48120" font-size="12" font-weight="600">Agent / Think</text>
+
+  <!-- ============ Large Sandbox Container (150, 130, 660, 340) ============ -->
+  <rect x="150" y="130" width="660" height="340" rx="10" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5" stroke-dasharray="8,4"/>
+  <!-- "独立 VM" badge -->
+  <rect x="155" y="124" width="60" height="20" rx="4" fill="#fef2f2" stroke="#fca5a5" stroke-width="1"/>
+  <text x="185" y="138" text-anchor="middle" fill="#dc2626" font-size="11" font-weight="600">独立 VM</text>
+
+  <!-- Terminal/PTY icon (dark fill, x=200, y=170) -->
+  <rect x="200" y="155" width="160" height="50" rx="6" fill="#1f2937" stroke="#374151" stroke-width="1.5" filter="url(#shadow-sm)"/>
+  <!-- Terminal prompt -->
+  <text x="216" y="176" fill="#22c55e" font-size="13" font-weight="600">$</text>
+  <text x="230" y="176" fill="#e5e7eb" font-size="12">cd /workspace &amp;&amp; npm run dev</text>
+  <text x="216" y="194" fill="#9ca3af" font-size="11">Ready on localhost:3000</text>
+  <text x="280" y="148" text-anchor="middle" fill="#6b7280" font-size="11">Terminal / PTY</text>
+
+  <!-- ============ Component Boxes Row 1 ============ -->
+  <!-- Shell box -->
+  <rect x="200" y="220" width="120" height="44" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" filter="url(#shadow-sm)"/>
+  <text x="260" y="239" text-anchor="middle" fill="#374151" font-size="13" font-weight="600">Shell</text>
+  <text x="260" y="255" text-anchor="middle" fill="#6b7280" font-size="11">bash / zsh</text>
+
+  <!-- 文件系统 box -->
+  <rect x="340" y="220" width="120" height="44" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" filter="url(#shadow-sm)"/>
+  <text x="400" y="239" text-anchor="middle" fill="#374151" font-size="13" font-weight="600">文件系统</text>
+  <text x="400" y="255" text-anchor="middle" fill="#6b7280" font-size="11">/workspace</text>
+
+  <!-- 后台进程 box -->
+  <rect x="480" y="220" width="120" height="44" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" filter="url(#shadow-sm)"/>
+  <text x="540" y="239" text-anchor="middle" fill="#374151" font-size="13" font-weight="600">后台进程</text>
+  <text x="540" y="255" text-anchor="middle" fill="#6b7280" font-size="11">dev server, workers</text>
+
+  <!-- ============ Component Boxes Row 2 ============ -->
+  <!-- Dev Server box -->
+  <rect x="200" y="280" width="120" height="44" rx="6" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5" filter="url(#shadow-sm)"/>
+  <text x="260" y="299" text-anchor="middle" fill="#1e40af" font-size="13" font-weight="600">Dev Server</text>
+  <text x="260" y="315" text-anchor="middle" fill="#6b7280" font-size="11">localhost:3000</text>
+
+  <!-- Git / Toolchain box -->
+  <rect x="340" y="280" width="120" height="44" rx="6" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5" filter="url(#shadow-sm)"/>
+  <text x="400" y="299" text-anchor="middle" fill="#1e40af" font-size="13" font-weight="600">Git / Toolchain</text>
+  <text x="400" y="315" text-anchor="middle" fill="#6b7280" font-size="11">版本控制 &amp; 构建</text>
+
+  <!-- Preview URL box -->
+  <rect x="480" y="280" width="120" height="44" rx="6" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5" filter="url(#shadow-sm)"/>
+  <text x="540" y="299" text-anchor="middle" fill="#1e40af" font-size="13" font-weight="600">Preview URL</text>
+  <text x="540" y="315" text-anchor="middle" fill="#6b7280" font-size="11">cloudflare.dev</text>
+
+  <!-- ============ Session Management Area ============ -->
+  <!-- Session 1 box -->
+  <rect x="200" y="340" width="195" height="52" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" filter="url(#shadow-sm)"/>
+  <text x="240" y="361" fill="#374151" font-size="13" font-weight="600">Session 1</text>
+  <rect x="240" y="368" width="140" height="16" rx="3" fill="#f3f4f6"/>
+  <text x="310" y="380" text-anchor="middle" fill="#6b7280" font-size="11">独立 shell / cwd</text>
+
+  <!-- Session 2 box -->
+  <rect x="405" y="340" width="195" height="52" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" filter="url(#shadow-sm)"/>
+  <text x="445" y="361" fill="#374151" font-size="13" font-weight="600">Session 2</text>
+  <rect x="445" y="368" width="140" height="16" rx="3" fill="#f3f4f6"/>
+  <text x="515" y="380" text-anchor="middle" fill="#6b7280" font-size="11">独立环境变量</text>
+
+  <!-- "共享文件系统 &amp; 进程" label spanning both sessions -->
+  <rect x="252" y="400" width="160" height="18" rx="3" fill="#fef2f2" stroke="#fca5a5" stroke-width="0.5"/>
+  <text x="332" y="413" text-anchor="middle" fill="#dc2626" font-size="11" font-weight="500">共享文件系统 &amp; 进程</text>
+  <!-- Arrow connecting sessions to shared label -->
+  <line x1="297" y1="392" x2="316" y2="400" stroke="#dc2626" stroke-width="0.8" opacity="0.6"/>
+  <line x1="502" y1="392" x2="400" y2="400" stroke="#dc2626" stroke-width="0.8" opacity="0.6"/>
+
+  <!-- ============ Right side: Sandbox SDK stack (x=850) ============ -->
+  <!-- Sandbox SDK box -->
+  <rect x="840" y="170" width="110" height="42" rx="6" fill="#fff7ed" stroke="#F48120" stroke-width="1.5" filter="url(#shadow-sm)"/>
+  <text x="895" y="195" text-anchor="middle" fill="#9a3412" font-size="13" font-weight="600">Sandbox SDK</text>
+
+  <!-- Worker box -->
+  <rect x="840" y="228" width="110" height="42" rx="6" fill="#fff7ed" stroke="#F48120" stroke-width="1.5" filter="url(#shadow-sm)"/>
+  <text x="895" y="253" text-anchor="middle" fill="#9a3412" font-size="13" font-weight="600">Worker</text>
+
+  <!-- Durable Object box -->
+  <rect x="840" y="286" width="110" height="42" rx="6" fill="#fff7ed" stroke="#F48120" stroke-width="1.5" filter="url(#shadow-sm)"/>
+  <text x="895" y="311" text-anchor="middle" fill="#9a3412" font-size="13" font-weight="600">Durable Object</text>
+
+  <!-- Containers box -->
+  <rect x="840" y="344" width="110" height="42" rx="6" fill="#fff7ed" stroke="#F48120" stroke-width="1.5" filter="url(#shadow-sm)"/>
+  <text x="895" y="369" text-anchor="middle" fill="#9a3412" font-size="13" font-weight="600">Containers</text>
+
+  <!-- Vertical stack arrows between SDK boxes -->
+  <line x1="895" y1="212" x2="895" y2="224" stroke="#F48120" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+  <line x1="895" y1="270" x2="895" y2="282" stroke="#F48120" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+  <line x1="895" y1="328" x2="895" y2="340" stroke="#F48120" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+
+  <!-- ============ Bottom callout boxes ============ -->
+  <!-- Security model callout (left) -->
+  <rect x="150" y="500" width="360" height="42" rx="8" fill="#fef2f2" stroke="#fca5a5" stroke-width="1"/>
+  <text x="166" y="518" fill="#dc2626" font-size="12" font-weight="600">安全模型:</text>
+  <text x="240" y="518" fill="#6b7280" font-size="12">文件 | 进程 | 网络 | 资源配额</text>
+  <text x="330" y="518" fill="#dc2626" font-size="12" font-weight="600">四维隔离</text>
+
+  <!-- Cost callout (right) -->
+  <rect x="530" y="500" width="360" height="42" rx="8" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="546" y="518" fill="#374151" font-size="12" font-weight="600">成本:</text>
+  <text x="590" y="518" fill="#6b7280" font-size="12">按 CPU / 内存 / 磁盘 / egress 计费</text>
+
+  <!-- ============ ARROWS ============ -->
+
+  <!-- Agent -> Sandbox (blue, label "getSandbox()") -->
+  <path d="M 480,88 L 480,126" stroke="#2563eb" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)"/>
+  <rect x="488" y="94" width="80" height="18" rx="3" fill="#ffffff" fill-opacity="0.95"/>
+  <text x="528" y="107" text-anchor="middle" fill="#2563eb" font-size="12" font-weight="600">getSandbox()</text>
+
+  <!-- Sandbox SDK -> Worker connection -->
+  <line x1="840" y1="191" x2="816" y2="191" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <line x1="840" y1="249" x2="816" y2="249" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <line x1="840" y1="307" x2="816" y2="307" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <line x1="840" y1="365" x2="816" y2="365" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+
+  <!-- Worker -> Sandbox SDK (blue, showing the stack direction) -->
+  <rect x="700" y="270" width="90" height="18" rx="3" fill="#ffffff" fill-opacity="0.95"/>
+  <text x="745" y="283" text-anchor="middle" fill="#2563eb" font-size="11">SDK Stack</text>
+
+  <!-- Workspace <-> Sandbox bidirectional (green dashed, label "双向同步") -->
+  <!-- Workspace label -->
+  <rect x="60" y="345" width="80" height="50" rx="6" fill="#f0fdf4" stroke="#86efac" stroke-width="1" filter="url(#shadow-sm)"/>
+  <text x="100" y="367" text-anchor="middle" fill="#166534" font-size="12" font-weight="600">Workspace</text>
+  <text x="100" y="383" text-anchor="middle" fill="#6b7280" font-size="10">本地目录</text>
+
+  <!-- Bidirectional green dashed arrows: Workspace <-> Sandbox -->
+  <!-- Top arrow: Workspace -> Sandbox -->
+  <path d="M 130,350 L 148,350 L 148,280 L 150,280" stroke="#059669" stroke-width="1.5" fill="none" stroke-dasharray="6,4" marker-end="url(#arrow-green)"/>
+  <!-- Bottom arrow: Sandbox -> Workspace -->
+  <path d="M 150,430 L 148,430 L 148,390 L 140,390" stroke="#059669" stroke-width="1.5" fill="none" stroke-dasharray="6,4" marker-end="url(#arrow-green)"/>
+  <!-- Bidirectional label -->
+  <rect x="60" y="310" width="80" height="18" rx="3" fill="#ffffff" fill-opacity="0.95"/>
+  <text x="100" y="323" text-anchor="middle" fill="#059669" font-size="11" font-weight="600">双向同步</text>
+
+  <!-- ============ Legend ============ -->
+  <g transform="translate(30, 565)">
+    <line x1="0" y1="8" x2="30" y2="8" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+    <text x="36" y="12" fill="#6b7280" font-size="12">Agent 调用</text>
+    <line x1="130" y1="8" x2="160" y2="8" stroke="#F48120" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+    <text x="166" y="12" fill="#6b7280" font-size="12">SDK Stack</text>
+    <line x1="260" y1="8" x2="290" y2="8" stroke="#059669" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrow-green)"/>
+    <text x="296" y="12" fill="#6b7280" font-size="12">双向同步</text>
+  </g>
+</svg>
