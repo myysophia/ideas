@@ -64,9 +64,9 @@ function processFile(filePath) {
   let password = '';
   let needsPassword = false;
   
-  // 从目录名提取 tag（对所有文件类型通用）
+  // 从目录名提取 tag（对所有文件类型通用，支持多级目录）
   const pathParts = relativePath.split(path.sep);
-  tag = pathParts.length > 1 ? pathParts[0] : '';
+  tag = pathParts.slice(0, -1).join('/');
   
   if (ext === '.md') {
     // 处理 Markdown 文件
