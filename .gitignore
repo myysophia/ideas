@@ -7,4 +7,7 @@ dist/
 *.md
 *.sh
 .history
+.claude-design/
+cf/assemble.py
+cf/cloudflare-slides-*.html
 
