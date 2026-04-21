@@ -737,6 +737,35 @@ function copyDirectoryRecursive(src, dest) {
   }
 }
 
+// 收集 HTML 文件引用的本地 assets 目录并复制到 dist
+function copyHtmlAssetDirs() {
+  const assetDirs = new Set();
+
+  articles.forEach(article => {
+    if (!article.url.endsWith('.html')) return;
+    const htmlPath = path.join('.', article.url.slice(1));
+    if (!fs.existsSync(htmlPath)) return;
+    const html = fs.readFileSync(htmlPath, 'utf-8');
+    const htmlDir = path.dirname(htmlPath);
+    const srcMatches = html.matchAll(/src="([^"]+)"/g);
+    for (const m of srcMatches) {
+      const srcVal = m[1];
+      if (srcVal.startsWith('http://') || srcVal.startsWith('https://') || srcVal.startsWith('/')) continue;
+      const absSrcDir = path.resolve(htmlDir, path.dirname(srcVal));
+      if (fs.existsSync(absSrcDir) && fs.statSync(absSrcDir).isDirectory()) {
+        assetDirs.add(absSrcDir);
+      }
+    }
+  });
+
+  for (const absDir of assetDirs) {
+    const relDir = path.relative('.', absDir);
+    const dest = path.join(OUTPUT_DIR, relDir);
+    copyDirectoryRecursive(absDir, dest);
+    console.log(`✓ 复制 asset 目录: ${relDir}/`);
+  }
+}
+
 // 主流程
 console.log('开始构建...\n');
 
@@ -751,6 +780,9 @@ generateAbout();
 
 // 复制静态资源
 copyStaticAssets();
+
+// 复制 HTML 引用的本地 assets 目录
+copyHtmlAssetDirs();
 
 console.log(`\n✓ 构建完成！共处理 ${articles.length} 篇文章`);
 console.log(`✓ 输出目录: ${OUTPUT_DIR}/`);
