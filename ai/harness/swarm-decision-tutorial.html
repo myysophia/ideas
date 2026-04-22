@@ -82,10 +82,11 @@ p{font-family:var(--font-body);font-weight:300;font-size:clamp(0.8rem,1.5vw,1.05
 .accent-line{width:48px;height:1px;background:linear-gradient(to right,var(--gold),transparent);margin-bottom:clamp(1rem,2vh,1.8rem)}
 
 /* ===== TERM TOOLTIPS ===== */
-.term{position:relative;border-bottom:1px dashed rgba(212,165,116,0.45);cursor:help;color:var(--gold);font-style:normal;white-space:nowrap}
-.term .tip{display:none;position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.93);color:#e8e4df;padding:8px 14px;border-radius:8px;font-family:var(--font-body);font-style:normal;font-size:clamp(0.62rem,1vw,0.8rem);white-space:nowrap;z-index:200;pointer-events:none;box-shadow:0 8px 30px rgba(0,0,0,0.6);border:1px solid rgba(212,165,116,0.2);max-width:300px;white-space:normal;text-align:center}
-.term .tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:rgba(0,0,0,0.93)}
-.term:hover .tip{display:block}
+.term{position:relative;border-bottom:1px dashed rgba(212,165,116,0.45);cursor:pointer;color:var(--gold);font-style:normal;transition:color 0.2s,border-color 0.2s}
+.term:hover,.term.active{color:#e8c9a0;border-color:rgba(232,201,160,0.6)}
+.term .tip{display:none}
+.term-pop{position:fixed;z-index:500;background:rgba(20,20,20,0.96);color:#e8e4df;padding:10px 16px;border-radius:10px;font-family:var(--font-body);font-style:normal;font-size:clamp(0.7rem,1.1vw,0.85rem);line-height:1.65;box-shadow:0 12px 40px rgba(0,0,0,0.5);border:1px solid rgba(212,165,116,0.25);max-width:280px;white-space:normal;text-align:left;pointer-events:none;opacity:0;transform:translateY(6px);transition:opacity 0.2s ease,transform 0.2s ease}
+.term-pop.show{opacity:1;transform:translateY(0)}
 
 /* ===== CARDS ===== */
 .card-grid{display:grid;gap:clamp(0.6rem,1.5vw,1.2rem)}
@@ -1209,6 +1210,62 @@ const sp = new SP();
   close.addEventListener('click',e=>{e.stopPropagation();lb.classList.remove('open')});
   lb.addEventListener('click',e=>{if(e.target===lb||e.target===inner)lb.classList.remove('open')});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')lb.classList.remove('open')});
+})();
+
+/* Term tooltip system — hover + click */
+(function(){
+  let pop=null, activeTerm=null, hoverTimer=null;
+
+  function createPop(){
+    pop=document.createElement('div');
+    pop.className='term-pop';
+    document.body.appendChild(pop);
+  }
+
+  function show(term){
+    const tip=term.querySelector('.tip');
+    if(!tip||!tip.textContent.trim()) return;
+    if(!pop) createPop();
+    activeTerm=term;
+    term.classList.add('active');
+    pop.textContent=tip.textContent.trim();
+    pop.classList.remove('show');
+    const r=term.getBoundingClientRect();
+    const vw=window.innerWidth, vh=window.innerHeight;
+    pop.style.maxWidth='280px';
+    const popH=pop.offsetHeight||60;
+    let top=r.top-10-popH, left=r.left+r.width/2;
+    if(top<8) top=r.bottom+10;
+    pop.style.top=top+'px';
+    pop.style.left=left+'px';
+    pop.style.transform='translateX(-50%) translateY(6px)';
+    requestAnimationFrame(()=>{pop.classList.add('show');pop.style.transform='translateX(-50%) translateY(0)'});
+    requestAnimationFrame(()=>{
+      const pr=pop.getBoundingClientRect();
+      if(pr.left<8) pop.style.left='8px',pop.style.transform='translateX(0)';
+      else if(pr.right>vw-8) pop.style.left=(vw-8)+'px',pop.style.transform='translateX(-100%)';
+    });
+  }
+
+  function hide(){
+    if(pop) pop.classList.remove('show');
+    if(activeTerm){activeTerm.classList.remove('active');activeTerm=null}
+    clearTimeout(hoverTimer);
+  }
+
+  document.querySelectorAll('.term').forEach(term=>{
+    term.addEventListener('mouseenter',()=>{hoverTimer=setTimeout(()=>show(term),350)});
+    term.addEventListener('mouseleave',()=>{clearTimeout(hoverTimer);hide()});
+    term.addEventListener('click',e=>{
+      e.stopPropagation();
+      if(activeTerm===term){hide();return}
+      hide();
+      show(term);
+    });
+  });
+
+  document.addEventListener('click',()=>hide());
+  document.addEventListener('scroll',()=>hide(),{passive:true});
 })();
 </script>
 </body>
