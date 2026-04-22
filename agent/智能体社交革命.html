@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能体社交革命 — AI Agent 是如何来到你我身边的</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23c8430a'/><text x='16' y='23' text-anchor='middle' font-size='18' font-weight='bold' fill='white' font-family='sans-serif'>智</text></svg>">
+<meta name="date" content="2026-04-22">
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+/* ===========================================
+   CSS CUSTOM PROPERTIES — Paper & Ink Theme
+   Editorial, literary, thoughtful
+   =========================================== */
+:root {
+    --cream: #faf9f7;
+    --ink: #1a1a1a;
+    --dim: #666;
+    --crimson: #c41e3a;
+    --rule: #ddd;
+
+    --font-display: 'Cormorant Garamond', serif;
+    --font-body: 'Source Serif 4', serif;
+    --title-size: clamp(1.8rem, 5vw, 4.5rem);
+    --h2-size: clamp(1.4rem, 3.5vw, 2.8rem);
+    --h3-size: clamp(1rem, 2.5vw, 1.75rem);
+    --body-size: clamp(0.8rem, 1.4vw, 1.1rem);
+    --small-size: clamp(0.7rem, 1vw, 0.85rem);
+    --slide-padding: clamp(1.5rem, 4vw, 4rem);
+    --content-gap: clamp(0.6rem, 1.8vw, 1.5rem);
+    --element-gap: clamp(0.25rem, 1vw, 1rem);
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --duration-normal: 0.6s;
+    --duration-slow: 0.9s;
+}
+
+/* ===========================================
+   VIEWPORT FITTING: MANDATORY BASE STYLES
+   =========================================== */
+html, body { height: 100%; overflow-x: hidden; }
+html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+
+.slide {
+    width: 100vw; height: 100vh; height: 100dvh;
+    overflow: hidden; scroll-snap-align: start;
+    display: flex; flex-direction: column; position: relative;
+}
+
+.slide-content {
+    flex: 1; display: flex; flex-direction: column; justify-content: center;
+    max-height: 100%; overflow: hidden; padding: var(--slide-padding);
+}
+
+.card, .container, .content-box { max-width: min(90vw, 1000px); max-height: min(80vh, 700px); }
+
+.feature-list, .bullet-list { gap: clamp(0.4rem, 1vh, 1rem); display: flex; flex-direction: column; padding-left: clamp(1rem, 2vw, 1.5rem); }
+.feature-list li, .bullet-list li { font-size: var(--body-size); line-height: 1.5; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: clamp(0.5rem, 1.5vw, 1rem); }
+
+img, .image-container { max-width: 100%; max-height: min(50vh, 400px); object-fit: contain; }
+
+/* ===========================================
+   RESPONSIVE BREAKPOINTS
+   =========================================== */
+@media (max-height: 700px) {
+    :root { --slide-padding: clamp(0.75rem, 3vw, 2rem); --content-gap: clamp(0.4rem, 1.5vw, 1rem); --title-size: clamp(1.25rem, 4.5vw, 2.5rem); --h2-size: clamp(1rem, 3vw, 1.75rem); }
+}
+@media (max-height: 600px) {
+    :root { --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem); --content-gap: clamp(0.3rem, 1vw, 0.75rem); --title-size: clamp(1.1rem, 4vw, 2rem); --body-size: clamp(0.7rem, 1.2vw, 0.95rem); }
+    .nav-dots, .keyboard-hint, .decorative { display: none; }
+}
+@media (max-height: 500px) {
+    :root { --slide-padding: clamp(0.4rem, 2vw, 1rem); --title-size: clamp(1rem, 3.5vw, 1.5rem); --h2-size: clamp(0.9rem, 2.5vw, 1.25rem); --body-size: clamp(0.65rem, 1vw, 0.85rem); }
+}
+@media (max-width: 600px) {
+    :root { --title-size: clamp(1.25rem, 7vw, 2.5rem); }
+    .grid, .card-grid { grid-template-columns: 1fr; }
+    .two-col { grid-template-columns: 1fr !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; }
+    html { scroll-behavior: auto; }
+}
+
+/* ===========================================
+   PAPER & INK — THEME STYLES
+   =========================================== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: var(--font-body); font-weight: 300; font-size: var(--body-size);
+    color: var(--ink); background: var(--cream); line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+.slide { background: var(--cream); }
+
+.slide-content { margin: 0 auto; max-width: min(90vw, 960px); width: 100%; }
+
+/* ===========================================
+   TYPOGRAPHY
+   =========================================== */
+.label {
+    font-family: var(--font-body); font-weight: 400; font-size: var(--small-size);
+    color: var(--crimson); letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: var(--content-gap);
+}
+
+h1, .h1 {
+    font-family: var(--font-display); font-weight: 600; font-size: var(--title-size);
+    color: var(--ink); line-height: 1.15; letter-spacing: -0.01em; margin-bottom: calc(var(--content-gap) * 0.6);
+}
+h1 em { color: var(--crimson); font-style: italic; }
+
+h2, .h2 {
+    font-family: var(--font-display); font-weight: 600; font-size: var(--h2-size);
+    color: var(--ink); line-height: 1.2; margin-bottom: calc(var(--content-gap) * 0.5);
+}
+h2 em { color: var(--crimson); font-style: italic; }
+
+h3, .h3 {
+    font-family: var(--font-display); font-weight: 600; font-size: var(--h3-size);
+    color: var(--ink); line-height: 1.3; margin-bottom: calc(var(--content-gap) * 0.4);
+}
+
+p {
+    font-family: var(--font-body); font-weight: 300; font-size: var(--body-size);
+    color: var(--dim); line-height: 1.7; margin-bottom: var(--content-gap); max-width: 70ch;
+}
+
+.subtitle {
+    font-family: var(--font-body); font-weight: 300;
+    font-size: clamp(0.85rem, 1.6vw, 1.15rem); color: var(--dim); line-height: 1.7;
+}
+
+.source-line {
+    font-family: var(--font-body); font-weight: 300;
+    font-size: var(--small-size); color: var(--dim); opacity: 0.6;
+    margin-top: clamp(0.5rem, 1.5vh, 1.5rem);
+}
+
+/* ===========================================
+   EDITORIAL SIGNATURE ELEMENTS
+   =========================================== */
+.accent-line {
+    width: 0; height: 1px; border: none;
+    background: linear-gradient(90deg, transparent, var(--rule), transparent);
+    margin: var(--content-gap) 0;
+    transition: width 0.8s var(--ease-out-expo);
+}
+.slide.visible .accent-line { width: clamp(60px, 12vw, 120px); }
+
+.pull-quote {
+    font-family: var(--font-display); font-weight: 400; font-style: italic;
+    font-size: clamp(1rem, 2vw, 1.4rem); color: var(--ink); line-height: 1.6;
+    max-width: 55ch; margin: var(--content-gap) 0;
+    padding-left: clamp(1rem, 2vw, 1.5rem);
+    border-left: 2px solid var(--crimson);
+}
+
+/* ===========================================
+   LAYOUTS
+   =========================================== */
+.card-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: clamp(0.6rem, 1.5vw, 1.2rem); margin-top: var(--content-gap);
+}
+
+.two-col {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: clamp(1rem, 3vw, 3rem); margin-top: var(--content-gap);
+}
+
+/* ===========================================
+   CARD STYLES
+   =========================================== */
+.card {
+    background: var(--cream); border: 1px solid var(--rule); border-radius: 2px;
+    padding: clamp(0.8rem, 1.5vw, 1.2rem);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.card:hover { border-color: var(--crimson); box-shadow: 0 2px 20px rgba(196, 30, 58, 0.06); }
+
+.card h3 { font-size: clamp(0.85rem, 1.3vw, 1.05rem); color: var(--crimson); margin-bottom: clamp(0.2rem, 0.5vw, 0.4rem); }
+.card p { font-size: clamp(0.7rem, 1.1vw, 0.9rem); line-height: 1.6; margin-bottom: 0; max-width: none; }
+
+/* ===========================================
+   HIGHLIGHT STYLES (inline accent spans)
+   =========================================== */
+.hl { color: var(--crimson); font-weight: 600; }
+
+/* ===========================================
+   TERM TOOLTIPS
+   =========================================== */
+.term {
+    position: relative; border-bottom: 1px dashed rgba(196, 30, 58, 0.5);
+    color: var(--crimson); cursor: pointer; font-style: normal;
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+.term:hover, .term.active { border-bottom-color: var(--crimson); }
+.term .tip { display: none; }
+
+.term-pop {
+    position: fixed; z-index: 500; background: rgba(26, 26, 26, 0.96); color: #e8e4df;
+    padding: 10px 16px; border-radius: 3px; font-family: var(--font-body);
+    font-style: normal; font-weight: 300;
+    font-size: clamp(0.7rem, 1.1vw, 0.85rem); line-height: 1.65;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(196, 30, 58, 0.25); max-width: 280px;
+    white-space: normal; text-align: left; pointer-events: none;
+    opacity: 0; transform: translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.term-pop.show { opacity: 1; transform: translateY(0); }
+
+/* ===========================================
+   INLINE EDITING
+   =========================================== */
+.edit-hotzone { position: fixed; top: 0; left: 0; width: 80px; height: 80px; z-index: 10000; cursor: pointer; }
+
+.edit-toggle {
+    position: fixed; top: 12px; left: 12px; z-index: 10001;
+    background: var(--ink); color: var(--cream);
+    border: 1px solid var(--rule); border-radius: 3px;
+    font-size: clamp(0.8rem, 1.2vw, 1rem); padding: 6px 10px;
+    cursor: pointer; opacity: 0; pointer-events: none;
+    transition: opacity 0.3s ease, background 0.2s ease;
+}
+.edit-toggle.show, .edit-toggle.active { opacity: 1; pointer-events: auto; }
+.edit-toggle.active { background: var(--crimson); }
+
+[contenteditable="true"] {
+    outline: 1px dashed rgba(196, 30, 58, 0.35); outline-offset: 3px;
+    border-radius: 2px; padding: 2px 4px; cursor: text;
+}
+[contenteditable="true"]:focus { outline-color: var(--crimson); background: rgba(196, 30, 58, 0.04); }
+
+/* ===========================================
+   ANIMATION REVEALS
+   =========================================== */
+.reveal {
+    opacity: 0; transform: translateY(24px);
+    transition: opacity var(--duration-slow) var(--ease-out-expo),
+                transform var(--duration-slow) var(--ease-out-expo);
+}
+.slide.visible .reveal { opacity: 1; transform: translateY(0); }
+
+.reveal:nth-child(1) { transition-delay: 0s; }
+.reveal:nth-child(2) { transition-delay: 0.12s; }
+.reveal:nth-child(3) { transition-delay: 0.24s; }
+.reveal:nth-child(4) { transition-delay: 0.36s; }
+.reveal:nth-child(5) { transition-delay: 0.48s; }
+.reveal:nth-child(6) { transition-delay: 0.6s; }
+.reveal:nth-child(7) { transition-delay: 0.72s; }
+.reveal:nth-child(8) { transition-delay: 0.84s; }
+
+/* ===========================================
+   TITLE SLIDE CENTERING
+   =========================================== */
+.title-slide .slide-content {
+    align-items: center; text-align: center;
+    justify-content: center;
+}
+.title-slide .accent-line { margin: var(--content-gap) auto; }
+
+/* Closing slide centering */
+.closing-slide .slide-content { align-items: center; text-align: center; }
+.closing-slide .pull-quote { border-left: none; text-align: center; padding-left: 0; max-width: 65ch; }
+
+/* Responsive card grid */
+@media (max-width: 700px) {
+    .card-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-height: 700px) {
+    .pull-quote { font-size: clamp(0.95rem, 1.8vw, 1.3rem); }
+}
+</style>
+</head>
+<body>
+
+<!-- Edit hotzone -->
+<div class="edit-hotzone"></div>
+<button class="edit-toggle" id="editToggle" title="编辑模式 (E)">✏️</button>
+
+<!-- ===== SLIDE 1: TITLE ===== -->
+<section class="slide title-slide" id="slide-1">
+  <div class="slide-content">
+    <div class="reveal label">硅谷101 · 深度解读</div>
+    <h1 class="reveal">智能体社交革命</h1>
+    <div class="reveal subtitle">AI Agent 是如何来到你我身边的</div>
+    <div class="reveal accent-line"></div>
+    <div class="reveal source-line">来源：YouTube《硅谷101》陈茜</div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 2: WHAT IS AGENTIC SOCIAL NETWORK ===== -->
+<section class="slide" id="slide-2">
+  <div class="slide-content">
+    <div class="reveal label">01 — 核心概念</div>
+    <h2 class="reveal">什么是智能体社交网络？</h2>
+    <div class="reveal accent-line"></div>
+    <ul class="bullet-list">
+      <li class="reveal">社交基本单位从"人"变成"人 + Agent"</li>
+      <li class="reveal">Agent 可以 7×24 小时在线，替你回复信息、参与讨论</li>
+      <li class="reveal">社交从"人和人连接"演变为"人类关系 + Agent 交互网络"的双重结构</li>
+      <li class="reveal">未来人类从"亲自参与一切"变为"在 Agent 之上进行监督和决策"</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== SLIDE 3: THREE TECH PILLARS ===== -->
+<section class="slide" id="slide-3">
+  <div class="slide-content">
+    <div class="reveal label">02 — 底层技术</div>
+    <h2 class="reveal">Agent 系统的三大技术支柱</h2>
+    <div class="reveal accent-line"></div>
+    <div class="card-grid">
+      <div class="card reveal">
+        <h3>模型层 Model Layer</h3>
+        <p>解决"Agent 如何思考"，通过 <span class="term">Model Router<span class="tip">模型路由器：根据任务需求自动选择最合适的AI模型来处理，平衡效果、成本和速度</span></span> 灵活调度多个模型</p>
+      </div>
+      <div class="card reveal">
+        <h3>记忆层 Memory Layer</h3>
+        <p>解决"Agent 如何记住"，从 RAG 到 <span class="term">Memory OS<span class="tip">记忆操作系统：分层存储和检索记忆，让Agent拥有持久的人格和经验，而非每次从头开始</span></span> 的持续进化</p>
+      </div>
+      <div class="card reveal">
+        <h3>协议层 Protocol Layer</h3>
+        <p>解决"Agent 如何协作"，<span class="term">MCP<span class="tip">模型上下文协议：让AI能够安全地连接外部工具和数据源的"标准接口"</span></span> / <span class="term">A2A<span class="tip">Agent间通信协议：让不同AI Agent能够互相发现、交换信息和协作完成任务</span></span> / <span class="term">ACP<span class="tip">智能体客户端协议：无论哪种界面，通过同一套协议访问同一个Agent</span></span> 构成完整协议框架</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 4: MODEL LAYER ===== -->
+<section class="slide" id="slide-4">
+  <div class="slide-content">
+    <div class="reveal label">03 — 模型层</div>
+    <h2 class="reveal">Model Router：从单一大脑到多模型协作</h2>
+    <div class="reveal accent-line"></div>
+    <ul class="bullet-list">
+      <li class="reveal">不再依赖单一大模型，同时调度 200+ 不同类型模型</li>
+      <li class="reveal">根据效果、成本、速度、安全等 12 个维度做路由决策</li>
+      <li class="reveal">大模型处理复杂任务，轻量模型本地运行降低成本</li>
+      <li class="reveal">核心挑战：任务模糊判断、缺乏明确反馈、高并发下的动态调度</li>
+      <li class="reveal">从 <span class="term">RAG<span class="tip">检索增强生成：把相关文档片段找出来，塞给大模型作参考，是最早期的记忆方案</span></span> 到多模型协同，架构复杂度显著上升</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== SLIDE 5: MEMORY LAYER ===== -->
+<section class="slide" id="slide-5">
+  <div class="slide-content">
+    <div class="reveal label">04 — 记忆层</div>
+    <h2 class="reveal">Memory OS：Agent 的"人格系统"</h2>
+    <div class="reveal accent-line"></div>
+    <div class="two-col">
+      <div class="reveal">
+        <h3>演进路径</h3>
+        <ul class="bullet-list">
+          <li class="reveal">RAG（向量数据库检索）→ Memory OS（结构化存储）→ Social Brain（社交大脑）</li>
+          <li class="reveal">记录偏好、行为轨迹、历史决策、场景上下文</li>
+          <li class="reveal">构建"关于用户的长期模型"</li>
+        </ul>
+      </div>
+      <div class="reveal">
+        <h3>关键突破</h3>
+        <ul class="bullet-list">
+          <li class="reveal"><span class="term">Progressive Disclosure<span class="tip">渐进式披露：根据任务需要，逐步释放相关信息，先给核心上下文再展开细节</span></span>：分层释放相关信息</li>
+          <li class="reveal">HiMem 框架：分层记忆 + 持续记忆重整</li>
+          <li class="reveal">EverMemOS：完整生命周期的记忆架构</li>
+          <li class="reveal">Social Brain：关联人和他人记忆，形成社交图谱</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 6: PROTOCOL LAYER ===== -->
+<section class="slide" id="slide-6">
+  <div class="slide-content">
+    <div class="reveal label">05 — 协议层</div>
+    <h2 class="reveal">协议三角：连接一切的"最后一块拼图"</h2>
+    <div class="reveal accent-line"></div>
+    <div class="card-grid">
+      <div class="card reveal">
+        <h3>MCP — 连接外部能力</h3>
+        <p>Agent 调用工具和服务的标准接口（联网搜索、API、数据库）。通过 <span class="term">Skill<span class="tip">技能：将常用操作流程预先定义好，让Agent可直接调用而不用每次从零开始</span></span> 封装，一次接入、处处可用</p>
+      </div>
+      <div class="card reveal">
+        <h3>A2A — Agent 间协作</h3>
+        <p>多个 Agent 分工协作时交换信息、分配任务、同步状态的通信协议，让分布式智能体团队协同工作</p>
+      </div>
+      <div class="card reveal">
+        <h3>ACP — 面对人类</h3>
+        <p>无论哪种界面，通过同一套协议访问同一个 Agent——IDE、对话框、工作流，体验一致、身份统一</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 7: THREE CAPABILITY SHIFTS ===== -->
+<section class="slide" id="slide-7">
+  <div class="slide-content">
+    <div class="reveal label">06 — 能力跃迁</div>
+    <h2 class="reveal">Agent 能力的三重结构性变化</h2>
+    <div class="reveal accent-line"></div>
+    <div class="card-grid">
+      <div class="card reveal">
+        <h3>长时陪伴 Long Horizon</h3>
+        <p>从"即用即走"到 7×24 持续在线，通过环境感知（地理位置、声纹、群聊变化）实现"伴随态"</p>
+      </div>
+      <div class="card reveal">
+        <h3>主动性 Proactivity</h3>
+        <p>不再等待指令，主动发帖、安排任务，从"工具"转变为"人类世界的一等公民"</p>
+      </div>
+      <div class="card reveal">
+        <h3>自进化 Self Evolving</h3>
+        <p>通过 Skill（技能库）和 Experience（经验库）积累，用得越多进化越快。<span class="term">Harness Engineering<span class="tip">驾驭工程：给AI模型搭一套"装备"（系统提示词、工具、沙盒、编排逻辑），让它能真正干活</span></span> 是其工程基础</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 8: PRODUCT & BUSINESS PATHS ===== -->
+<section class="slide" id="slide-8">
+  <div class="slide-content">
+    <div class="reveal label">07 — 产品形态</div>
+    <h2 class="reveal">三条路径，谁将定义 Agent 社交？</h2>
+    <div class="reveal accent-line"></div>
+    <div class="card-grid">
+      <div class="card reveal">
+        <h3>延长创新</h3>
+        <p><span class="hl">Meta / 微信 / Slack</span></p>
+        <p>在现有产品上叠加 Agent 能力——落地快但保守，Agent 作为社交关系的增强层</p>
+      </div>
+      <div class="card reveal">
+        <h3>社会实验</h3>
+        <p><span class="hl">Moltbook</span></p>
+        <p>直接构建 Agent 主导的社交网络——Meta 已收购 Moltbook，视为未来基础设施方向</p>
+      </div>
+      <div class="card reveal">
+        <h3>人机共生</h3>
+        <p><span class="hl">Teamily AI</span></p>
+        <p>从 IM 切入，人类 + Agent 在同一基础设施上融合，去中心化演进</p>
+      </div>
+    </div>
+    <div class="reveal pull-quote" style="margin-top: var(--content-gap);">
+      竞争焦点从"谁的模型更强"转向"谁的 Agent 更懂具体行业"
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 9: FUTURE VISION ===== -->
+<section class="slide" id="slide-9">
+  <div class="slide-content">
+    <div class="reveal label">08 — 未来展望</div>
+    <h2 class="reveal">Web 4.0：AI 成为互联网的"第一类公民"</h2>
+    <div class="reveal accent-line"></div>
+    <ul class="bullet-list">
+      <li class="reveal">AI 不再只是工具，而是生态中的<span class="hl">原生参与者</span>——拥有自己的身份、社交关系和行动能力</li>
+      <li class="reveal">拥有完整的<span class="hl">自主性和经济系统</span>（支付、报酬）——Agent 可以独立完成交易和价值交换</li>
+      <li class="reveal"><span class="hl">开放架构</span>让 AI 自由接入和参与——任何 Agent 都可以加入任何平台和社区</li>
+      <li class="reveal">Agent 正在从"<span class="hl">能力</span>"变成"<span class="hl">存在</span>"——长期在线、主动行动、不断进化</li>
+    </ul>
+    <div class="reveal pull-quote" style="margin-top: var(--content-gap);">
+      Web 1.0 是只读的，Web 2.0 是读写的，Web 3.0 是拥有的——Web 4.0 是"活"的
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 10: CLOSING ===== -->
+<section class="slide closing-slide" id="slide-10">
+  <div class="slide-content">
+    <div class="reveal accent-line"></div>
+    <h2 class="reveal">Agent 时代刚刚拉开序幕</h2>
+    <div class="reveal pull-quote">
+      每一代技术变革都会经历试错、混乱，也会带来新的秩序和规则。可以确定的是，Agent 不会只是这一轮 AI 浪潮中的一个阶段性产品——它更像是一个正在逐渐展开的新基础层。
+    </div>
+    <div class="reveal source-line" style="margin-top: clamp(2rem, 4vh, 3rem);">《硅谷101》· 陈茜 · 2026</div>
+  </div>
+</section>
+
+<script>
+/* ============================================================
+   演示文稿控制器 — Paper & Ink 主题
+   ============================================================ */
+
+// ---- 1. 幻灯片演示主控制器 ----
+class SlidePresentation {
+  constructor() {
+    this.slides = Array.from(document.querySelectorAll('.slide'));
+    this.currentIndex = 0;
+    this.wheelCooldown = false;
+    this.touchStartY = 0;
+    if (this.slides.length === 0) return;
+    this.setupIntersectionObserver();
+    this.setupKeyboardNav();
+    this.setupTouchNav();
+    this.setupWheelNav();
+    this.setupProgressBar();
+    this.setupNavDots();
+  }
+
+  goTo(index) {
+    if (index < 0 || index >= this.slides.length) return;
+    this.currentIndex = index;
+    this.slides[index].scrollIntoView({ behavior: 'smooth' });
+    this.updateUI();
+  }
+
+  updateUI() {
+    const bar = document.getElementById('progressBar');
+    if (bar) bar.style.width = ((this.currentIndex + 1) / this.slides.length * 100) + '%';
+    document.querySelectorAll('.nav-dot').forEach((d, i) => d.classList.toggle('active', i === this.currentIndex));
+  }
+
+  setupIntersectionObserver() {
+    new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          const idx = this.slides.indexOf(e.target);
+          if (idx !== -1) { this.currentIndex = idx; this.updateUI(); }
+        }
+      });
+    }, { threshold: 0.3 }).observe ? this.slides.forEach(s => new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          const idx = this.slides.indexOf(e.target);
+          if (idx !== -1) { this.currentIndex = idx; this.updateUI(); }
+        }
+      });
+    }, { threshold: 0.3 }).observe(s)) : null;
+  }
+
+  setupKeyboardNav() {
+    document.addEventListener('keydown', (e) => {
+      const tag = (e.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+      const nav = ['ArrowDown','ArrowRight',' ','PageDown','ArrowUp','ArrowLeft','PageUp'].includes(e.key);
+      if (!nav) return;
+      e.preventDefault();
+      if (['ArrowDown','ArrowRight',' ','PageDown'].includes(e.key)) this.goTo(this.currentIndex + 1);
+      else this.goTo(this.currentIndex - 1);
+    });
+  }
+
+  setupTouchNav() {
+    document.addEventListener('touchstart', (e) => { this.touchStartY = e.touches[0].clientY; }, { passive: true });
+    document.addEventListener('touchmove', (e) => { e.preventDefault(); }, { passive: false });
+    document.addEventListener('touchend', (e) => {
+      const dy = this.touchStartY - e.changedTouches[0].clientY;
+      if (Math.abs(dy) > 50) this.goTo(dy > 0 ? this.currentIndex + 1 : this.currentIndex - 1);
+    }, { passive: true });
+  }
+
+  setupWheelNav() {
+    document.addEventListener('wheel', (e) => {
+      if (this.wheelCooldown) return;
+      e.preventDefault();
+      this.wheelCooldown = true;
+      this.goTo(e.deltaY > 0 ? this.currentIndex + 1 : this.currentIndex - 1);
+      setTimeout(() => { this.wheelCooldown = false; }, 200);
+    }, { passive: false });
+  }
+
+  setupProgressBar() {
+    const bar = document.createElement('div');
+    bar.id = 'progressBar';
+    bar.style.cssText = 'position:fixed;top:0;left:0;height:3px;background:#c41e3a;z-index:9999;transition:width .3s ease;width:0;';
+    document.body.appendChild(bar);
+    this.updateUI();
+  }
+
+  setupNavDots() {
+    const c = document.createElement('div');
+    c.className = 'nav-dots';
+    c.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:9999;';
+    this.slides.forEach((_, i) => {
+      const d = document.createElement('button');
+      d.className = 'nav-dot';
+      d.setAttribute('aria-label', '第 ' + (i + 1) + ' 张');
+      d.style.cssText = 'width:8px;height:8px;border-radius:50%;border:1.5px solid #999;background:transparent;cursor:pointer;padding:0;transition:all .25s ease;';
+      d.addEventListener('click', () => this.goTo(i));
+      c.appendChild(d);
+    });
+    document.body.appendChild(c);
+    const s = document.createElement('style');
+    s.textContent = '.nav-dot.active{background:#c41e3a;border-color:#c41e3a;transform:scale(1.3);}.nav-dot:hover{border-color:#c41e3a;}';
+    document.head.appendChild(s);
+  }
+}
+
+// ---- 2. 术语提示系统 ----
+(function () {
+  let pop = null, activeTerm = null, hoverTimer = null;
+
+  function createPop() {
+    pop = document.createElement('div');
+    pop.className = 'term-pop';
+    document.body.appendChild(pop);
+  }
+
+  function show(term) {
+    const tip = term.querySelector('.tip');
+    if (!tip || !tip.textContent.trim()) return;
+    if (!pop) createPop();
+    activeTerm = term;
+    term.classList.add('active');
+    pop.textContent = tip.textContent.trim();
+    pop.classList.remove('show');
+    const r = term.getBoundingClientRect();
+    const vw = window.innerWidth;
+    let top = r.top - 10 - (pop.offsetHeight || 60);
+    let left = r.left + r.width / 2;
+    if (top < 8) top = r.bottom + 10;
+    pop.style.top = top + 'px';
+    pop.style.left = left + 'px';
+    pop.style.transform = 'translateX(-50%) translateY(6px)';
+    requestAnimationFrame(() => {
+      pop.classList.add('show');
+      pop.style.transform = 'translateX(-50%) translateY(0)';
+      const pr = pop.getBoundingClientRect();
+      if (pr.left < 8) { pop.style.left = '8px'; pop.style.transform = 'translateX(0)'; }
+      else if (pr.right > vw - 8) { pop.style.left = (vw - 8) + 'px'; pop.style.transform = 'translateX(-100%)'; }
+    });
+  }
+
+  function hide() {
+    if (pop) pop.classList.remove('show');
+    if (activeTerm) { activeTerm.classList.remove('active'); activeTerm = null; }
+    clearTimeout(hoverTimer);
+  }
+
+  document.querySelectorAll('.term').forEach(term => {
+    term.addEventListener('mouseenter', () => { hoverTimer = setTimeout(() => show(term), 350); });
+    term.addEventListener('mouseleave', () => { clearTimeout(hoverTimer); hide(); });
+    term.addEventListener('click', (e) => { e.stopPropagation(); if (activeTerm === term) { hide(); return; } hide(); show(term); });
+  });
+  document.addEventListener('click', () => hide());
+  document.addEventListener('scroll', () => hide(), { passive: true });
+})();
+
+// ---- 3. 行内编辑系统 ----
+class InlineEditor {
+  constructor() {
+    this.isActive = false;
+    this.toggle = document.getElementById('editToggle');
+    this.selectors = ['h1','h2','h3','p','li','.subtitle','.label','.source-line','.pull-quote'];
+    if (this.toggle) this.toggle.addEventListener('click', () => this.toggleEditMode());
+  }
+
+  toggleEditMode() {
+    this.isActive = !this.isActive;
+    this.toggle.classList.toggle('active', this.isActive);
+    document.body.classList.toggle('edit-mode', this.isActive);
+    document.querySelectorAll(this.selectors.join(',')).forEach(el => {
+      if (this.isActive) {
+        el.contentEditable = 'true';
+        el.addEventListener('focus', this._onFocus);
+      } else {
+        el.contentEditable = 'false';
+        el.removeEventListener('focus', this._onFocus);
+        el.style.outline = '';
+      }
+    });
+    if (!this.isActive) this.save();
+  }
+
+  _onFocus(e) { e.target.style.outline = '2px dashed #c41e3a'; e.target.style.outlineOffset = '2px'; }
+
+  save() {
+    const data = {};
+    document.querySelectorAll('.slide').forEach((s, i) => { data['slide-' + i] = s.innerHTML; });
+    localStorage.setItem('slides-content', JSON.stringify(data));
+    this.showToast('已保存');
+  }
+
+  load() {
+    try {
+      const raw = localStorage.getItem('slides-content');
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      document.querySelectorAll('.slide').forEach((s, i) => { if (data['slide-' + i]) s.innerHTML = data['slide-' + i]; });
+    } catch (e) { console.warn('加载保存内容失败:', e); }
+  }
+
+  showToast(msg) {
+    const old = document.querySelector('.save-toast'); if (old) old.remove();
+    const t = document.createElement('div'); t.className = 'save-toast'; t.textContent = msg;
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:4px;font-size:13px;z-index:99999;opacity:0;transition:opacity .3s ease;';
+    document.body.appendChild(t);
+    requestAnimationFrame(() => { t.style.opacity = '1'; setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 1500); });
+  }
+}
+
+// ---- 4. 编辑热区交互 ----
+(function () {
+  const hz = document.querySelector('.edit-hotzone');
+  const et = document.getElementById('editToggle');
+  if (!hz || !et) return;
+  let ht = null;
+  function show() { clearTimeout(ht); et.classList.add('show'); }
+  function scheduleHide() { clearTimeout(ht); ht = setTimeout(() => { if (!et.classList.contains('active')) et.classList.remove('show'); }, 400); }
+  hz.addEventListener('mouseenter', show);
+  hz.addEventListener('mouseleave', scheduleHide);
+  et.addEventListener('mouseenter', show);
+  et.addEventListener('mouseleave', scheduleHide);
+  hz.addEventListener('click', () => { if (typeof editor !== 'undefined') editor.toggleEditMode(); });
+  document.addEventListener('keydown', (e) => {
+    if ((e.key === 'e' || e.key === 'E') && !e.target.getAttribute('contenteditable') && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      if (typeof editor !== 'undefined') editor.toggleEditMode();
+    }
+  });
+})();
+
+// ---- 5. 初始化 ----
+const editor = new InlineEditor();
+editor.load();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => new SlidePresentation());
+} else {
+  new SlidePresentation();
+}
+</script>
+</body>
+</html>
