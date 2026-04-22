@@ -164,6 +164,13 @@ h2 .hl-warm{color:var(--accent-warm)}
 .toc-item .num{display:inline-block;width:clamp(1.2rem,1.8vw,1.6rem);color:rgba(154,149,144,.35);font-size:clamp(.6rem,.85vw,.7rem)}
 @media(prefers-reduced-motion:reduce){.toc-btn,.toc-backdrop,.toc-sidebar{transition:none}}
 
+/* Architecture diagram zoom */
+.arch-svg-wrap{cursor:zoom-in;border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.3);display:inline-block;transition:box-shadow .3s ease}
+.arch-svg-wrap:hover{box-shadow:0 6px 30px rgba(0,0,0,.4)}
+#archModal{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:2000;display:none;align-items:center;justify-content:center;cursor:zoom-out;padding:2vh}
+#archModal svg{max-width:96vw;max-height:94vh;display:block;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.arch-zoom-hint{font-size:clamp(.5rem,.75vw,.65rem);color:rgba(154,149,144,.4);margin-top:clamp(.4rem,.8vw,.6rem);letter-spacing:.1em}
+
 </style>
 </head>
 <body>
@@ -231,11 +238,12 @@ h2 .hl-warm{color:var(--accent-warm)}
     <a class="toc-item" data-slide="29"><span class="num">30</span>Section Divider</a>
     <a class="toc-item" data-slide="30"><span class="num">31</span>场景 &times; 约束 选型矩阵</a>
     <a class="toc-item" data-slide="31"><span class="num">32</span>默认 AI SaaS 架构</a>
-    <a class="toc-item" data-slide="32"><span class="num">33</span>企业 AI 架构</a>
-    <a class="toc-item" data-slide="33"><span class="num">34</span>独立优势分析</a>
-    <a class="toc-item" data-slide="34"><span class="num">35</span>不足与风险</a>
-    <a class="toc-item" data-slide="35"><span class="num">36</span>战略建议</a>
-    <a class="toc-item" data-slide="36"><span class="num">37</span>结语 Q&A</a>
+    <a class="toc-item" data-slide="32"><span class="num">33</span>全栈架构图</a>
+    <a class="toc-item" data-slide="33"><span class="num">34</span>企业 AI 架构</a>
+    <a class="toc-item" data-slide="34"><span class="num">35</span>独立优势分析</a>
+    <a class="toc-item" data-slide="35"><span class="num">36</span>不足与风险</a>
+    <a class="toc-item" data-slide="36"><span class="num">37</span>战略建议</a>
+    <a class="toc-item" data-slide="37"><span class="num">38</span>结语 Q&A</a>
   </div>
 </aside>
 
@@ -1354,10 +1362,136 @@ h2 .hl-warm{color:var(--accent-warm)}
   </div>
 </div>
 
+<!-- Architecture Diagram Slide -->
+<div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f;flex-direction:column">
+  <div style="position:absolute;width:clamp(250px,35vw,450px);height:clamp(250px,35vw,450px);top:-8%;right:-5%;border-radius:50%;background:rgba(243,128,32,.07);filter:blur(80px);pointer-events:none"></div>
+  <div style="position:absolute;width:clamp(200px,30vw,350px);height:clamp(200px,30vw,350px);bottom:-5%;left:8%;border-radius:50%;background:rgba(201,184,150,.06);filter:blur(80px);pointer-events:none"></div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">32</div>
+  <div style="text-align:center;position:relative;z-index:1;max-width:clamp(700px,92vw,1100px);padding:clamp(1rem,2.5vw,2rem)">
+    <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.8rem);color:#d4a574;letter-spacing:.3em;text-transform:uppercase;margin-bottom:clamp(.4rem,.8vw,.6rem);opacity:0;animation:reveal .8s .2s forwards">ARCHITECTURE DIAGRAM</div>
+    <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.4rem,3vw,2.4rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(.3rem,.6vw,.5rem);opacity:0;animation:reveal .8s .4s forwards">Cloudflare AI <span style="color:#F38020">全栈架构图</span></h2>
+    <div style="width:clamp(60px,10vw,100px);height:1px;background:linear-gradient(90deg,transparent,#c9b896,transparent);margin:0 auto clamp(.6rem,1.2vw,1rem);opacity:0;animation:reveal .8s .5s forwards"></div>
+    <div class="arch-svg-wrap" id="archSvgWrap" style="width:100%;max-width:clamp(580px,72vw,880px);opacity:0;animation:reveal .8s .6s forwards">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780" width="100%" preserveAspectRatio="xMidYMid meet">
+        <style>text{font-family:'Helvetica Neue',Helvetica,Arial,'PingFang SC','Microsoft YaHei',sans-serif}</style>
+        <defs>
+          <marker id="a-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#2563eb"/></marker>
+          <marker id="a-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#ea580c"/></marker>
+          <marker id="a-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#059669"/></marker>
+          <marker id="a-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#7c3aed"/></marker>
+          <filter id="glow" x="-4%" y="-4%" width="108%" height="116%"><feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#F38020" flood-opacity="0.12"/></filter>
+        </defs>
+        <rect width="1200" height="780" fill="#ffffff"/>
+        <text x="600" y="36" text-anchor="middle" font-size="20" font-weight="700" fill="#111827">Cloudflare AI 全栈架构</text>
+        <!-- Layer 1: Security -->
+        <rect x="50" y="56" width="1100" height="70" rx="8" fill="#fef2f2" fill-opacity="0.5" stroke="#e8b4b8" stroke-width="1.2"/>
+        <text x="66" y="73" fill="#be185d" font-size="10" font-weight="600" letter-spacing="0.05em">安全与访问控制 SECURITY &amp; ACCESS CONTROL</text>
+        <rect x="117" y="80" width="126" height="36" rx="8" fill="#ffffff" stroke="#e8b4b8" stroke-width="1.2"/>
+        <text x="180" y="103" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Turnstile</text>
+        <rect x="317" y="80" width="126" height="36" rx="8" fill="#ffffff" stroke="#e8b4b8" stroke-width="1.2"/>
+        <text x="380" y="103" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">WAF</text>
+        <rect x="517" y="80" width="126" height="36" rx="8" fill="#ffffff" stroke="#e8b4b8" stroke-width="1.2"/>
+        <text x="580" y="103" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">API Shield</text>
+        <rect x="717" y="80" width="126" height="36" rx="8" fill="#ffffff" stroke="#e8b4b8" stroke-width="1.2"/>
+        <text x="780" y="103" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">DDoS</text>
+        <rect x="917" y="80" width="126" height="36" rx="8" fill="#ffffff" stroke="#e8b4b8" stroke-width="1.2"/>
+        <text x="980" y="103" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Access</text>
+        <line x1="600" y1="126" x2="600" y2="149" stroke="#2563eb" stroke-width="1.5" marker-end="url(#a-blue)"/>
+        <!-- Layer 2: Delivery -->
+        <rect x="50" y="152" width="1100" height="70" rx="8" fill="#fff7ed" fill-opacity="0.5" stroke="#d4a574" stroke-width="1.2"/>
+        <text x="66" y="169" fill="#c2410c" font-size="10" font-weight="600" letter-spacing="0.05em">客户端与交付 CLIENT &amp; DELIVERY</text>
+        <rect x="117" y="176" width="126" height="36" rx="8" fill="#ffffff" stroke="#d4a574" stroke-width="1.2"/>
+        <text x="180" y="199" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Pages</text>
+        <rect x="317" y="176" width="126" height="36" rx="8" fill="#ffffff" stroke="#d4a574" stroke-width="1.2"/>
+        <text x="380" y="199" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">CDN / Cache</text>
+        <rect x="517" y="176" width="126" height="36" rx="8" fill="#ffffff" stroke="#d4a574" stroke-width="1.2"/>
+        <text x="580" y="199" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Load Balancing</text>
+        <rect x="717" y="176" width="126" height="36" rx="8" fill="#ffffff" stroke="#d4a574" stroke-width="1.2"/>
+        <text x="780" y="199" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Argo</text>
+        <rect x="917" y="176" width="126" height="36" rx="8" fill="#ffffff" stroke="#d4a574" stroke-width="1.2"/>
+        <text x="980" y="199" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Spectrum</text>
+        <line x1="600" y1="222" x2="600" y2="250" stroke="#2563eb" stroke-width="1.5" marker-end="url(#a-blue)"/>
+        <!-- Layer 3: Workers Hub -->
+        <rect x="150" y="254" width="900" height="80" rx="12" fill="#fff7ed" stroke="#F38020" stroke-width="2.5" filter="url(#glow)"/>
+        <rect x="155" y="259" width="890" height="70" rx="10" fill="none" stroke="#F38020" stroke-width="0.7" opacity="0.35"/>
+        <text x="600" y="284" text-anchor="middle" font-size="22" font-weight="700" fill="#ea580c">Workers</text>
+        <text x="600" y="306" text-anchor="middle" fill="#9a3412" font-size="12">边缘计算与编排引擎 Edge Compute &amp; Orchestration Engine</text>
+        <text x="600" y="324" text-anchor="middle" fill="#c2410c" font-size="10" opacity="0.7">原生绑定 → R2 · D1 · KV · Vectorize · AI Search · Durable Objects · Queues</text>
+        <line x1="600" y1="334" x2="600" y2="362" stroke="#ea580c" stroke-width="2" marker-end="url(#a-orange)"/>
+        <!-- Layer 4: AI Platform -->
+        <rect x="50" y="366" width="1100" height="90" rx="8" fill="#fff7ed" fill-opacity="0.4" stroke="#F38020" stroke-width="1.2"/>
+        <text x="66" y="384" fill="#ea580c" font-size="10" font-weight="600" letter-spacing="0.05em">AI 平台 AI PLATFORM</text>
+        <rect x="190" y="405" width="130" height="40" rx="8" fill="#ffffff" stroke="#F38020" stroke-width="1.5"/>
+        <rect x="194" y="409" width="122" height="32" rx="6" fill="none" stroke="#F38020" stroke-width="0.6" opacity="0.3"/>
+        <text x="255" y="430" text-anchor="middle" fill="#111827" font-size="13" font-weight="600">Workers AI</text>
+        <polygon points="580,395 606,410 606,440 580,455 554,440 554,410" fill="#fff7ed" stroke="#F38020" stroke-width="2"/>
+        <text x="580" y="422" text-anchor="middle" font-size="11" font-weight="700" fill="#ea580c">AI</text>
+        <text x="580" y="436" text-anchor="middle" font-size="11" font-weight="700" fill="#ea580c">Gateway</text>
+        <text x="580" y="471" text-anchor="middle" fill="#9a3412" font-size="9" opacity="0.7">缓存 · 限流 · 回退 · 日志 · 成本追踪</text>
+        <rect x="790" y="397" width="340" height="56" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.2" stroke-dasharray="6,3"/>
+        <text x="960" y="411" text-anchor="middle" fill="#6b7280" font-size="10">External Models (via API)</text>
+        <circle cx="835" cy="434" r="14" fill="#10A37F"/>
+        <text x="835" y="438" text-anchor="middle" fill="#ffffff" font-size="8" font-weight="700">OpenAI</text>
+        <circle cx="940" cy="434" r="14" fill="#D97757"/>
+        <text x="940" y="438" text-anchor="middle" fill="#ffffff" font-size="8" font-weight="700">Anthropic</text>
+        <circle cx="1045" cy="434" r="14" fill="#4285F4"/>
+        <text x="1045" y="438" text-anchor="middle" fill="#ffffff" font-size="8" font-weight="700">Gemini</text>
+        <line x1="322" y1="425" x2="551" y2="425" stroke="#ea580c" stroke-width="1.5" marker-end="url(#a-orange)"/>
+        <line x1="609" y1="425" x2="788" y2="425" stroke="#ea580c" stroke-width="1.5" marker-end="url(#a-orange)"/>
+        <line x1="600" y1="456" x2="600" y2="482" stroke="#2563eb" stroke-width="1.5" marker-end="url(#a-blue)"/>
+        <!-- Layer 5: Data -->
+        <rect x="50" y="486" width="1100" height="76" rx="8" fill="#fefce8" fill-opacity="0.5" stroke="#c9b896" stroke-width="1.2"/>
+        <text x="66" y="504" fill="#a16207" font-size="10" font-weight="600" letter-spacing="0.05em">数据与存储 DATA &amp; STORAGE</text>
+        <rect x="117" y="512" width="126" height="38" rx="8" fill="#ffffff" stroke="#c9b896" stroke-width="1.2"/>
+        <text x="180" y="536" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">R2</text>
+        <rect x="317" y="512" width="126" height="38" rx="8" fill="#ffffff" stroke="#c9b896" stroke-width="1.2"/>
+        <text x="380" y="536" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">D1</text>
+        <rect x="517" y="512" width="126" height="38" rx="8" fill="#ffffff" stroke="#c9b896" stroke-width="1.2"/>
+        <text x="580" y="536" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">KV</text>
+        <rect x="717" y="512" width="126" height="38" rx="8" fill="#ffffff" stroke="#c9b896" stroke-width="1.2"/>
+        <text x="780" y="536" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Vectorize</text>
+        <rect x="917" y="512" width="126" height="38" rx="8" fill="#ffffff" stroke="#c9b896" stroke-width="1.2"/>
+        <text x="980" y="536" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">AI Search</text>
+        <line x1="600" y1="562" x2="600" y2="588" stroke="#2563eb" stroke-width="1.5" marker-end="url(#a-blue)"/>
+        <!-- Layer 6: Runtime -->
+        <rect x="50" y="592" width="1100" height="76" rx="8" fill="#faf5ff" fill-opacity="0.5" stroke="#c4b5fd" stroke-width="1.2"/>
+        <text x="66" y="610" fill="#7c3aed" font-size="10" font-weight="600" letter-spacing="0.05em">有状态运行时与编排 STATEFUL RUNTIME &amp; ORCHESTRATION</text>
+        <rect x="99" y="618" width="142" height="38" rx="8" fill="#ffffff" stroke="#c4b5fd" stroke-width="1.2"/>
+        <text x="170" y="642" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Durable Objects</text>
+        <rect x="320" y="618" width="120" height="38" rx="8" fill="#ffffff" stroke="#c4b5fd" stroke-width="1.2"/>
+        <text x="380" y="642" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Agents</text>
+        <rect x="520" y="618" width="120" height="38" rx="8" fill="#ffffff" stroke="#c4b5fd" stroke-width="1.2"/>
+        <text x="580" y="642" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Queues</text>
+        <rect x="725" y="618" width="130" height="38" rx="8" fill="#ffffff" stroke="#c4b5fd" stroke-width="1.2"/>
+        <text x="790" y="642" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Workflows</text>
+        <rect x="940" y="618" width="120" height="38" rx="8" fill="#ffffff" stroke="#c4b5fd" stroke-width="1.2"/>
+        <text x="1000" y="642" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Pipelines</text>
+        <!-- Legend -->
+        <g transform="translate(50, 700)">
+          <line x1="0" y1="8" x2="28" y2="8" stroke="#2563eb" stroke-width="1.5" marker-end="url(#a-blue)"/>
+          <text x="36" y="12" fill="#6b7280" font-size="11">请求流 Request Flow</text>
+          <line x1="190" y1="8" x2="218" y2="8" stroke="#ea580c" stroke-width="1.5" marker-end="url(#a-orange)"/>
+          <text x="226" y="12" fill="#6b7280" font-size="11">AI 路由 AI Routing</text>
+          <rect x="390" y="1" width="14" height="14" rx="3" fill="#fef2f2" stroke="#e8b4b8" stroke-width="1"/>
+          <text x="409" y="12" fill="#6b7280" font-size="11">安全</text>
+          <rect x="450" y="1" width="14" height="14" rx="3" fill="#fff7ed" stroke="#F38020" stroke-width="1"/>
+          <text x="469" y="12" fill="#6b7280" font-size="11">AI / 交付</text>
+          <rect x="530" y="1" width="14" height="14" rx="3" fill="#fefce8" stroke="#c9b896" stroke-width="1"/>
+          <text x="549" y="12" fill="#6b7280" font-size="11">数据</text>
+          <rect x="585" y="1" width="14" height="14" rx="3" fill="#faf5ff" stroke="#c4b5fd" stroke-width="1"/>
+          <text x="604" y="12" fill="#6b7280" font-size="11">编排</text>
+        </g>
+        <text x="1150" y="730" text-anchor="end" fill="#9a9590" font-size="10">Cloudflare AI 全栈架构 · 2026</text>
+      </svg>
+    </div>
+    <div class="arch-zoom-hint">点击图片查看大图 · 按 Esc 关闭</div>
+  </div>
+</div>
+
 <div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
   <div style="position:absolute;width:clamp(280px,38vw,480px);height:clamp(280px,38vw,480px);top:-8%;left:-8%;border-radius:50%;background:rgba(232,180,184,.06);filter:blur(80px);pointer-events:none"></div>
   <div style="position:absolute;width:clamp(200px,28vw,350px);height:clamp(200px,28vw,350px);bottom:-5%;right:5%;border-radius:50%;background:rgba(243,128,32,.05);filter:blur(80px);pointer-events:none"></div>
-  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">31</div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">33</div>
   <div style="text-align:center;position:relative;z-index:1;max-width:clamp(700px,90vw,1050px);padding:clamp(1.5rem,3vw,2.5rem)">
     <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.8rem);color:#e8b4b8;letter-spacing:.3em;text-transform:uppercase;margin-bottom:clamp(.5rem,1.2vw,.8rem)">ENTERPRISE AI</div>
     <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.4rem,3vw,2.4rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(.3rem,.6vw,.5rem)">企业 AI 架构：<span style="color:#e8b4b8">双向管控</span>模型</h2>
@@ -1416,7 +1550,7 @@ h2 .hl-warm{color:var(--accent-warm)}
 <div class="slide" style="width:100vw;height:100vh;height:100dvh;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#0f0f0f">
   <div style="position:absolute;width:clamp(300px,42vw,520px);height:clamp(300px,42vw,520px);top:-12%;right:-8%;border-radius:50%;background:rgba(243,128,32,.06);filter:blur(80px);pointer-events:none"></div>
   <div style="position:absolute;width:clamp(220px,30vw,380px);height:clamp(220px,30vw,380px);bottom:-8%;left:-5%;border-radius:50%;background:rgba(201,184,150,.05);filter:blur(80px);pointer-events:none"></div>
-  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">32</div>
+  <div style="position:absolute;top:clamp(1.5rem,4vw,3rem);left:clamp(1.5rem,4vw,3rem);font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.75rem);color:rgba(154,149,144,.3);letter-spacing:.2em">34</div>
   <div style="text-align:center;position:relative;z-index:1;max-width:clamp(680px,88vw,1000px);padding:clamp(1.5rem,3vw,2.5rem)">
     <div style="font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:clamp(.6rem,.9vw,.8rem);color:#F38020;letter-spacing:.3em;text-transform:uppercase;margin-bottom:clamp(.5rem,1.2vw,.8rem)">ORIGINAL ANALYSIS</div>
     <h2 style="font-family:'Cormorant',serif;font-weight:600;font-size:clamp(1.5rem,3.2vw,2.6rem);color:#e8e4df;line-height:1.2;margin:0 0 clamp(.3rem,.6vw,.5rem)">独立优势：<span style="color:#F38020">为什么 Cloudflare 不可替代</span></h2>
@@ -1752,6 +1886,31 @@ class SlidePresentation {
 }
 
 document.addEventListener('DOMContentLoaded', () => new SlidePresentation());
+
+// Architecture diagram zoom (clone into separate modal)
+(function(){
+    const wrap = document.getElementById('archSvgWrap');
+    if (!wrap) return;
+    const modal = document.createElement('div');
+    modal.id = 'archModal';
+    document.body.appendChild(modal);
+    function open() {
+        const svg = wrap.querySelector('svg');
+        if (!svg) return;
+        modal.innerHTML = '';
+        modal.appendChild(svg.cloneNode(true));
+        modal.style.display = 'flex';
+        document.documentElement.style.overflow = 'hidden';
+    }
+    function close() {
+        modal.style.display = 'none';
+        modal.innerHTML = '';
+        document.documentElement.style.overflow = '';
+    }
+    wrap.addEventListener('click', function(e) { e.stopPropagation(); open(); });
+    modal.addEventListener('click', close);
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') close(); });
+})();
 
 </script>
 </body>

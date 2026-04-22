@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780" width="1200" height="780">
+  <style>
+    text { font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+  </style>
+  <defs>
+    <marker id="a-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#2563eb"/></marker>
+    <marker id="a-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#ea580c"/></marker>
+    <marker id="a-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#059669"/></marker>
+    <marker id="a-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#7c3aed"/></marker>
+    <filter id="glow" x="-4%" y="-4%" width="108%" height="116%"><feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#F38020" flood-opacity="0.12"/></filter>
+  </defs>
+  <rect width="1200" height="780" fill="#ffffff"/>
+  <text x="600" y="36" text-anchor="middle" font-size="20" font-weight="700" fill="#111827">Cloudflare AI 全栈架构</text>
+  <!-- Layer 1: Security & Access Control -->
+  <rect x="50" y="56" width="1100" height="70" rx="8" fill="#fef2f2" fill-opacity="0.5" stroke="#e8b4b8" stroke-width="1.2"/>
+  <text x="66" y="73" fill="#be185d" font-size="10" font-weight="600" letter-spacing="0.05em">安全与访问控制 SECURITY &amp; ACCESS CONTROL</text>
+  <rect x="117" y="80" width="126" height="36" rx="8" fill="#ffffff" stroke="#e8b4b8" stroke-width="1.2"/>
+  <text x="180" y="103" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Turnstile</text>
+  <rect x="317" y="80" width="126" height="36" rx="8" fill="#ffffff" stroke="#e8b4b8" stroke-width="1.2"/>
+  <text x="380" y="103" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">WAF</text>
+  <rect x="517" y="80" width="126" height="36" rx="8" fill="#ffffff" stroke="#e8b4b8" stroke-width="1.2"/>
+  <text x="580" y="103" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">API Shield</text>
+  <rect x="717" y="80" width="126" height="36" rx="8" fill="#ffffff" stroke="#e8b4b8" stroke-width="1.2"/>
+  <text x="780" y="103" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">DDoS</text>
+  <rect x="917" y="80" width="126" height="36" rx="8" fill="#ffffff" stroke="#e8b4b8" stroke-width="1.2"/>
+  <text x="980" y="103" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Access</text>
+  <line x1="600" y1="126" x2="600" y2="149" stroke="#2563eb" stroke-width="1.5" marker-end="url(#a-blue)"/>
+  <!-- Layer 2: Client & Delivery -->
+  <rect x="50" y="152" width="1100" height="70" rx="8" fill="#fff7ed" fill-opacity="0.5" stroke="#d4a574" stroke-width="1.2"/>
+  <text x="66" y="169" fill="#c2410c" font-size="10" font-weight="600" letter-spacing="0.05em">客户端与交付 CLIENT &amp; DELIVERY</text>
+  <rect x="117" y="176" width="126" height="36" rx="8" fill="#ffffff" stroke="#d4a574" stroke-width="1.2"/>
+  <text x="180" y="199" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Pages</text>
+  <rect x="317" y="176" width="126" height="36" rx="8" fill="#ffffff" stroke="#d4a574" stroke-width="1.2"/>
+  <text x="380" y="199" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">CDN / Cache</text>
+  <rect x="517" y="176" width="126" height="36" rx="8" fill="#ffffff" stroke="#d4a574" stroke-width="1.2"/>
+  <text x="580" y="199" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Load Balancing</text>
+  <rect x="717" y="176" width="126" height="36" rx="8" fill="#ffffff" stroke="#d4a574" stroke-width="1.2"/>
+  <text x="780" y="199" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Argo</text>
+  <rect x="917" y="176" width="126" height="36" rx="8" fill="#ffffff" stroke="#d4a574" stroke-width="1.2"/>
+  <text x="980" y="199" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Spectrum</text>
+  <line x1="600" y1="222" x2="600" y2="250" stroke="#2563eb" stroke-width="1.5" marker-end="url(#a-blue)"/>
+  <!-- Layer 3: Workers Central Hub -->
+  <rect x="150" y="254" width="900" height="80" rx="12" fill="#fff7ed" stroke="#F38020" stroke-width="2.5" filter="url(#glow)"/>
+  <rect x="155" y="259" width="890" height="70" rx="10" fill="none" stroke="#F38020" stroke-width="0.7" opacity="0.35"/>
+  <text x="600" y="284" text-anchor="middle" font-size="22" font-weight="700" fill="#ea580c">Workers</text>
+  <text x="600" y="306" text-anchor="middle" fill="#9a3412" font-size="12">边缘计算与编排引擎 Edge Compute &amp; Orchestration Engine</text>
+  <text x="600" y="324" text-anchor="middle" fill="#c2410c" font-size="10" opacity="0.7">原生绑定 → R2 · D1 · KV · Vectorize · AI Search · Durable Objects · Queues</text>
+  <line x1="600" y1="334" x2="600" y2="362" stroke="#ea580c" stroke-width="2" marker-end="url(#a-orange)"/>
+  <!-- Layer 4: AI Platform -->
+  <rect x="50" y="366" width="1100" height="90" rx="8" fill="#fff7ed" fill-opacity="0.4" stroke="#F38020" stroke-width="1.2"/>
+  <text x="66" y="384" fill="#ea580c" font-size="10" font-weight="600" letter-spacing="0.05em">AI 平台 AI PLATFORM</text>
+  <rect x="190" y="405" width="130" height="40" rx="8" fill="#ffffff" stroke="#F38020" stroke-width="1.5"/>
+  <rect x="194" y="409" width="122" height="32" rx="6" fill="none" stroke="#F38020" stroke-width="0.6" opacity="0.3"/>
+  <text x="255" y="430" text-anchor="middle" fill="#111827" font-size="13" font-weight="600">Workers AI</text>
+  <polygon points="580,395 606,410 606,440 580,455 554,440 554,410" fill="#fff7ed" stroke="#F38020" stroke-width="2"/>
+  <text x="580" y="422" text-anchor="middle" font-size="11" font-weight="700" fill="#ea580c">AI</text>
+  <text x="580" y="436" text-anchor="middle" font-size="11" font-weight="700" fill="#ea580c">Gateway</text>
+  <text x="580" y="471" text-anchor="middle" fill="#9a3412" font-size="9" opacity="0.7">缓存 · 限流 · 回退 · 日志 · 成本追踪</text>
+  <rect x="790" y="397" width="340" height="56" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.2" stroke-dasharray="6,3"/>
+  <text x="960" y="411" text-anchor="middle" fill="#6b7280" font-size="10">External Models (via API)</text>
+  <circle cx="835" cy="434" r="14" fill="#10A37F"/>
+  <text x="835" y="438" text-anchor="middle" fill="#ffffff" font-size="8" font-weight="700">OpenAI</text>
+  <circle cx="940" cy="434" r="14" fill="#D97757"/>
+  <text x="940" y="438" text-anchor="middle" fill="#ffffff" font-size="8" font-weight="700">Anthropic</text>
+  <circle cx="1045" cy="434" r="14" fill="#4285F4"/>
+  <text x="1045" y="438" text-anchor="middle" fill="#ffffff" font-size="8" font-weight="700">Gemini</text>
+  <line x1="322" y1="425" x2="602.9807621135332" y2="425" stroke="#ea580c" stroke-width="1.5" marker-end="url(#a-orange)"/>
+  <line x1="608.9807621135332" y1="425" x2="788" y2="425" stroke="#ea580c" stroke-width="1.5" marker-end="url(#a-orange)"/>
+  <line x1="600" y1="456" x2="600" y2="482" stroke="#2563eb" stroke-width="1.5" marker-end="url(#a-blue)"/>
+  <!-- Layer 5: Data & Storage -->
+  <rect x="50" y="486" width="1100" height="76" rx="8" fill="#fefce8" fill-opacity="0.5" stroke="#c9b896" stroke-width="1.2"/>
+  <text x="66" y="504" fill="#a16207" font-size="10" font-weight="600" letter-spacing="0.05em">数据与存储 DATA &amp; STORAGE</text>
+  <rect x="117" y="512" width="126" height="38" rx="8" fill="#ffffff" stroke="#c9b896" stroke-width="1.2"/>
+  <text x="180" y="536" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">R2</text>
+  <rect x="317" y="512" width="126" height="38" rx="8" fill="#ffffff" stroke="#c9b896" stroke-width="1.2"/>
+  <text x="380" y="536" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">D1</text>
+  <rect x="517" y="512" width="126" height="38" rx="8" fill="#ffffff" stroke="#c9b896" stroke-width="1.2"/>
+  <text x="580" y="536" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">KV</text>
+  <rect x="717" y="512" width="126" height="38" rx="8" fill="#ffffff" stroke="#c9b896" stroke-width="1.2"/>
+  <text x="780" y="536" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Vectorize</text>
+  <rect x="917" y="512" width="126" height="38" rx="8" fill="#ffffff" stroke="#c9b896" stroke-width="1.2"/>
+  <text x="980" y="536" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">AI Search</text>
+  <line x1="600" y1="562" x2="600" y2="588" stroke="#2563eb" stroke-width="1.5" marker-end="url(#a-blue)"/>
+  <!-- Layer 6: Stateful Runtime & Orchestration -->
+  <rect x="50" y="592" width="1100" height="76" rx="8" fill="#faf5ff" fill-opacity="0.5" stroke="#c4b5fd" stroke-width="1.2"/>
+  <text x="66" y="610" fill="#7c3aed" font-size="10" font-weight="600" letter-spacing="0.05em">有状态运行时与编排 STATEFUL RUNTIME &amp; ORCHESTRATION</text>
+  <rect x="99" y="618" width="142" height="38" rx="8" fill="#ffffff" stroke="#c4b5fd" stroke-width="1.2"/>
+  <text x="170" y="642" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Durable Objects</text>
+  <rect x="320" y="618" width="120" height="38" rx="8" fill="#ffffff" stroke="#c4b5fd" stroke-width="1.2"/>
+  <text x="380" y="642" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Agents</text>
+  <rect x="520" y="618" width="120" height="38" rx="8" fill="#ffffff" stroke="#c4b5fd" stroke-width="1.2"/>
+  <text x="580" y="642" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Queues</text>
+  <rect x="725" y="618" width="130" height="38" rx="8" fill="#ffffff" stroke="#c4b5fd" stroke-width="1.2"/>
+  <text x="790" y="642" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Workflows</text>
+  <rect x="940" y="618" width="120" height="38" rx="8" fill="#ffffff" stroke="#c4b5fd" stroke-width="1.2"/>
+  <text x="1000" y="642" text-anchor="middle" fill="#111827" font-size="13" font-weight="500">Pipelines</text>
+  <!-- Legend -->
+  <g transform="translate(50, 700)">
+    <line x1="0" y1="8" x2="28" y2="8" stroke="#2563eb" stroke-width="1.5" marker-end="url(#a-blue)"/>
+    <text x="36" y="12" fill="#6b7280" font-size="11">请求流 Request Flow</text>
+    <line x1="190" y1="8" x2="218" y2="8" stroke="#ea580c" stroke-width="1.5" marker-end="url(#a-orange)"/>
+    <text x="226" y="12" fill="#6b7280" font-size="11">AI 路由 AI Routing</text>
+    <rect x="390" y="1" width="14" height="14" rx="3" fill="#fef2f2" stroke="#e8b4b8" stroke-width="1"/>
+    <text x="409" y="12" fill="#6b7280" font-size="11">安全</text>
+    <rect x="450" y="1" width="14" height="14" rx="3" fill="#fff7ed" stroke="#F38020" stroke-width="1"/>
+    <text x="469" y="12" fill="#6b7280" font-size="11">AI / 交付</text>
+    <rect x="530" y="1" width="14" height="14" rx="3" fill="#fefce8" stroke="#c9b896" stroke-width="1"/>
+    <text x="549" y="12" fill="#6b7280" font-size="11">数据</text>
+    <rect x="585" y="1" width="14" height="14" rx="3" fill="#faf5ff" stroke="#c4b5fd" stroke-width="1"/>
+    <text x="604" y="12" fill="#6b7280" font-size="11">编排</text>
+  </g>
+  <text x="1150" y="730" text-anchor="end" fill="#9a9590" font-size="10">Cloudflare AI 全栈架构 · 2026</text>
+</svg>
