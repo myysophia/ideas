@@ -1000,7 +1000,7 @@ h2 .hl-warm{color:var(--accent-warm)}
 
     <div style="display:flex;justify-content:center;margin-top:clamp(1.5rem,3vw,2rem);opacity:0;animation:reveal .8s 1s forwards;width:100%">
 
-      <div style="max-width:800px;width:100%;border-radius:10px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.25)">
+      <div class="arch-svg-wrap" id="svgWorkersHub" <div style="max-width:800px;width:100%;border-radius:10px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.25)">
 
         <svg style="display:block;width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" width="800" height="520">
 
@@ -1011,6 +1011,7 @@ h2 .hl-warm{color:var(--accent-warm)}
       </div>
 
     </div>
+    <div class="arch-zoom-hint">点击图片查看大图 · 按 Esc 关闭</div>
 
       <div style="font-size:clamp(.55rem,.8vw,.65rem);color:#9a9590"><span style="color:#F38020">&bull;</span> JS / TS / Python / Rust</div>
 
@@ -1178,7 +1179,7 @@ h2 .hl-warm{color:var(--accent-warm)}
 
     <div style="display:flex;justify-content:center;margin-top:clamp(1.5rem,3vw,2rem);opacity:0;animation:reveal .8s 1s forwards;width:100%">
 
-      <div style="max-width:800px;width:100%;border-radius:10px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.25)">
+      <div class="arch-svg-wrap" id="svgAIGateway" <div style="max-width:800px;width:100%;border-radius:10px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.25)">
 
         <svg style="display:block;width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" width="800" height="520">
 
@@ -1249,6 +1250,7 @@ h2 .hl-warm{color:var(--accent-warm)}
       </div>
 
     </div>
+    <div class="arch-zoom-hint">点击图片查看大图 · 按 Esc 关闭</div>
 
       <div style="font-size:clamp(.55rem,.8vw,.65rem);color:#9a9590"><span style="color:#F38020">&bull;</span> OpenAI 兼容接口</div>
 
@@ -1470,7 +1472,7 @@ h2 .hl-warm{color:var(--accent-warm)}
 
     <div style="display:flex;justify-content:center;margin-top:clamp(1.5rem,3vw,2rem);opacity:0;animation:reveal .8s 1s forwards;width:100%">
 
-      <div style="max-width:800px;width:100%;border-radius:10px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.25)">
+      <div class="arch-svg-wrap" id="svgAgentsDO" <div style="max-width:800px;width:100%;border-radius:10px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.25)">
 
         <svg style="display:block;width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" width="800" height="520">
 
@@ -1481,6 +1483,7 @@ h2 .hl-warm{color:var(--accent-warm)}
       </div>
 
     </div>
+    <div class="arch-zoom-hint">点击图片查看大图 · 按 Esc 关闭</div>
 
   <div class="slide-hint">AI / Agent</div>
 
@@ -2052,7 +2055,7 @@ h2 .hl-warm{color:var(--accent-warm)}
 
     <div style="display:flex;justify-content:center;margin-top:clamp(1.5rem,3vw,2rem);opacity:0;animation:reveal .8s 1s forwards;width:100%">
 
-      <div style="max-width:800px;width:100%;border-radius:10px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.25)">
+      <div class="arch-svg-wrap" id="svgZeroTrust" <div style="max-width:800px;width:100%;border-radius:10px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.25)">
 
         <svg style="display:block;width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" width="800" height="520">
 
@@ -2063,6 +2066,7 @@ h2 .hl-warm{color:var(--accent-warm)}
       </div>
 
     </div>
+    <div class="arch-zoom-hint">点击图片查看大图 · 按 Esc 关闭</div>
 
   <div class="slide-hint">Security / Zero Trust</div>
 
@@ -2170,7 +2174,7 @@ h2 .hl-warm{color:var(--accent-warm)}
 
     <div style="display:flex;justify-content:center;margin-top:clamp(1.5rem,3vw,2rem);opacity:0;animation:reveal .8s 1s forwards;width:100%">
 
-      <div style="max-width:800px;width:100%;border-radius:10px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.25)">
+      <div class="arch-svg-wrap" id="svgSecurityChain" <div style="max-width:800px;width:100%;border-radius:10px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.25)">
 
         <svg style="display:block;width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" width="800" height="560">
 
@@ -2181,6 +2185,7 @@ h2 .hl-warm{color:var(--accent-warm)}
       </div>
 
     </div>
+    <div class="arch-zoom-hint">点击图片查看大图 · 按 Esc 关闭</div>
 
   <div class="slide-hint">Security / Architecture</div>
 
@@ -3716,52 +3721,36 @@ document.addEventListener('DOMContentLoaded', () => new SlidePresentation());
 
 
 
-// Architecture diagram zoom (clone into separate modal)
-
+// SVG diagram zoom (clone into modal)
 (function(){
+    var wraps = document.querySelectorAll('.arch-svg-wrap');
+    if (!wraps.length) return;
 
-    const wrap = document.getElementById('archSvgWrap');
-
-    if (!wrap) return;
-
-    const modal = document.createElement('div');
-
+    var modal = document.createElement('div');
     modal.id = 'archModal';
-
     document.body.appendChild(modal);
 
-    function open() {
-
-        const svg = wrap.querySelector('svg');
-
+    function open(wrap) {
+        var svg = wrap.querySelector('svg');
         if (!svg) return;
-
         modal.innerHTML = '';
-
         modal.appendChild(svg.cloneNode(true));
-
         modal.style.display = 'flex';
-
         document.documentElement.style.overflow = 'hidden';
-
     }
 
     function close() {
-
         modal.style.display = 'none';
-
         modal.innerHTML = '';
-
         document.documentElement.style.overflow = '';
-
     }
 
-    wrap.addEventListener('click', function(e) { e.stopPropagation(); open(); });
+    wraps.forEach(function(wrap) {
+        wrap.addEventListener('click', function(e) { e.stopPropagation(); open(wrap); });
+    });
 
     modal.addEventListener('click', close);
-
     document.addEventListener('keydown', function(e) { if (e.key === 'Escape') close(); });
-
 })();
 
 
