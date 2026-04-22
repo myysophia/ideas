@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>通用两轮并行提案评审决策流程 — Swarm Decision Skill 教程</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%232A7B9B'/><text x='16' y='23' text-anchor='middle' font-size='18' font-weight='bold' fill='white' font-family='sans-serif'>通</text></svg>">
+<meta name="date" content="2026-04-22">
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ===== BASE RESET & ROOT ===== */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f0f0f;
+  --text:#e8e4df;
+  --text-dim:#9a9590;
+  --gold:#d4a574;
+  --pink:#e8b4b8;
+  --gold-light:rgba(212,165,116,0.12);
+  --pink-light:rgba(232,180,184,0.08);
+  --border:rgba(212,165,116,0.18);
+  --font-display:'Cormorant',serif;
+  --font-body:'IBM Plex Sans',sans-serif;
+}
+html,body{height:100%;overflow-x:hidden}
+html{scroll-snap-type:y mandatory;scroll-behavior:smooth}
+
+/* ===== SLIDE BASE ===== */
+.slide{
+  width:100vw;min-height:100vh;height:100dvh;
+  overflow:hidden;scroll-snap-align:start;
+  display:flex;flex-direction:column;
+  position:relative;
+  background:var(--bg);
+  --slide-pad:clamp(2rem,5vw,5rem);
+}
+
+/* ===== DARK BOTANICAL BLOBS ===== */
+.blob-tl{
+  position:absolute;top:-15%;left:-10%;
+  width:clamp(250px,40vw,500px);height:clamp(250px,40vw,500px);
+  border-radius:50%;
+  background:radial-gradient(circle,var(--gold) 0%,transparent 65%);
+  opacity:0.07;filter:blur(80px);pointer-events:none;z-index:0;
+}
+.blob-br{
+  position:absolute;bottom:-10%;right:-5%;
+  width:clamp(200px,35vw,420px);height:clamp(200px,35vw,420px);
+  border-radius:50%;
+  background:radial-gradient(circle,var(--pink) 0%,transparent 65%);
+  opacity:0.06;filter:blur(70px);pointer-events:none;z-index:0;
+}
+.blob-center{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:clamp(300px,50vw,600px);height:clamp(300px,50vw,600px);
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(201,184,150,0.05) 0%,transparent 65%);
+  filter:blur(60px);pointer-events:none;z-index:0;
+}
+
+/* ===== CONTENT CONTAINER ===== */
+.slide-content{
+  flex:1;display:flex;flex-direction:column;
+  justify-content:center;
+  max-height:100%;overflow:hidden;
+  padding:var(--slide-pad);
+  position:relative;z-index:1;
+}
+
+/* ===== TYPOGRAPHY ===== */
+h1{font-family:var(--font-display);font-weight:400;font-size:clamp(2.4rem,6vw,5rem);color:var(--text);line-height:1.15;letter-spacing:-0.02em;margin-bottom:clamp(0.8rem,2vh,1.5rem)}
+h1 em{font-style:italic;color:var(--gold)}
+h2{font-family:var(--font-display);font-weight:400;font-size:clamp(1.6rem,3.5vw,2.8rem);color:var(--text);line-height:1.2;margin-bottom:clamp(0.6rem,1.5vh,1.2rem)}
+h3{font-family:var(--font-display);font-weight:600;font-size:clamp(1.1rem,2.2vw,1.6rem);color:var(--text);margin-bottom:0.4em}
+p{font-family:var(--font-body);font-weight:300;font-size:clamp(0.8rem,1.5vw,1.05rem);color:var(--text-dim);line-height:1.75}
+.lead{font-size:clamp(0.9rem,1.8vw,1.25rem);color:var(--text);font-weight:300;line-height:1.8}
+.tag{font-family:var(--font-body);font-size:clamp(0.6rem,1vw,0.78rem);font-weight:500;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:1em}
+
+/* ===== SECTION ACCENT LINE ===== */
+.accent-line{width:48px;height:1px;background:linear-gradient(to right,var(--gold),transparent);margin-bottom:clamp(1rem,2vh,1.8rem)}
+
+/* ===== TERM TOOLTIPS ===== */
+.term{position:relative;border-bottom:1px dashed rgba(212,165,116,0.45);cursor:help;color:var(--gold);font-style:normal;white-space:nowrap}
+.term .tip{display:none;position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.93);color:#e8e4df;padding:8px 14px;border-radius:8px;font-family:var(--font-body);font-style:normal;font-size:clamp(0.62rem,1vw,0.8rem);white-space:nowrap;z-index:200;pointer-events:none;box-shadow:0 8px 30px rgba(0,0,0,0.6);border:1px solid rgba(212,165,116,0.2);max-width:300px;white-space:normal;text-align:center}
+.term .tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:rgba(0,0,0,0.93)}
+.term:hover .tip{display:block}
+
+/* ===== CARDS ===== */
+.card-grid{display:grid;gap:clamp(0.6rem,1.5vw,1.2rem)}
+.card{background:linear-gradient(145deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01));border:1px solid var(--border);border-radius:12px;padding:clamp(1rem,2.5vw,1.8rem)}
+.card-gold{border-color:rgba(212,165,116,0.3);background:linear-gradient(145deg,rgba(212,165,116,0.08),rgba(212,165,116,0.03))}
+.card-pink{border-color:rgba(232,180,184,0.25)}
+
+/* ===== BULLET LIST ===== */
+.bullet-list{list-style:none;display:flex;flex-direction:column;gap:clamp(0.5rem,1.2vh,1rem)}
+.bullet-list li{font-family:var(--font-body);font-weight:300;font-size:clamp(0.8rem,1.5vw,1.05rem);color:var(--text-dim);line-height:1.7;padding-left:1.4em;position:relative}
+.bullet-list li::before{content:'—';position:absolute;left:0;color:var(--gold);opacity:0.6;font-size:0.85em}
+
+/* ===== STATE MACHINE ===== */
+.sm-flow{display:flex;flex-wrap:wrap;align-items:center;gap:clamp(0.4rem,1vw,0.8rem);margin-bottom:1.5rem}
+.sm-node{font-family:var(--font-body);font-size:clamp(0.65rem,1.1vw,0.85rem);font-weight:500;color:var(--bg);background:var(--gold);padding:clamp(0.3rem,0.8vw,0.6rem) clamp(0.6rem,1.5vw,1.1rem);border-radius:6px;letter-spacing:0.5px}
+.sm-arrow{color:var(--gold);opacity:0.4;font-size:1.2em;user-select:none}
+
+/* ===== STEPS ===== */
+.step-list{display:flex;flex-direction:column;gap:clamp(0.5rem,1.2vh,1rem)}
+.step{display:flex;gap:clamp(0.8rem,1.5vw,1.2rem);align-items:flex-start}
+.step-num{font-family:var(--font-body);font-weight:500;font-size:clamp(0.65rem,1.1vw,0.82rem);color:var(--gold);background:var(--gold-light);border:1px solid var(--border);width:clamp(1.6rem,2.5vw,2rem);height:clamp(1.6rem,2.5vw,2rem);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-body h4{font-family:var(--font-body);font-weight:500;font-size:clamp(0.82rem,1.3vw,1rem);color:var(--text);margin-bottom:0.2em}
+.step-body p{font-size:clamp(0.72rem,1.2vw,0.9rem);color:var(--text-dim);line-height:1.6}
+
+/* ===== BADGE ===== */
+.badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-body);font-size:clamp(0.58rem,0.9vw,0.75rem);font-weight:500;letter-spacing:1.5px;text-transform:uppercase;padding:5px 14px;border-radius:20px;margin-bottom:1em}
+.badge-gold{background:rgba(212,165,116,0.12);color:var(--gold);border:1px solid rgba(212,165,116,0.25)}
+.badge-pink{background:rgba(232,180,184,0.1);color:var(--pink);border:1px solid rgba(232,180,184,0.2)}
+.badge-green{background:rgba(90,158,111,0.1);color:#7bc49a;border:1px solid rgba(90,158,111,0.2)}
+.badge-red{background:rgba(201,112,112,0.1);color:#c97070;border:1px solid rgba(201,112,112,0.2)}
+
+/* ===== HIGHLIGHT ===== */
+.highlight{color:var(--text);font-weight:400}
+.highlight-gold{color:var(--gold)}
+.highlight-pink{color:var(--pink)}
+
+/* ===== SECTION LABEL ===== */
+.section-label{position:absolute;top:var(--slide-pad);right:var(--slide-pad);font-family:var(--font-body);font-size:clamp(0.55rem,0.8vw,0.7rem);color:var(--text-dim);opacity:0.35;letter-spacing:2px;text-transform:uppercase}
+
+/* ===== TABLES ===== */
+.data-table{width:100%;border-collapse:collapse;border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+.data-table th{font-family:var(--font-body);font-size:clamp(0.6rem,0.9vw,0.78rem);font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);background:var(--gold-light);padding:clamp(0.6rem,1.2vw,1rem) clamp(0.8rem,1.5vw,1.2rem);text-align:left}
+.data-table td{font-family:var(--font-body);font-size:clamp(0.72rem,1.2vw,0.9rem);font-weight:300;color:var(--text-dim);padding:clamp(0.6rem,1.2vw,1rem) clamp(0.8rem,1.5vw,1.2rem);border-top:1px solid rgba(212,165,116,0.08);vertical-align:top}
+.data-table tr:first-child td{border-top:none}
+
+/* ===== GRID LAYOUTS ===== */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:clamp(1.2rem,3vw,2.5rem);align-items:start}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(0.8rem,1.8vw,1.4rem);align-items:start}
+.four-col{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(0.6rem,1.5vw,1.2rem);align-items:start}
+
+/* ===== ROLE CARDS ===== */
+.role-card{background:linear-gradient(145deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01));border:1px solid var(--border);border-radius:12px;padding:clamp(0.8rem,1.8vw,1.4rem)}
+.role-name{font-family:var(--font-body);font-weight:500;font-size:clamp(0.8rem,1.3vw,1rem);color:var(--gold);margin-bottom:0.2em}
+.role-desc{font-family:var(--font-body);font-size:clamp(0.7rem,1.1vw,0.85rem);color:var(--text-dim);line-height:1.6}
+.role-focus{font-family:var(--font-body);font-size:clamp(0.65rem,1vw,0.78rem);color:var(--pink);margin-top:0.5em;padding-top:0.5em;border-top:1px solid rgba(232,180,184,0.12)}
+
+/* ===== CALLOUT ===== */
+.callout{padding:clamp(0.8rem,1.8vw,1.4rem) clamp(1rem,2vw,1.6rem);border-radius:10px;border-left:3px solid var(--gold);background:rgba(212,165,116,0.06)}
+.callout-pink{border-left-color:var(--pink);background:rgba(232,180,184,0.06)}
+.callout p{margin:0}
+
+/* ===== QUOTE ===== */
+.quote{font-family:var(--font-display);font-size:clamp(1.2rem,2.5vw,1.8rem);font-style:italic;color:var(--text);line-height:1.5;padding:clamp(1rem,2vw,1.5rem) 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:clamp(1rem,2vh,1.5rem) 0}
+
+/* ===== NAV ===== */
+.nav-dots{position:fixed;right:clamp(1rem,2vw,2rem);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:999}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.15);cursor:pointer;transition:all 0.3s}
+.nav-dot.active{background:var(--gold);transform:scale(1.4)}
+
+/* ===== REVEAL ANIMATION ===== */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity 0.65s cubic-bezier(0.16,1,0.3,1),transform 0.65s cubic-bezier(0.16,1,0.3,1)}
+.visible .reveal{opacity:1;transform:translateY(0)}
+.visible .reveal:nth-child(2){transition-delay:0.12s}
+.visible .reveal:nth-child(3){transition-delay:0.22s}
+.visible .reveal:nth-child(4){transition-delay:0.32s}
+.visible .reveal:nth-child(5){transition-delay:0.42s}
+.visible .reveal:nth-child(6){transition-delay:0.52s}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .two-col,.three-col,.four-col{grid-template-columns:1fr}
+  .slide-content{padding:clamp(1.5rem,4vw,3rem)}
+}
+@media(max-height:600px){
+  .nav-dots{display:none}
+  h1{font-size:clamp(1.8rem,5vw,3rem)}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition-duration:0.15s!important}
+  html{scroll-behavior:auto}
+}
+
+/* ===== TYPE BADGE IN TABLES ===== */
+.type-badge{display:inline-block;font-family:var(--font-body);font-size:0.75em;font-weight:500;padding:2px 10px;border-radius:20px;margin:2px}
+.type-badge.tech{background:rgba(212,165,116,0.12);color:var(--gold)}
+.type-badge.ops{background:rgba(232,180,184,0.1);color:var(--pink)}
+.type-badge.biz{background:rgba(90,158,111,0.1);color:#7bc49a}
+
+/* ===== FAIL CLOSED ===== */
+.fail-block{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-body);font-size:clamp(0.6rem,0.9vw,0.75rem);font-weight:600;color:#c97070;background:rgba(201,112,112,0.1);padding:3px 12px;border-radius:20px;border:1px solid rgba(201,112,112,0.25)}
+.pass-block{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-body);font-size:clamp(0.6rem,0.9vw,0.75rem);font-weight:600;color:#7bc49a;background:rgba(90,158,111,0.1);padding:3px 12px;border-radius:20px;border:1px solid rgba(90,158,111,0.2)}
+
+/* ===== DIVIDER ===== */
+.divider{width:100%;height:1px;background:linear-gradient(to right,transparent,var(--border),transparent);margin:clamp(0.8rem,1.5vh,1.2rem) 0}
+
+/* ===== STAT NUMBER ===== */
+.stat{font-family:var(--font-display);font-size:clamp(3rem,8vw,6rem);font-weight:600;color:var(--gold);line-height:1}
+
+/* ===== MATRIX TABLE ===== */
+.matrix-table{width:100%;border-collapse:collapse;border-radius:10px;overflow:hidden;border:1px solid var(--border);font-family:var(--font-body)}
+.matrix-table th{background:rgba(212,165,116,0.1);color:var(--gold);font-size:clamp(0.6rem,0.85vw,0.75rem);letter-spacing:1px;text-transform:uppercase;padding:clamp(0.5rem,1vw,0.8rem) clamp(0.6rem,1.2vw,1rem);text-align:center;font-weight:500}
+.matrix-table td{font-size:clamp(0.7rem,1.1vw,0.85rem);padding:clamp(0.5rem,1vw,0.8rem) clamp(0.6rem,1.2vw,1rem);border-top:1px solid rgba(212,165,116,0.08);color:var(--text-dim);text-align:center}
+.matrix-table td:first-child{color:var(--text);font-weight:500;text-align:left}
+
+/* ===== TAG ROW ===== */
+.tag-row{display:flex;flex-wrap:wrap;gap:0.4em;margin-top:0.5em}
+.tag-chip{display:inline-block;font-family:var(--font-body);font-size:clamp(0.58rem,0.85vw,0.72rem);color:var(--text-dim);background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:2px 10px;border-radius:20px}
+
+/* ===== ARCHITECTURE DIAGRAM SLIDE ===== */
+.arch-container{width:100%;display:flex;justify-content:center;align-items:center;flex:1;min-height:0;max-height:calc(100dvh - 6rem)}
+.arch-wrap{cursor:zoom-in;border-radius:12px;overflow:hidden;border:1px solid rgba(212,165,116,0.25);transition:box-shadow 0.3s,transform 0.3s;max-width:960px;width:100%;height:100%}
+.arch-wrap:hover{box-shadow:0 8px 40px rgba(212,165,116,0.12);transform:translateY(-2px)}
+.arch-wrap svg{display:block;width:100%;height:100%}
+
+/* ===== LIGHTBOX ===== */
+.lightbox{display:none;position:fixed;inset:0;background:rgba(5,5,5,0.95);z-index:10000;align-items:center;justify-content:center;padding:2rem;cursor:zoom-out;backdrop-filter:blur(10px)}
+.lightbox.open{display:flex;animation:lb-fade 0.2s ease}
+.lightbox .lb-inner{max-width:min(96vw,1500px);max-height:94vh;width:auto;height:auto;animation:lb-scale 0.25s cubic-bezier(0.16,1,0.3,1);border-radius:12px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.6)}
+.lightbox .lb-inner svg{display:block;max-width:min(96vw,1500px);max-height:94vh;width:auto;height:auto}
+.lightbox .lb-close{position:fixed;top:1.2rem;right:1.2rem;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:1.4rem;width:42px;height:42px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s;z-index:10001;line-height:1}
+.lightbox .lb-close:hover{background:rgba(255,255,255,0.22)}
+.lightbox .lb-hint{position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.4);font-size:0.8rem;pointer-events:none;font-family:var(--font-body)}
+@keyframes lb-fade{from{opacity:0}to{opacity:1}}
+@keyframes lb-scale{from{opacity:0;transform:scale(0.92)}to{opacity:1;transform:scale(1)}}
+</style>
+</head>
+<body>
+
+<!-- ===== SLIDE 1: TITLE ===== -->
+<section class="slide" id="s01">
+  <div class="blob-tl"></div><div class="blob-br"></div><div class="blob-center"></div>
+  <div class="slide-content" style="align-items:center;text-align:center">
+    <div class="accent-line" style="margin:0 auto 2rem"></div>
+    <h1 class="reveal">通用<span style="font-style:italic">两轮并行</span><br>提案评审决策流程</h1>
+    <p class="lead reveal" style="max-width:600px;text-align:center">
+      如何用 <span class="term">Swarm Decision<span class="tip">群体并行决策：多角色独立提案 + 独立评审 + 最终裁决</span></span> Skill<br>把复杂问题变成可裁决对象
+    </p>
+    <p class="reveal" style="margin-top:3rem;font-size:clamp(0.7rem,1.2vw,0.9rem);color:var(--text-dim)">胥克谦 · 2026-04-21</p>
+  </div>
+</section>
+
+<!-- ===== SLIDE 2: WHAT IS SWARM DECISION ===== -->
+<section class="slide" id="s02">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">背景</span>
+  <div class="slide-content">
+    <p class="tag reveal">核心概念</p>
+    <h1 class="reveal">什么是 <em>Swarm Decision</em>？</h1>
+    <div class="accent-line reveal"></div>
+    <div class="three-col" style="margin-top:clamp(1.2rem,2.5vh,2rem)">
+      <div class="card reveal">
+        <div class="badge badge-gold">第一轮</div>
+        <h3>提案发散</h3>
+        <p>多个角色在同一 <span class="term">Profile<span class="tip">配置档案：按内容类型装配角色、评审标准与门禁强度</span></span> 下独立产出差异化方案，强调独立性与多样性，避免群体极化。</p>
+      </div>
+      <div class="card reveal">
+        <div class="badge badge-pink">汇总</div>
+        <h3>观点变选项</h3>
+        <p>主进程将候选方案整理为可比较的 <span class="term">Option Cards<span class="tip">选项卡片：每个候选方案的清晰结构化描述</span></span> + 对比矩阵 + 阻塞问题清单。</p>
+      </div>
+      <div class="card reveal">
+        <div class="badge badge-gold">第二轮</div>
+        <h3>独立裁决</h3>
+        <p>全新角色组对候选方案独立给出 verdict（含 trade-offs、风险与签字条件），确保评审者与提案者完全解耦。</p>
+      </div>
+    </div>
+    <div class="callout reveal" style="margin-top:clamp(1.2rem,2.5vh,2rem)">
+      <p>把「多解、强约束、跨角色博弈」变成 <span class="highlight-gold">可交付结论</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 3: WHY NEEDED ===== -->
+<section class="slide" id="s03">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">背景</span>
+  <div class="slide-content">
+    <p class="tag reveal">痛点驱动</p>
+    <h1 class="reveal">为什么需要它？</h1>
+    <div class="accent-line reveal"></div>
+    <ul class="bullet-list reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <li><span class="term">Evidence Root<span class="tip">证据根目录：统一落盘、可回放、可审计的过程证据</span></span> 散落在 root，门禁范围不一致</li>
+      <li><span class="term">docLinks<span class="tip">文档链接：跨文档引用关系与断链检测</span></span> 断链治理缺失，commit-path 不一致</li>
+      <li>讨论阶段误触发写入，仓库被污染</li>
+      <li>多解方案无独立评审，结论难以回放审计</li>
+    </ul>
+    <div class="callout reveal" style="margin-top:clamp(1.2rem,2.5vh,2rem)">
+      <p><span class="term">Swarm Decision<span class="tip">群体并行决策：多角色独立提案 + 独立评审 + 最终裁决</span></span> 把「讨论」变成「决策」，把「方案」变成「交付」</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 4: 30 CASES ===== -->
+<section class="slide" id="s04">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">背景</span>
+  <div class="slide-content">
+    <p class="tag reveal">实证基础</p>
+    <h1 class="reveal">30 个案例横跨 <em>3 大领域</em></h1>
+    <div class="accent-line reveal"></div>
+    <div style="display:flex;align-items:center;gap:1.5rem;margin:clamp(1rem,2vh,1.5rem) 0" class="reveal">
+      <span class="stat">30</span>
+      <div>
+        <p style="color:var(--text);font-size:clamp(0.85rem,1.4vw,1rem);margin-bottom:0.2em">完整闭环案例</p>
+        <p>每个案例都跑完整两轮闭环并落盘全过程证据</p>
+      </div>
+    </div>
+    <div class="three-col reveal">
+      <div class="card card-gold">
+        <h3 style="color:var(--gold)">研发 / 产品</h3>
+        <div class="tag-row">
+          <span class="tag-chip">Doc Root Policy</span><span class="tag-chip">docLinks 治理</span><span class="tag-chip">Write-Intent Gate</span>
+          <span class="tag-chip">并行边界</span><span class="tag-chip">MSW Mock 口径</span><span class="tag-chip">ToolInventory 契约</span>
+          <span class="tag-chip">包管理器冲突</span><span class="tag-chip">Docker 探测稳健性</span><span class="tag-chip">LLM 路由治理</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--pink)">架构决策</h3>
+        <div class="tag-row">
+          <span class="tag-chip">EvidenceRoot 统一</span><span class="tag-chip">配置协议</span><span class="tag-chip">Resumable Task 状态机</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>写作创意</h3>
+        <div class="tag-row">
+          <span class="tag-chip">一页纸入口</span><span class="tag-chip">决策型模板</span><span class="tag-chip">指令型防误触发</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 5: TUTORIAL STRUCTURE ===== -->
+<section class="slide" id="s05">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">结构</span>
+  <div class="slide-content">
+    <p class="tag reveal">本教程</p>
+    <h1 class="reveal">内容结构</h1>
+    <div class="accent-line reveal"></div>
+    <div class="step-list reveal" style="margin-top:clamp(1rem,2.5vh,2rem)">
+      <div class="step">
+        <span class="step-num">01</span>
+        <div class="step-body"><h4>流程骨架</h4><p>两轮发散 → 收敛 → 裁决的完整状态机</p></div>
+      </div>
+      <div class="step">
+        <span class="step-num">02</span>
+        <div class="step-body"><h4>角色体系</h4><p>谁提案、谁评审、谁裁决</p></div>
+      </div>
+      <div class="step">
+        <span class="step-num">03</span>
+        <div class="step-body"><h4>10 类内容类型</h4><p>如何按类型装配不同 <span class="term">Profile<span class="tip">配置档案：按内容类型装配角色、评审标准与门禁强度</span></span></p></div>
+      </div>
+      <div class="step">
+        <span class="step-num">04</span>
+        <div class="step-body"><h4>安全门禁</h4><p>防误写、防泄密、防越权（<span class="term">Fail-Closed<span class="tip">阻断式门禁：不满足条件直接停止，不允许降级为警告</span></span>）</p></div>
+      </div>
+      <div class="step">
+        <span class="step-num">05</span>
+        <div class="step-body"><h4>Skill 生成</h4><p>从研究文档到可复用能力的完整路径</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 5.5: ARCHITECTURE DIAGRAM ===== -->
+<section class="slide" id="s05b">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">总览</span>
+  <div class="slide-content" style="justify-content:flex-start;padding-top:clamp(0.8rem,2vh,1.5rem)">
+    <div class="reveal" style="display:flex;align-items:baseline;gap:0.8em;flex-wrap:wrap">
+      <p class="tag" style="margin-bottom:0">架构总览</p>
+      <h2 style="margin:0;font-size:clamp(1.1rem,2.2vw,1.6rem)">系统架构 — 一张图理解 <em>Swarm Decision</em>  <span style="font-size:0.7em;color:var(--text-dim);font-weight:300;font-style:normal">（点击放大）</span></h2>
+    </div>
+    <div class="arch-container reveal">
+      <div class="arch-wrap" id="archWrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 860" width="960" height="860">
+          <style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei","Microsoft JhengHei","SimHei",sans-serif}</style>
+          <defs>
+            <marker id="a-arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><polygon points="0 0,8 4,0 8" fill="#5a5a5a"/></marker>
+            <marker id="a-purple" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><polygon points="0 0,8 4,0 8" fill="#9333ea"/></marker>
+            <filter id="a-sh"><feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#00000010"/></filter>
+            <filter id="a-shs"><feDropShadow dx="0" dy="3" stdDeviation="8" flood-color="#00000018"/></filter>
+          </defs>
+          <rect width="960" height="860" fill="#f8f6f3"/>
+          <text x="480" y="38" text-anchor="middle" fill="#1a1a1a" font-size="22" font-weight="700">Swarm Decision 架构总览</text>
+          <text x="480" y="60" text-anchor="middle" fill="#6a6a6a" font-size="13">两轮并行提案评审 · 可配置决策引擎</text>
+          <!-- LEFT: 10 Content Types -->
+          <rect x="16" y="78" width="175" height="720" rx="10" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="1.5"/>
+          <text x="103" y="100" text-anchor="middle" fill="#1a1a1a" font-size="13" font-weight="600">10 类 Content Type</text>
+          <text x="103" y="116" text-anchor="middle" fill="#6a6a6a" font-size="11">输入内容分类</text>
+          <text x="30" y="136" fill="#6a6a6a" font-size="11" font-weight="600">研发</text>
+          <rect x="30" y="150" width="147" height="24" rx="6" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1.5"/><text x="103" y="167" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Spec · 技术规格</text>
+          <rect x="30" y="178" width="147" height="24" rx="6" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1.5"/><text x="103" y="195" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">ADR · 选型决策</text>
+          <rect x="30" y="206" width="147" height="24" rx="6" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1.5"/><text x="103" y="223" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Plan · 交付计划</text>
+          <text x="30" y="242" fill="#6a6a6a" font-size="11" font-weight="600">运维</text>
+          <rect x="30" y="256" width="147" height="24" rx="6" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1.5"/><text x="103" y="273" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">QA/Audit · 质量审计</text>
+          <rect x="30" y="284" width="147" height="24" rx="6" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1.5"/><text x="103" y="301" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Ops · 运维操作</text>
+          <rect x="30" y="312" width="147" height="24" rx="6" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1.5"/><text x="103" y="329" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Security · 安全策略</text>
+          <text x="30" y="348" fill="#6a6a6a" font-size="11" font-weight="600">业务传播</text>
+          <rect x="30" y="362" width="147" height="24" rx="6" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1.5"/><text x="103" y="379" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Analytics · 分析报告</text>
+          <rect x="30" y="390" width="147" height="24" rx="6" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1.5"/><text x="103" y="407" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Comms · 对外材料</text>
+          <rect x="30" y="418" width="147" height="24" rx="6" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1.5"/><text x="103" y="435" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Creative · 创意简报</text>
+          <rect x="30" y="446" width="147" height="24" rx="6" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1.5"/><text x="103" y="463" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Enablement · 知识赋能</text>
+          <line x1="191" y1="430" x2="208" y2="430" stroke="#5a5a5a" stroke-width="2" marker-end="url(#a-arr)"/>
+          <!-- Profile System -->
+          <rect x="208" y="390" width="552" height="80" rx="10" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="2" filter="url(#a-shs)"/>
+          <text x="484" y="415" text-anchor="middle" fill="#1a1a1a" font-size="14" font-weight="700">Profile System · 装配系统</text>
+          <text x="484" y="432" text-anchor="middle" fill="#6a6a6a" font-size="11">contentType × riskClass → {roles, rubric, gates, artifacts}</text>
+          <rect x="220" y="438" width="112" height="28" rx="5" fill="#e8b4b8" stroke="#4a4a4a" stroke-width="1.2"/><text x="276" y="450" text-anchor="middle" fill="#1a1a1a" font-size="9" font-weight="600">Risk Overlay</text><text x="276" y="461" text-anchor="middle" fill="#4a4a4a" font-size="8">风险叠加层</text>
+          <rect x="345" y="438" width="112" height="28" rx="5" fill="#d4a574" stroke="#4a4a4a" stroke-width="1.2"/><text x="401" y="450" text-anchor="middle" fill="#1a1a1a" font-size="9" font-weight="600">ContentType</text><text x="401" y="461" text-anchor="middle" fill="#4a4a4a" font-size="8">内容类型层</text>
+          <rect x="470" y="438" width="112" height="28" rx="5" fill="#c4956a" stroke="#4a4a4a" stroke-width="1.2"/><text x="526" y="450" text-anchor="middle" fill="#1a1a1a" font-size="9" font-weight="600">Org Policy</text><text x="526" y="461" text-anchor="middle" fill="#4a4a4a" font-size="8">组织政策层</text>
+          <rect x="595" y="438" width="112" height="28" rx="5" fill="#b3845c" stroke="#4a4a4a" stroke-width="1.2"/><text x="651" y="450" text-anchor="middle" fill="#1a1a1a" font-size="9" font-weight="600">Task Override</text><text x="651" y="461" text-anchor="middle" fill="#4a4a4a" font-size="8">任务级覆盖</text>
+          <line x1="484" y1="470" x2="484" y2="492" stroke="#5a5a5a" stroke-width="2" marker-end="url(#a-arr)"/>
+          <!-- Process Core -->
+          <rect x="208" y="492" width="552" height="165" rx="10" fill="#ffffff" stroke="#4a4a4a" stroke-width="2" filter="url(#a-shs)"/>
+          <text x="484" y="514" text-anchor="middle" fill="#1a1a1a" font-size="14" font-weight="700">两轮并行流程骨架</text>
+          <rect x="222" y="528" width="72" height="52" rx="8" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1.8" filter="url(#a-sh)"/>
+          <text x="258" y="546" text-anchor="middle" fill="#1a1a1a" font-size="10" font-weight="700">冻结输入</text><text x="258" y="558" text-anchor="middle" fill="#4a4a4a" font-size="8">FREEZE</text><text x="258" y="570" text-anchor="middle" fill="#6a6a6a" font-size="8">冻结输入合同</text>
+          <line x1="294" y1="554" x2="308" y2="554" stroke="#5a5a5a" stroke-width="2" marker-end="url(#a-arr)"/>
+          <rect x="308" y="528" width="72" height="52" rx="8" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1.8" filter="url(#a-sh)"/>
+          <text x="344" y="546" text-anchor="middle" fill="#1a1a1a" font-size="10" font-weight="700">提案轮 R1</text><text x="344" y="558" text-anchor="middle" fill="#4a4a4a" font-size="8">DISPATCH_R1</text><text x="344" y="570" text-anchor="middle" fill="#6a6a6a" font-size="8">多角色独立提案</text>
+          <line x1="380" y1="554" x2="394" y2="554" stroke="#5a5a5a" stroke-width="2" marker-end="url(#a-arr)"/>
+          <rect x="394" y="528" width="72" height="52" rx="8" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1.8" filter="url(#a-sh)"/>
+          <text x="430" y="546" text-anchor="middle" fill="#1a1a1a" font-size="10" font-weight="700">汇总合成</text><text x="430" y="558" text-anchor="middle" fill="#4a4a4a" font-size="8">SYNTHESIS</text><text x="430" y="570" text-anchor="middle" fill="#6a6a6a" font-size="8">Option Cards</text>
+          <line x1="466" y1="554" x2="480" y2="554" stroke="#5a5a5a" stroke-width="2" marker-end="url(#a-arr)"/>
+          <rect x="480" y="528" width="72" height="52" rx="8" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1.8" filter="url(#a-sh)"/>
+          <text x="516" y="546" text-anchor="middle" fill="#1a1a1a" font-size="10" font-weight="700">评审轮 R2</text><text x="516" y="558" text-anchor="middle" fill="#4a4a4a" font-size="8">DISPATCH_R2</text><text x="516" y="570" text-anchor="middle" fill="#6a6a6a" font-size="8">定向回答阻塞</text>
+          <line x1="552" y1="554" x2="566" y2="554" stroke="#5a5a5a" stroke-width="2" marker-end="url(#a-arr)"/>
+          <rect x="566" y="528" width="72" height="52" rx="8" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1.8" filter="url(#a-sh)"/>
+          <text x="602" y="546" text-anchor="middle" fill="#1a1a1a" font-size="10" font-weight="700">裁决评审</text><text x="602" y="558" text-anchor="middle" fill="#4a4a4a" font-size="8">JUDGING</text><text x="602" y="570" text-anchor="middle" fill="#6a6a6a" font-size="8">独立 verdict</text>
+          <line x1="638" y1="554" x2="652" y2="554" stroke="#5a5a5a" stroke-width="2" marker-end="url(#a-arr)"/>
+          <rect x="652" y="528" width="72" height="52" rx="8" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1.8" filter="url(#a-sh)"/>
+          <text x="688" y="546" text-anchor="middle" fill="#1a1a1a" font-size="10" font-weight="700">最终决策</text><text x="688" y="558" text-anchor="middle" fill="#4a4a4a" font-size="8">FINAL</text><text x="688" y="570" text-anchor="middle" fill="#6a6a6a" font-size="8">冻结 Profile v1</text>
+          <text x="220" y="590" fill="#dc2626" font-size="11" font-weight="600">● Security Gates</text>
+          <text x="220" y="606" fill="#6a6a6a" font-size="10">Write-Intent Gate · SSOT 单写者规则 · Scan Gates · Negative Fixtures</text>
+          <text x="220" y="622" fill="#6a6a6a" font-size="10">门禁位置: 冻结输入后 · R1 提案后 · 评审轮后 · 最终决策前</text>
+          <!-- RIGHT: Task Dials -->
+          <rect x="776" y="78" width="168" height="420" rx="10" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="1.5"/>
+          <text x="860" y="100" text-anchor="middle" fill="#1a1a1a" font-size="13" font-weight="700">Task Dials</text>
+          <text x="860" y="116" text-anchor="middle" fill="#6a6a6a" font-size="11">任务旋钮 · 每次调参</text>
+          <rect x="784" y="128" width="152" height="60" rx="8" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/><rect x="784" y="128" width="6" height="60" rx="3" fill="#9333ea"/>
+          <text x="800" y="144" fill="#1a1a1a" font-size="11" font-weight="600">创造力</text><text x="800" y="158" fill="#6a6a6a" font-size="9">creativity</text><text x="800" y="171" fill="#4a4a4a" font-size="9">low / medium / high</text>
+          <rect x="784" y="196" width="152" height="60" rx="8" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/><rect x="784" y="196" width="6" height="60" rx="3" fill="#dc2626"/>
+          <text x="800" y="212" fill="#1a1a1a" font-size="11" font-weight="600">风险容忍度</text><text x="800" y="226" fill="#6a6a6a" font-size="9">riskTolerance</text><text x="800" y="239" fill="#4a4a4a" font-size="9">low / med / high / critical</text>
+          <rect x="784" y="264" width="152" height="60" rx="8" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/><rect x="784" y="264" width="6" height="60" rx="3" fill="#2563eb"/>
+          <text x="800" y="280" fill="#1a1a1a" font-size="11" font-weight="600">通用性</text><text x="800" y="294" fill="#6a6a6a" font-size="9">generality</text><text x="800" y="307" fill="#4a4a4a" font-size="9">narrow / medium / broad</text>
+          <rect x="784" y="332" width="152" height="60" rx="8" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/><rect x="784" y="332" width="6" height="60" rx="3" fill="#16a34a"/>
+          <text x="800" y="348" fill="#1a1a1a" font-size="11" font-weight="600">速度</text><text x="800" y="362" fill="#6a6a6a" font-size="9">speed</text><text x="800" y="375" fill="#4a4a4a" font-size="9">fast / normal / thorough</text>
+          <rect x="784" y="400" width="152" height="60" rx="8" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/><rect x="784" y="400" width="6" height="60" rx="3" fill="#d97706"/>
+          <text x="800" y="416" fill="#1a1a1a" font-size="11" font-weight="600">复用优先</text><text x="800" y="430" fill="#6a6a6a" font-size="9">reuseFirst</text><text x="800" y="443" fill="#4a4a4a" font-size="9">true / false</text>
+          <rect x="784" y="468" width="152" height="26" rx="8" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/><rect x="784" y="468" width="6" height="26" rx="3" fill="#dc2626"/>
+          <text x="800" y="483" fill="#1a1a1a" font-size="10" font-weight="600">安全严格度</text><text x="860" y="483" fill="#4a4a4a" font-size="9">low/med/high</text>
+          <line x1="776" y1="430" x2="760" y2="430" stroke="#5a5a5a" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <text x="754" y="426" text-anchor="end" fill="#6a6a6a" font-size="9">配置流程</text>
+          <!-- Output -->
+          <rect x="208" y="670" width="250" height="68" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2" filter="url(#a-shs)"/>
+          <text x="333" y="694" text-anchor="middle" fill="#1a1a1a" font-size="13" font-weight="700">Decision Report</text>
+          <text x="333" y="711" text-anchor="middle" fill="#6a6a6a" font-size="10">决策报告 · 可回放 · 可验收 · 可审计</text>
+          <text x="333" y="727" text-anchor="middle" fill="#6a6a6a" font-size="9">decision.json (机读) + requirements.md</text>
+          <line x1="484" y1="657" x2="484" y2="670" stroke="#5a5a5a" stroke-width="2" marker-end="url(#a-arr)"/>
+          <!-- Dynamic Sampling -->
+          <rect x="510" y="670" width="250" height="68" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2" filter="url(#a-shs)"/>
+          <text x="635" y="694" text-anchor="middle" fill="#1a1a1a" font-size="13" font-weight="700">Dynamic Sampling</text>
+          <text x="635" y="711" text-anchor="middle" fill="#4a4a4a" font-size="10">动态采样 · 按信号扩容</text>
+          <text x="635" y="727" text-anchor="middle" fill="#4a4a4a" font-size="9">Baseline 矩阵 + 多样性/证据/分歧信号</text>
+          <path d="M 510 704 L 280 704 L 280 580 L 280 568" stroke="#9333ea" stroke-width="1.5" stroke-dasharray="5,3" fill="none" marker-end="url(#a-purple)"/>
+          <text x="295" y="700" fill="#9333ea" font-size="10" font-weight="600">动态扩容信号</text>
+          <!-- Legend -->
+          <rect x="776" y="510" width="168" height="150" rx="10" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/>
+          <text x="860" y="530" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="600">图例 Legend</text>
+          <rect x="786" y="539" width="12" height="12" rx="3" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1"/><text x="804" y="550" fill="#4a4a4a" font-size="10">输入 / 配置层</text>
+          <rect x="786" y="556" width="12" height="12" rx="3" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1"/><text x="804" y="567" fill="#4a4a4a" font-size="10">处理 / 裁决层</text>
+          <rect x="786" y="573" width="12" height="12" rx="3" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1"/><text x="804" y="584" fill="#4a4a4a" font-size="10">基础设施 / 输出</text>
+          <rect x="786" y="590" width="12" height="12" rx="3" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="1"/><text x="804" y="601" fill="#4a4a4a" font-size="10">存储 / 状态</text>
+          <line x1="786" y1="615" x2="798" y2="615" stroke="#5a5a5a" stroke-width="1.5" marker-end="url(#a-arr)"/><text x="804" y="619" fill="#4a4a4a" font-size="10">主数据流</text>
+          <line x1="786" y1="630" x2="798" y2="630" stroke="#9333ea" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#a-purple)"/><text x="804" y="634" fill="#4a4a4a" font-size="10">反馈 / 扩容信号</text>
+          <line x1="786" y1="645" x2="798" y2="645" stroke="#dc2626" stroke-width="1.5"/><text x="804" y="649" fill="#4a4a4a" font-size="10">安全门禁</text>
+          <text x="480" y="820" text-anchor="middle" fill="#6a6a6a" font-size="12">最小信任 · 层层防御 · 任何层级只允许收紧，禁止放松</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+  <!-- Lightbox -->
+  <div class="lightbox" id="archLightbox">
+    <button class="lb-close" id="lbClose">x</button>
+    <div class="lb-inner" id="lbInner"></div>
+    <div class="lb-hint">点击任意处或按 Esc 关闭</div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 6: STATE MACHINE ===== -->
+<section class="slide" id="s06">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">Part 1 · 流程骨架</span>
+  <div class="slide-content">
+    <p class="tag reveal">核心流程</p>
+    <h1 class="reveal">两轮并行流程骨架</h1>
+    <div class="accent-line reveal"></div>
+    <div class="sm-flow reveal" style="margin:clamp(1rem,2vh,1.5rem) 0">
+      <span class="sm-node">INIT</span><span class="sm-arrow">→</span>
+      <span class="sm-node">FREEZE_INPUT</span><span class="sm-arrow">→</span>
+      <span class="sm-node">DISPATCH_R1</span><span class="sm-arrow">→</span>
+      <span class="sm-node">SYNTHESIS</span><span class="sm-arrow">→</span>
+      <span class="sm-node">DISPATCH_R2</span><span class="sm-arrow">→</span>
+      <span class="sm-node">JUDGING</span><span class="sm-arrow">→</span>
+      <span class="sm-node">FINAL</span><span class="sm-arrow">→</span>
+      <span class="sm-node">META</span>
+    </div>
+    <div class="two-col">
+      <div class="reveal">
+        <h3>各阶段职责</h3>
+        <ul class="bullet-list">
+          <li><strong style="color:var(--text)">FREEZE_INPUT</strong>：冻结输入合同（Problem / Evidence / Constraints / Success / Non-Goals / Rubric）</li>
+          <li><strong style="color:var(--text)">DISPATCH_R1</strong>：多角色独立提案（至少 3–5 个角色）</li>
+          <li><strong style="color:var(--text)">SYNTHESIS</strong>：Option Cards + 对比矩阵 + 阻塞问题</li>
+          <li><strong style="color:var(--text)">DISPATCH_R2</strong>：仅回答阻塞问题（<span class="highlight-gold">禁止二次发散</span>）</li>
+        </ul>
+      </div>
+      <div class="reveal">
+        <h3>裁决与交付</h3>
+        <ul class="bullet-list">
+          <li><strong style="color:var(--text)">JUDGING</strong>：全新角色独立 verdict（pick + confidence + trade-offs + sign-off）</li>
+          <li><strong style="color:var(--text)">FINAL</strong>：最终裁决，冻结 <span class="term">Profile<span class="tip">配置档案：按内容类型装配角色、评审标准与门禁强度</span></span> v1</li>
+          <li><strong style="color:var(--text)">META</strong>：trace + requirements（可回放合同）</li>
+        </ul>
+        <div class="callout callout-pink" style="margin-top:1rem">
+          <p><strong style="color:var(--pink)">禁止跳过任何阶段</strong>，确保决策链路完整可追溯</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 7: ROLES R1 ===== -->
+<section class="slide" id="s07">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">Part 1 · 流程骨架</span>
+  <div class="slide-content">
+    <p class="tag reveal">提案轮</p>
+    <h1 class="reveal">Round 1：<em>独立发散</em></h1>
+    <div class="accent-line reveal"></div>
+    <div class="four-col reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <div class="role-card">
+        <div class="role-name">Product</div>
+        <div class="role-desc">产品视角</div>
+        <div class="role-focus">可落地性、用户体验</div>
+      </div>
+      <div class="role-card">
+        <div class="role-name">Architect</div>
+        <div class="role-desc">架构视角</div>
+        <div class="role-focus">可扩展性、长期成本</div>
+      </div>
+      <div class="role-card">
+        <div class="role-name">Implementation</div>
+        <div class="role-desc">实现视角</div>
+        <div class="role-focus">工期、依赖、风险</div>
+      </div>
+      <div class="role-card">
+        <div class="role-name">QA</div>
+        <div class="role-desc">质量视角</div>
+        <div class="role-focus">可验证性、回归覆盖</div>
+      </div>
+    </div>
+    <div class="four-col reveal" style="margin-top:clamp(0.6rem,1.2vw,1rem)">
+      <div class="role-card" style="grid-column:2/4">
+        <div class="role-name" style="color:var(--pink)">Risk Security</div>
+        <div class="role-desc">风险视角</div>
+        <div class="role-focus">合规、安全、泄密风险</div>
+      </div>
+    </div>
+    <div class="callout reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <p><strong style="color:var(--gold)">核心规则</strong>：每个角色先独立成稿，<span class="highlight-gold">禁止互相引用后再写</span>——防止观点趋同，保留多视角优势</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 8: SYNTHESIS ===== -->
+<section class="slide" id="s08">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">Part 1 · 流程骨架</span>
+  <div class="slide-content">
+    <p class="tag reveal">汇总</p>
+    <h1 class="reveal">汇总阶段：<em>观点变选项</em></h1>
+    <div class="accent-line reveal"></div>
+    <div class="three-col reveal" style="margin-top:clamp(1.2rem,2.5vh,2rem)">
+      <div class="card card-gold">
+        <h3>Option Cards</h3>
+        <p style="font-size:clamp(0.72rem,1.1vw,0.88rem)">每个候选方案的清晰描述，包含：方案名称、核心做法、关键假设、预期收益、已知局限</p>
+      </div>
+      <div class="card card-gold">
+        <h3>对比矩阵</h3>
+        <p style="font-size:clamp(0.72rem,1.1vw,0.88rem)">多维度评分对比：<br>可落地性 / 可验证性 / 风险 / 成本 / 采用率</p>
+      </div>
+      <div class="card card-gold">
+        <h3>阻塞问题清单</h3>
+        <p style="font-size:clamp(0.72rem,1.1vw,0.88rem)">必须回答的关键问题，决定 R2 的方向：悬空假设 / 跨方案冲突 / High 风险未决项</p>
+      </div>
+    </div>
+    <div class="callout reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <p>允许 <span class="highlight-gold">Composite（组合方案）</span>，但必须写成明确 option，禁止把多个方案揉成一团变成模糊折中</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 9: JUDGING ===== -->
+<section class="slide" id="s09">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">Part 1 · 流程骨架</span>
+  <div class="slide-content">
+    <p class="tag reveal">评审轮</p>
+    <h1 class="reveal">Judging：<em>全新角色独立裁决</em></h1>
+    <div class="accent-line reveal"></div>
+    <div class="three-col reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <div class="card">
+        <div class="badge badge-gold">技术</div>
+        <h3>Judge Tech</h3>
+        <p>技术可行性、架构合理性</p>
+      </div>
+      <div class="card">
+        <div class="badge badge-gold">产品</div>
+        <h3>Judge Product</h3>
+        <p>价值、用户体验</p>
+      </div>
+      <div class="card card-pink">
+        <div class="badge badge-pink" style="background:rgba(232,180,184,0.15)">必须</div>
+        <h3 style="color:var(--pink)">Judge Risk</h3>
+        <p>安全、合规、泄密风险</p>
+      </div>
+    </div>
+    <div class="reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <h3>Verdict 格式（每个 Judge 必须输出）</h3>
+      <div class="four-col" style="margin-top:0.8rem">
+        <div style="text-align:center"><div class="stat" style="font-size:clamp(1.4rem,3vw,2rem)">pick</div><p style="font-size:0.78rem">选哪个方案</p></div>
+        <div style="text-align:center"><div class="stat" style="font-size:clamp(1.4rem,3vw,2rem)">confidence</div><p style="font-size:0.78rem">置信度 0-1</p></div>
+        <div style="text-align:center"><div class="stat" style="font-size:clamp(1.4rem,3vw,2rem)">trade-offs</div><p style="font-size:0.78rem">权衡点</p></div>
+        <div style="text-align:center"><div class="stat" style="font-size:clamp(1.4rem,3vw,2rem)">sign-off</div><p style="font-size:0.78rem">验收条件</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 10: FINAL REPORT ===== -->
+<section class="slide" id="s10">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">Part 1 · 流程骨架</span>
+  <div class="slide-content">
+    <p class="tag reveal">最终交付</p>
+    <h1 class="reveal">Decision Report：<em>可交付报告</em></h1>
+    <div class="accent-line reveal"></div>
+    <div class="two-col reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <div>
+        <h3>必须包含的 8 个章节</h3>
+        <ul class="bullet-list">
+          <li><strong style="color:var(--text)">Executive Summary</strong>：执行摘要</li>
+          <li><strong style="color:var(--text)">Final Decision</strong>：最终决定</li>
+          <li><strong style="color:var(--text)">Option Cards</strong>：选项卡片</li>
+          <li><strong style="color:var(--text)">Comparison Matrix</strong>：对比矩阵</li>
+          <li><strong style="color:var(--text)">Verdict Summary</strong>：评审汇总</li>
+          <li><strong style="color:var(--text)">Risks & Sign-off</strong>：风险与签字</li>
+          <li><strong style="color:var(--text)">Acceptance Checklist</strong>：验收清单</li>
+          <li><strong style="color:var(--text)">Revisit Triggers</strong>：复盘触发条件</li>
+        </ul>
+      </div>
+      <div>
+        <h3>核心原则</h3>
+        <div class="callout">
+          <p><strong style="color:var(--gold)">可回放</strong>：每个结论都有证据支撑</p>
+        </div>
+        <div class="callout" style="margin-top:0.6rem">
+          <p><strong style="color:var(--gold)">可验收</strong>：Acceptance Checklist 量化验收条件</p>
+        </div>
+        <div class="callout" style="margin-top:0.6rem">
+          <p><strong style="color:var(--gold)">可审计</strong>：决策链路完整存档，随时可回放</p>
+        </div>
+        <div class="callout callout-pink" style="margin-top:0.8rem">
+          <p><strong style="color:var(--pink)">Revisit Triggers</strong> 将一次性决策升级为可演化的决策协议</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 11: WHY 10 TYPES ===== -->
+<section class="slide" id="s11">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">Part 2 · 内容类型</span>
+  <div class="slide-content">
+    <p class="tag reveal">内容类型</p>
+    <h1 class="reveal">为什么需要 <em>10 类</em> Content Type？</h1>
+    <div class="accent-line reveal"></div>
+    <div class="two-col reveal" style="margin-top:clamp(1.2rem,2.5vh,2rem)">
+      <div class="callout callout-pink">
+        <p><strong style="color:var(--pink)">痛点</strong><br>研发流程、创意流程、企业传播流程——对内容类型的要求截然不同：谁来决策？门禁是什么？最终产出什么？用同一套逻辑，必然导致 <span class="highlight-pink">过松或过严</span>。</p>
+      </div>
+      <div class="callout">
+        <p><strong style="color:var(--gold)">解法：Profile 装配</strong><br>按 <span class="term">contentType × riskClass<span class="tip">内容类型 × 风险等级：决定角色、门禁与产物合同</span></span> 装配：角色、Rubric、<span class="term">Gate<span class="tip">门禁规则：决定何时阻断、何时警告</span></span>、产物格式——同一骨架，因地制宜。</p>
+      </div>
+    </div>
+    <div class="reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <h3>三域覆盖</h3>
+      <div class="three-col" style="margin-top:0.8rem">
+        <div class="card"><div class="badge badge-gold">研发</div><p>Spec · ADR · Plan · QA · Ops · Security · Analytics</p></div>
+        <div class="card"><div class="badge badge-pink">创意</div><p>Creative Brief · Enablement</p></div>
+        <div class="card"><div class="badge badge-green">企业市场</div><p>External Comms · Analytics · Security</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 12: 10 TYPES OVERVIEW ===== -->
+<section class="slide" id="s12">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">Part 2 · 内容类型</span>
+  <div class="slide-content">
+    <p class="tag reveal">内容类型</p>
+    <h1 class="reveal">10 类 Content Type <em>总览</em></h1>
+    <div class="accent-line reveal"></div>
+    <table class="data-table reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <thead><tr><th style="width:18%">类型</th><th>核心门禁</th><th style="width:12%">分组</th></tr></thead>
+      <tbody>
+        <tr><td><span class="type-badge tech">Spec</span></td><td>schema + examples 合同，breaking change 迁移窗口</td><td><span class="type-badge tech">技术</span></td></tr>
+        <tr><td><span class="type-badge tech">ADR</span></td><td>trade-offs + revisit triggers + 拒绝理由</td><td><span class="type-badge tech">技术</span></td></tr>
+        <tr><td><span class="type-badge tech">Plan</span></td><td>阶段门禁 + 并行资格机读裁决</td><td><span class="type-badge tech">技术</span></td></tr>
+        <tr><td><span class="type-badge ops">QA/Audit</span></td><td>evidence manifest + 默认脱敏</td><td><span class="type-badge ops">运维</span></td></tr>
+        <tr><td><span class="type-badge ops">Ops</span></td><td>Execution Intent + Danger Zone token</td><td><span class="type-badge ops">运维</span></td></tr>
+        <tr><td><span class="type-badge ops">Security</span></td><td>controls→gate + restricted 指针</td><td><span class="type-badge ops">运维</span></td></tr>
+        <tr><td><span class="type-badge biz">Analytics</span></td><td>metricVersion + query pointers (restricted)</td><td><span class="type-badge biz">业务</span></td></tr>
+        <tr><td><span class="type-badge biz">Comms</span></td><td>claim→evidence + 审批块（Approvers/Expiry/Scope）</td><td><span class="type-badge biz">业务</span></td></tr>
+        <tr><td><span class="type-badge biz">Creative</span></td><td>Brief 必填 + Do-Not 清单</td><td><span class="type-badge biz">业务</span></td></tr>
+        <tr><td><span class="type-badge biz">Enablement</span></td><td>双轨结构 + 命令标签（SAFE/DANGEROUS）</td><td><span class="type-badge biz">业务</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== SLIDE 13: EXTERNAL COMMS ===== -->
+<section class="slide" id="s13">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">Part 2 · 内容类型</span>
+  <div class="slide-content">
+    <p class="tag reveal">对外材料</p>
+    <h1 class="reveal">External Comms：<em>审批链路</em></h1>
+    <div class="accent-line reveal"></div>
+    <div class="two-col reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <div>
+        <div class="callout callout-pink">
+          <p><strong style="color:var(--pink)">⚠ 为什么关键？</strong><br>对外发布的声明、数据、承诺——任何失误都将影响 <span class="highlight-pink">客户信任与法律责任</span>。</p>
+        </div>
+        <h3 style="margin-top:1rem">必备字段</h3>
+        <ul class="bullet-list">
+          <li><strong style="color:var(--text)">claim→evidence 映射表</strong>：每个声明必须有对应证据指针，不可空口无凭</li>
+          <li><strong style="color:var(--text)">Approvers / Date / Expiry / Scope</strong>：审批块（必填）</li>
+          <li><strong style="color:var(--text)">Migration / Rollback</strong>：承诺变更时的迁移与回滚策略</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Fail-Closed 规则</h3>
+        <div class="card card-pink reveal" style="margin-top:0.8rem">
+          <p class="fail-block" style="margin-bottom:0.6rem">✕ 缺 Approvers / Expiry / Scope → BLOCK</p>
+          <p class="fail-block">✕ 未批准承诺 → 直接阻断</p>
+        </div>
+        <div class="callout reveal" style="margin-top:1rem">
+          <p><strong style="color:var(--gold)">核心原则</strong>：未经审批的日期、价格、合规承诺，一律不得出现在对外材料中</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 14: OPS ===== -->
+<section class="slide" id="s14">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">Part 2 · 内容类型</span>
+  <div class="slide-content">
+    <p class="tag reveal">运维安全</p>
+    <h1 class="reveal">Ops/Incident：<em>危险操作门禁</em></h1>
+    <div class="accent-line reveal"></div>
+    <div class="reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <h3>Execution Intent：三级水位线</h3>
+      <div class="three-col" style="margin-top:0.8rem">
+        <div class="card" style="border-color:rgba(90,158,111,0.3)"><div class="badge badge-green">NONE</div><p style="color:var(--text)">仅读取，不执行</p><p style="font-size:0.78rem;margin-top:0.4em">安全</p></div>
+        <div class="card" style="border-color:rgba(212,165,116,0.3)"><div class="badge badge-gold">READ-ONLY</div><p style="color:var(--text)">仅查询操作</p><p style="font-size:0.78rem;margin-top:0.4em">需审核</p></div>
+        <div class="card card-pink"><div class="badge badge-pink">WRITE</div><p style="color:var(--text)">写操作 — 必须带 token</p><p style="font-size:0.78rem;margin-top:0.4em">高风险</p></div>
+      </div>
+    </div>
+    <div class="reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <h3>Danger Zone — 写操作必须包含</h3>
+      <div class="four-col" style="margin-top:0.6rem">
+        <div class="card"><p style="font-size:clamp(0.72rem,1.1vw,0.85rem);color:var(--text)">☠ 影响面分析</p></div>
+        <div class="card"><p style="font-size:clamp(0.72rem,1.1vw,0.85rem);color:var(--text)">↩ 回滚策略</p></div>
+        <div class="card"><p style="font-size:clamp(0.72rem,1.1vw,0.85rem);color:var(--text)">✓ 前置检查清单</p></div>
+        <div class="card"><p style="font-size:clamp(0.72rem,1.1vw,0.85rem);color:var(--text)">✓ 验证步骤</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 15: SPEC ===== -->
+<section class="slide" id="s15">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">Part 2 · 内容类型</span>
+  <div class="slide-content">
+    <p class="tag reveal">技术规格</p>
+    <h1 class="reveal">Spec：<em>合同化治理</em></h1>
+    <div class="accent-line reveal"></div>
+    <div class="two-col reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <div>
+        <h3>schema + examples = 可回归合同</h3>
+        <div class="card card-gold" style="margin-top:0.8rem">
+          <p><strong style="color:var(--gold)">Spec（规范）</strong> = schema 定义 + examples 示例 + strict/compat 分级</p>
+          <p style="margin-top:0.6em;border-top:1px solid var(--border);padding-top:0.6em"><strong style="color:var(--gold)">可回归合同</strong> = 接口契约 + 测试用例 + 破坏性变更追踪</p>
+        </div>
+        <div style="margin-top:0.8rem">
+          <div class="card" style="margin-bottom:0.5rem"><p><strong>strict</strong>：高风险类规格，强制严格模式</p></div>
+          <div class="card"><p><strong>compat</strong>：向后兼容，允许渐进迁移</p></div>
+        </div>
+      </div>
+      <div>
+        <h3>Fail-Closed 规则</h3>
+        <div class="reveal" style="margin-top:0.8rem">
+          <p class="fail-block" style="margin-bottom:0.5rem">✕ 缺 schema / examples → BLOCK</p>
+          <p class="fail-block" style="margin-bottom:0.5rem">✕ breaking change 无迁移策略 → BLOCK</p>
+          <p class="fail-block">✕ 示例命中敏感模式（token / key / 绝对路径）→ BLOCK</p>
+        </div>
+        <div class="callout reveal" style="margin-top:0.8rem">
+          <p><strong style="color:var(--gold)">Profile 装配</strong>：高风险类技术规格（支付、认证、数据格式）→ strict 模式强制，不允许 compat 回退</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 16: 6 THREATS ===== -->
+<section class="slide" id="s16">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">Part 3 · 安全治理</span>
+  <div class="slide-content">
+    <p class="tag reveal">安全治理</p>
+    <h1 class="reveal">6 大安全威胁模型</h1>
+    <div class="accent-line reveal"></div>
+    <div class="three-col reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <div class="card card-pink"><div style="font-size:clamp(1.4rem,2.5vw,2rem);color:var(--gold);opacity:0.3;font-family:var(--font-display);margin-bottom:0.4em">01</div><h3>过早写入</h3><p>用户只是讨论/要方案，系统却已生成文件、修改仓库</p></div>
+      <div class="card card-pink"><div style="font-size:clamp(1.4rem,2.5vw,2rem);color:var(--gold);opacity:0.3;font-family:var(--font-display);margin-bottom:0.4em">02</div><h3>误把示例当执行</h3><p>文档 <span class="term">命令块<span class="tip">Code Block：文档中的代码/操作示例</span></span> 被误判为可执行脚本</p></div>
+      <div class="card card-pink"><div style="font-size:clamp(1.4rem,2.5vw,2rem);color:var(--gold);opacity:0.3;font-family:var(--font-display);margin-bottom:0.4em">03</div><h3>证据二次泄漏</h3><p>敏感日志或配置信息被粘贴进正文或对外材料</p></div>
+      <div class="card card-pink"><div style="font-size:clamp(1.4rem,2.5vw,2rem);color:var(--gold);opacity:0.3;font-family:var(--font-display);margin-bottom:0.4em">04</div><h3>越权承诺</h3><p>对外材料出现未经审批的日期、价格或合规承诺</p></div>
+      <div class="card card-pink"><div style="font-size:clamp(1.4rem,2.5vw,2rem);color:var(--gold);opacity:0.3;font-family:var(--font-display);margin-bottom:0.4em">05</div><h3>权限不可追责</h3><p>谁批准、何时批准、范围是什么——全部不可审计</p></div>
+      <div class="card card-pink"><div style="font-size:clamp(1.4rem,2.5vw,2rem);color:var(--gold);opacity:0.3;font-family:var(--font-display);margin-bottom:0.4em">06</div><h3>治理退化</h3><p>从"严"逐步变成"随便"，<span class="term">warn-only<span class="tip">仅警告模式：违规仅提示，不阻断</span></span> 长期存在</p></div>
+    </div>
+    <div class="callout reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <p>每一种威胁都可能独立触发，也可能在多个环节级联放大——防御体系必须同时覆盖</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 17: WRITE-INTENT GATE ===== -->
+<section class="slide" id="s17">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">Part 3 · 安全治理</span>
+  <div class="slide-content">
+    <p class="tag reveal">安全治理</p>
+    <h1 class="reveal"><span class="term">Write-Intent Gate<span class="tip">写入意图门禁：防止误写机制，强制显式授权</span></span></h1>
+    <div class="accent-line reveal"></div>
+    <div class="two-col reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <div>
+        <h3>两阶段原则</h3>
+        <div class="card card-gold" style="margin-bottom:0.5rem">
+          <div class="badge badge-gold">Phase 1</div>
+          <h3 style="margin-top:0.4em"><span class="term">DISCUSSION / RESEARCH<span class="tip">讨论 / 研究态</span></span></h3>
+          <p>只读 / 分析 / 生成提案 → <span class="highlight-pink">禁止写入仓库</span></p>
+        </div>
+        <div style="text-align:center;color:var(--gold);font-size:1.2rem;margin:0.3rem 0">↓</div>
+        <div class="card card-pink">
+          <div class="badge badge-pink">Phase 2</div>
+          <h3 style="margin-top:0.4em"><span class="term">APPLY / EXECUTION<span class="tip">执行态</span></span></h3>
+          <p>满足写入意图协议后才允许写操作</p>
+        </div>
+      </div>
+      <div>
+        <h3>写入意图协议（4 要素）</h3>
+        <div class="step-list" style="margin-top:0.8rem">
+          <div class="step"><span class="step-num">1</span><div class="step-body"><h4><span class="term">dry-run<span class="tip">Dry-Run：仅输出计划，不实际写入</span></span> 默认</h4><p>先输出 plan + diff-scope</p></div></div>
+          <div class="step"><span class="step-num">2</span><div class="step-body"><h4><span class="term">--apply<span class="tip">显式确认标记</span></h4><p>显式标记才能触发真实写入</p></div></div>
+          <div class="step"><span class="step-num">3</span><div class="step-body"><h4><span class="term">nonce / token<span class="tip">一次性令牌：防跨对话误触发</span></h4><p>防止会话误触发写入</p></div></div>
+          <div class="step"><span class="step-num">4</span><div class="step-body"><h4><span class="term">scope<span class="tip">范围化授权：限定允许写入的目录/文件类型</span></span> 约束</h4><p>范围化授权：允许写哪些目录</p></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="callout callout-pink reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <p><strong style="color:var(--pink)">Fail-Closed：</strong>缺少 <span class="term">apply<span class="tip">应用标记</span></span> / <span class="term">nonce<span class="tip">一次性令牌</span></span> / <span class="term">scope<span class="tip">范围化授权</span></span> 任一项 → <strong style="color:var(--text)">直接阻断</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 18: SSOT ===== -->
+<section class="slide" id="s18">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">Part 3 · 安全治理</span>
+  <div class="slide-content">
+    <p class="tag reveal">安全治理</p>
+    <h1 class="reveal"><span class="term">SSOT<span class="tip">Single Source of Truth · 单一事实来源</span></span> 单写者 + 并行边界</h1>
+    <div class="accent-line reveal"></div>
+    <div class="two-col reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <div>
+        <h3>单一事实来源</h3>
+        <div class="card card-gold" style="margin-top:0.8rem">
+          <div class="badge badge-gold">主进程</div>
+          <ul class="bullet-list" style="margin-top:0.6rem">
+            <li><span class="term">options.md<span class="tip">选项说明文件</span></span></li>
+            <li><span class="term">decision-report.md<span class="tip">决策报告</span></span></li>
+            <li>最终汇总</li>
+          </ul>
+        </div>
+        <div class="card" style="margin-top:0.6rem">
+          <div class="badge badge-pink">子进程</div>
+          <ul class="bullet-list" style="margin-top:0.6rem">
+            <li>各自 <span class="term">round*.md<span class="tip">轮次记录文件</span></span></li>
+            <li>各自 <span class="term">verdict-*.md<span class="tip">裁决结果文件</span></span></li>
+          </ul>
+        </div>
+        <div class="callout reveal" style="margin-top:0.6rem"><p>子进程不得越权写入主进程产物</p></div>
+      </div>
+      <div>
+        <h3>三态裁决 — 并行资格</h3>
+        <div style="margin-top:0.8rem">
+          <div class="card" style="border-color:rgba(90,158,111,0.3);margin-bottom:0.5rem"><div class="badge badge-green">PARALLEL_OK</div><p>写集合互斥，可安全并行执行</p></div>
+          <div class="card" style="border-color:rgba(212,165,116,0.3);margin-bottom:0.5rem"><div class="badge badge-gold">SERIAL_ONLY</div><p>不确定是否有冲突 → <span class="highlight-gold">降级为串行</span></p></div>
+          <div class="card card-pink"><div class="badge badge-red">BLOCKED</div><p>发现写集合冲突或 <span class="term">scope<span class="tip">授权范围</span></span> 不清晰 → <span class="highlight-pink">直接阻断</span></p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 19: SCAN GATES ===== -->
+<section class="slide" id="s19">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">Part 3 · 安全治理</span>
+  <div class="slide-content">
+    <p class="tag reveal">安全治理</p>
+    <h1 class="reveal">扫描门禁：<em>自动拦截风险</em></h1>
+    <div class="accent-line reveal"></div>
+    <table class="data-table reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <thead><tr><th style="width:20%">模式</th><th>命中内容</th><th style="width:15%">动作</th></tr></thead>
+      <tbody>
+        <tr><td><span class="term">secrets<span class="tip">密钥/凭证/令牌</span></span></td><td>token / key / password / 私钥 / 连接串</td><td><span class="fail-block">FAIL</span></td></tr>
+        <tr><td><span class="term">绝对路径<span class="tip">Absolute Path</span></span></td><td>/Users/... , /home/... , C:\...</td><td><span class="fail-block">FAIL</span></td></tr>
+        <tr><td><span class="term">越权承诺<span class="tip">Unauthorized Commitment</span></span></td><td>未经审批的日期 / 价格 / 合规承诺</td><td><span class="fail-block">FAIL</span></td></tr>
+        <tr><td><span class="term">危险命令块<span class="tip">Dangerous Command Block</span></span></td><td>无 <span class="term">Execution Intent<span class="tip">执行意图标签</span></span> 标签的写操作命令</td><td><span class="fail-block">FAIL</span></td></tr>
+      </tbody>
+    </table>
+    <div class="two-col reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <div class="callout"><p><strong>默认安全策略</strong>：证据采集默认脱敏 / 摘要处理，不保留原始敏感信息</p></div>
+      <div class="callout callout-pink"><p><strong>高风险模式</strong>：必须显式启用，任何隐式跳过视为配置违规</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 20: NEGATIVE FIXTURES ===== -->
+<section class="slide" id="s20">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">Part 3 · 安全治理</span>
+  <div class="slide-content">
+    <p class="tag reveal">安全治理</p>
+    <h1 class="reveal">负例 Fixtures：<em>最强防退化手段</em></h1>
+    <div class="accent-line reveal"></div>
+    <div class="callout callout-pink reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <p><strong style="color:var(--pink)">为何需要负例？</strong><br>内容风险（泄密/越权/误触发）很容易在迭代中悄悄退化——人的判断会疲劳，规则会松动，负例 fixtures 是唯一能持续捕获退化的机制。</p>
+    </div>
+    <div class="three-col reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <div class="card" style="border-color:rgba(90,158,111,0.3)"><div class="badge badge-green">PASS</div><h3 style="margin-top:0.4em">pass fixtures</h3><p style="font-size:clamp(0.72rem,1.1vw,0.85rem)">最小合规样例<br>每种 <span class="term">contentType<span class="tip">内容类型</span></span> 保留 1 份</p><p style="font-size:0.72rem;color:rgba(90,158,111,0.7);font-style:italic;margin-top:0.5em">定义合规基线</p></div>
+      <div class="card" style="border-color:rgba(201,112,112,0.3)"><div class="badge badge-red">FAIL</div><h3 style="margin-top:0.4em">fail fixtures</h3><p style="font-size:clamp(0.72rem,1.1vw,0.85rem)">每条 <span class="term">fail-closed gate<span class="tip">失败即阻断的检查门</span></span> 对应 1 个故意失败样例</p><p style="font-size:0.72rem;color:rgba(201,112,112,0.7);font-style:italic;margin-top:0.5em">验证门禁有效性</p></div>
+      <div class="card card-gold"><div class="badge badge-gold">EXPECTED</div><h3 style="margin-top:0.4em">expected fixtures</h3><p style="font-size:clamp(0.72rem,1.1vw,0.85rem)">预期 <span class="term">gate<span class="tip">检查门</span></span> 结果<br>PASS / FAIL + <span class="term">reason codes<span class="tip">原因码</span></span></p><p style="font-size:0.72rem;color:rgba(212,165,116,0.7);font-style:italic;margin-top:0.5em">锁定预期行为</p></div>
+    </div>
+    <div class="callout reveal" style="margin-top:clamp(1rem,2vh,1.5rem);text-align:center">
+      <p><strong style="color:var(--gold)">核心洞察：</strong><span class="term">负例 fixtures<span class="tip">Negative Fixtures：故意设计的失败样例，用于验证门禁有效性</span></span> 的治理优先级 <strong style="color:var(--text)">=</strong> <span class="term">代码测试<span class="tip">Code Tests：单元测试/集成测试</span></span></p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 21: PROFILE SYSTEM ===== -->
+<section class="slide" id="s21">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">Part 4 · 集成与配置</span>
+  <div class="slide-content">
+    <p class="tag reveal">配置体系</p>
+    <h1 class="reveal">Profile 体系：<em>可配置装配</em></h1>
+    <div class="accent-line reveal"></div>
+    <div class="reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <h3>四层叠加，可收紧不可放松</h3>
+      <div class="step-list" style="margin-top:0.8rem">
+        <div class="step"><span class="step-num" style="background:rgba(232,180,184,0.15);border-color:rgba(232,180,184,0.3);color:var(--pink)">1</span><div class="step-body"><h4 style="color:var(--pink)">Risk Overlay（风险叠加层）</h4><p>riskClass 决定门禁强度、restricted 标签与审批流程</p></div></div>
+        <div class="step"><span class="step-num"><span style="color:var(--gold)">2</span></span><div class="step-body"><h4 style="color:var(--gold)">ContentType Overlay（内容类型层）</h4><p>typeSpecific 规则 + 角色增删 + 必交付机读合同</p></div></div>
+        <div class="step"><span class="step-num"><span style="color:var(--gold)">3</span></span><div class="step-body"><h4>Org/Repo Policy Overlay（组织政策层）</h4><p>组织级或仓库级安全与合规政策覆盖</p></div></div>
+        <div class="step"><span class="step-num"><span style="color:var(--text-dim)">4</span></span><div class="step-body"><h4>Task Override（任务级覆盖）</h4><p>仅允许收紧；放宽必须走正式 waiver 申请</p></div></div>
+      </div>
+    </div>
+    <div class="callout reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <p><strong style="color:var(--gold)">核心原则：</strong>任何层级只允许收紧，<span class="highlight-gold">禁止放松</span> —— 这是防止配置漂移的关键约束</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 22: TASK DIALS ===== -->
+<section class="slide" id="s22">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">Part 4 · 集成与配置</span>
+  <div class="slide-content">
+    <p class="tag reveal">配置体系</p>
+    <h1 class="reveal">Task Dials：<em>任务旋钮</em></h1>
+    <div class="accent-line reveal"></div>
+    <div class="reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <p class="lead">同一骨架，按次调参——从轻量速推到深度评审，一套体系覆盖全频谱</p>
+    </div>
+    <table class="data-table reveal" style="margin-top:clamp(0.8rem,1.5vh,1.2rem)">
+      <thead><tr><th>旋钮</th><th>选项</th><th>影响</th></tr></thead>
+      <tbody>
+        <tr><td><strong style="color:var(--text)">creativity</strong></td><td>low / medium / <strong>high</strong></td><td>是否要求 moonshot option</td></tr>
+        <tr><td><strong style="color:var(--text)">riskTolerance</strong></td><td>low / medium / high / critical</td><td>评审侧风险权重与决策阈值</td></tr>
+        <tr><td><strong style="color:var(--text)">generality</strong></td><td>narrow / medium / broad</td><td>option 适用范围与可复用性要求</td></tr>
+        <tr><td><strong style="color:var(--text)">speed</strong></td><td>fast / normal / thorough</td><td>角色数量与阻塞问题上限</td></tr>
+        <tr><td><strong style="color:var(--text)">reuseFirst</strong></td><td>true / false</td><td>是否强制复用已有组件</td></tr>
+        <tr><td><strong style="color:var(--text)">safety.strictness</strong></td><td>low / medium / high</td><td>扫描门禁覆盖范围与深度</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== SLIDE 23: DYNAMIC SAMPLING ===== -->
+<section class="slide" id="s23">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">Part 4 · 集成与配置</span>
+  <div class="slide-content">
+    <p class="tag reveal">配置体系</p>
+    <h1 class="reveal">动态采样：<em>按需扩容</em></h1>
+    <div class="accent-line reveal"></div>
+    <div class="two-col reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <div>
+        <h3>固定基线矩阵（risk × budget）</h3>
+        <table class="matrix-table" style="margin-top:0.8rem">
+          <thead><tr><th>Risk \ Budget</th><th>fast</th><th>normal</th><th>thorough</th></tr></thead>
+          <tbody>
+            <tr><td>Low</td><td>R1=3, J=3</td><td>R1=5, J=3</td><td>R1=7, J=5</td></tr>
+            <tr><td>Med</td><td>R1=5, J=3</td><td>R1=7, J=5</td><td>R1=11, J=7</td></tr>
+            <tr><td>High</td><td>R1=7, J=5</td><td>R1=9, J=7</td><td>R1=15, J=9</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3>扩容触发信号</h3>
+        <div class="step-list" style="margin-top:0.8rem">
+          <div class="step"><span class="step-num"><span style="color:var(--pink)">!</span></span><div class="step-body"><h4>多样性不足</h4><p>options 缺方向性不同的候选</p></div></div>
+          <div class="step"><span class="step-num"><span style="color:var(--pink)">!</span></span><div class="step-body"><h4>证据不足</h4><p>关键 claim 无证据指针</p></div></div>
+          <div class="step"><span class="step-num"><span style="color:var(--pink)">!</span></span><div class="step-body"><h4>分歧过大</h4><p>judge pick 分散，无法靠证据裁决</p></div></div>
+        </div>
+        <div class="callout" style="margin-top:0.8rem"><p><strong>停止条件：</strong>边际增益变小 / 覆盖达标 / 预算触顶</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 24: INTEGRATION ===== -->
+<section class="slide" id="s24">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">Part 4 · 集成与配置</span>
+  <div class="slide-content">
+    <p class="tag reveal">生态集成</p>
+    <h1 class="reveal">生态集成：<em>被其它 Skill 调用</em></h1>
+    <div class="accent-line reveal"></div>
+    <div class="two-col reveal" style="margin-top:clamp(1rem,2vh,1.5rem)">
+      <div>
+        <h3>触发模式</h3>
+        <div class="card card-gold" style="margin-bottom:0.6rem">
+          <div class="badge badge-gold">手动</div>
+          <p>用户显式表达"要决策闭环"</p>
+        </div>
+        <div class="card card-pink">
+          <div class="badge badge-pink">自动</div>
+          <p>上游 Skill 遇到阻塞问题或门禁 FAIL</p>
+        </div>
+        <h3 style="margin-top:1rem">集成点</h3>
+        <ul class="bullet-list">
+          <li>PRD 文档生成器 → 关键争议需多角色裁决</li>
+          <li>架构文档生成器 → 技术选型存在多解</li>
+          <li>开发计划生成器 → 并行边界不清</li>
+          <li>文档质量门禁 → FAIL 需要方案裁决</li>
+        </ul>
+      </div>
+      <div>
+        <h3>输出物</h3>
+        <div class="card" style="margin-top:0.8rem">
+          <p style="color:var(--text);margin-bottom:0.5em">decision-report.md</p>
+          <p class="tag" style="margin:0 0 0.8em 0">决策过程与结论报告</p>
+          <p style="color:var(--text);margin-bottom:0.5em">requirements.md</p>
+          <p class="tag" style="margin:0 0 0.8em 0">从决策中提炼的需求</p>
+          <p style="color:var(--text);margin-bottom:0.5em">decision.json</p>
+          <p class="tag" style="margin:0">机读决策记录（可选）</p>
+        </div>
+        <div class="callout callout-pink" style="margin-top:0.8rem">
+          <p><strong style="color:var(--pink)">关键接口：</strong>decision.json 是机读格式，供下游 Skill 直接消费</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 25: SPEC PACK SUMMARY ===== -->
+<section class="slide" id="s25">
+  <div class="blob-tl"></div><div class="blob-br"></div>
+  <span class="section-label">总结</span>
+  <div class="slide-content">
+    <p class="tag reveal">下一步</p>
+    <h1 class="reveal">从研究到 <em>Skill</em>：Spec Pack 概览</h1>
+    <div class="accent-line reveal"></div>
+    <div class="two-col reveal" style="margin-top:clamp(1.2rem,2.5vh,2rem)">
+      <div>
+        <h3>已产出</h3>
+        <ul class="bullet-list">
+          <li>30 个案例全流程闭环证据</li>
+          <li>通用流程骨架（7 状态机）</li>
+          <li>10 类内容类型 <span class="term">Profile<span class="tip">配置档案：按内容类型装配角色、评审标准与门禁强度</span></span> v1</li>
+          <li>安全门禁 + 扫描规则 + 负例 fixtures</li>
+          <li>机读 <span class="term">Schema<span class="tip">数据结构定义：规范文件中字段、类型、约束</span></span> v0.1</li>
+        </ul>
+      </div>
+      <div>
+        <h3>下一步</h3>
+        <div class="step-list">
+          <div class="step"><span class="step-num"><span style="color:var(--gold)">1</span></span><div class="step-body"><h4>生成目录结构</h4><p>.claude/skills/swarm-decision/</p></div></div>
+          <div class="step"><span class="step-num"><span style="color:var(--gold)">2</span></span><div class="step-body"><h4>编写 skill.md + templates/</h4><p>Prompt Contract / Proposal / Verdict / Decision Report</p></div></div>
+          <div class="step"><span class="step-num"><span style="color:var(--gold)">3</span></span><div class="step-body"><h4>制作 examples/ + schemas/</h4><p>工程决策 × 1 + Creative × 1（含负例说明）</p></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="quote reveal" style="margin-top:clamp(1.2rem,2.5vh,2rem)">
+      从"两轮并行提案评审"到"可复用的决策能力"，一步之遥
+    </div>
+  </div>
+</section>
+
+<!-- ===== NAVIGATION DOTS ===== -->
+<nav class="nav-dots" id="navDots"></nav>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+/* Slide presentation controller */
+class SP {
+  constructor() {
+    this.slides = document.querySelectorAll('.slide');
+    this.nav = document.getElementById('navDots');
+    this.setup();
+  }
+  setup() {
+    // Build nav dots
+    this.slides.forEach((s,i) => {
+      const d = document.createElement('div');
+      d.className = 'nav-dot';
+      d.title = s.id || `Slide ${i+1}`;
+      d.addEventListener('click', () => s.scrollIntoView({behavior:'smooth'}));
+      this.nav.appendChild(d);
+    });
+    // Intersection observer for reveal + dot
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          const idx = [...this.slides].indexOf(e.target);
+          document.querySelectorAll('.nav-dot').forEach((d,i) => d.classList.toggle('active', i===idx));
+        }
+      });
+    }, {threshold:0.4});
+    this.slides.forEach(s => obs.observe(s));
+    // Keyboard nav
+    document.addEventListener('keydown', e => {
+      const idx = [...this.slides].findIndex(s => s.classList.contains('visible'));
+      if (e.key==='ArrowDown'||e.key==='ArrowRight'||e.key===' ') {e.preventDefault();this.slides[Math.min(idx+1,this.slides.length-1)].scrollIntoView({behavior:'smooth'});}
+      if (e.key==='ArrowUp'||e.key==='ArrowLeft') {e.preventDefault();this.slides[Math.max(idx-1,0)].scrollIntoView({behavior:'smooth'});}
+    });
+    // Edit mode
+    this.editing = false;
+    this._initEdit();
+  }
+  _initEdit() {
+    const hot = document.createElement('div');
+    hot.style.cssText='position:fixed;top:0;left:0;width:80px;height:80px;z-index:10000;cursor:pointer;';
+    document.body.appendChild(hot);
+    const btn = document.createElement('button');
+    btn.textContent='✏️';
+    btn.title='编辑模式 (E)';
+    btn.style.cssText='position:fixed;top:10px;left:10px;z-index:10001;opacity:0;pointer-events:none;transition:opacity 0.3s;background:rgba(0,0,0,0.7);border:1px solid var(--gold);color:var(--gold);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:14px;';
+    document.body.appendChild(btn);
+    let hideT;
+    const show=()=>{clearTimeout(hideT);btn.style.opacity='1';btn.style.pointerEvents='auto'};
+    const hide=()=>{hideT=setTimeout(()=>{if(!sp.editing){btn.style.opacity='0';btn.style.pointerEvents='none';}},400)};
+    hot.addEventListener('mouseenter',show);hot.addEventListener('mouseleave',hide);btn.addEventListener('mouseenter',show);btn.addEventListener('mouseleave',hide);
+    hot.addEventListener('click',()=>{if(sp.editing)return;sp.editing=true;document.querySelectorAll('h1,h2,h3,p,.lead').forEach(el=>{if(el.closest('.term'))return;el.setAttribute('contenteditable','true');el.style.outline='1px dashed rgba(212,165,116,0.4)';});btn.textContent='💾';btn.style.opacity='1';btn.style.pointerEvents='auto'});
+    btn.addEventListener('click',()=>{if(!sp.editing)return;document.querySelectorAll('[contenteditable]').forEach(el=>{el.removeAttribute('contenteditable');el.style.outline='';});sp.editing=false;btn.textContent='✏️';btn.style.opacity='0';btn.style.pointerEvents='none';const blob=new Blob([document.documentElement.outerHTML],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='swarm-decision-tutorial-edited.html';a.click();});
+    document.addEventListener('keydown',e=>{if((e.key==='e'||e.key==='E')&&!e.target.getAttribute('contenteditable')&&document.activeElement.tagName==='BODY')hot.click();});
+  }
+}
+const sp = new SP();
+
+/* Architecture diagram lightbox */
+(function(){
+  const wrap=document.getElementById('archWrap');
+  const lb=document.getElementById('archLightbox');
+  const inner=document.getElementById('lbInner');
+  const close=document.getElementById('lbClose');
+  if(!wrap||!lb) return;
+  wrap.addEventListener('click',()=>{inner.innerHTML=wrap.innerHTML;lb.classList.add('open')});
+  close.addEventListener('click',e=>{e.stopPropagation();lb.classList.remove('open')});
+  lb.addEventListener('click',e=>{if(e.target===lb||e.target===inner)lb.classList.remove('open')});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')lb.classList.remove('open')});
+})();
+</script>
+</body>
+</html>
