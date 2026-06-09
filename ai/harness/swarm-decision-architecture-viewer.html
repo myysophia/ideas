@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swarm Decision 架构图</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%232A7B9B'/><text x='16' y='23' text-anchor='middle' font-size='18' font-weight='bold' fill='white' font-family='sans-serif'>S</text></svg>">
+<meta name="date" content="2026-06-09">
+
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@700&f[]=satoshi@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8f6f3;
+  --text: #1a1a1a;
+  --text-dim: #6a6a6a;
+  --gold: #d4a574;
+  --gold-light: #f4e4c1;
+  --border: #4a4a4a;
+  --shadow: rgba(0,0,0,0.08);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+h1 {
+  font-family: 'Clash Display', sans-serif;
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.4rem;
+}
+
+.subtitle {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+.diagram-wrapper {
+  position: relative;
+  cursor: zoom-in;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 40px var(--shadow), 0 2px 8px var(--shadow);
+  border: 1.5px solid rgba(74,74,74,0.2);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  max-width: 960px;
+  width: 100%;
+}
+
+.diagram-wrapper:hover {
+  box-shadow: 0 16px 60px rgba(0,0,0,0.14), 0 4px 16px var(--shadow);
+  transform: translateY(-2px);
+}
+
+.diagram-wrapper svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  margin-top: 0.75rem;
+}
+
+.hint svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ── Lightbox ── */
+.lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10,10,10,0.92);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  backdrop-filter: blur(8px);
+  cursor: zoom-out;
+}
+
+.lightbox.open {
+  display: flex;
+  animation: fadeIn 0.2s ease;
+}
+
+.lightbox svg {
+  max-width: min(95vw, 1400px);
+  max-height: 92vh;
+  width: auto;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  animation: scaleIn 0.25s cubic-bezier(0.16,1,0.3,1);
+}
+
+.close-btn {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff;
+  font-size: 1.5rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  line-height: 1;
+}
+
+.close-btn:hover { background: rgba(255,255,255,0.25); }
+
+.zoom-hint {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255,255,255,0.5);
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Swarm Decision 架构总览</h1>
+  <p class="subtitle">两轮并行提案评审 · 可配置决策引擎</p>
+</header>
+
+<div class="diagram-wrapper" id="diagramWrapper">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 860" width="960" height="860">
+  <style>
+    text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', 'Microsoft JhengHei', 'SimHei', sans-serif; }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#5a5a5a"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#dc2626"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#16a34a"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#9333ea"/>
+    </marker>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#00000010"/>
+    </filter>
+    <filter id="shadow-strong">
+      <feDropShadow dx="0" dy="3" stdDeviation="8" flood-color="#00000018"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="960" height="860" fill="#f8f6f3"/>
+
+  <!-- Title -->
+  <text x="480" y="38" text-anchor="middle" fill="#1a1a1a" font-size="22" font-weight="700">Swarm Decision 架构总览</text>
+  <text x="480" y="60" text-anchor="middle" fill="#6a6a6a" font-size="13">两轮并行提案评审 · 可配置决策引擎</text>
+
+  <!-- LEFT PANEL: 10 Content Types -->
+  <rect x="16" y="78" width="175" height="720" rx="10" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="100" text-anchor="middle" fill="#1a1a1a" font-size="13" font-weight="600">10 类 Content Type</text>
+  <text x="103" y="116" text-anchor="middle" fill="#6a6a6a" font-size="11">输入内容分类</text>
+
+  <text x="30" y="136" fill="#6a6a6a" font-size="11" font-weight="600">研发</text>
+  <rect x="30" y="150" width="147" height="24" rx="6" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="167" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Spec · 技术规格</text>
+  <rect x="30" y="178" width="147" height="24" rx="6" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="195" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">ADR · 选型决策</text>
+  <rect x="30" y="206" width="147" height="24" rx="6" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="223" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Plan · 交付计划</text>
+
+  <text x="30" y="242" fill="#6a6a6a" font-size="11" font-weight="600">运维</text>
+  <rect x="30" y="256" width="147" height="24" rx="6" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="273" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">QA/Audit · 质量审计</text>
+  <rect x="30" y="284" width="147" height="24" rx="6" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="301" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Ops · 运维操作</text>
+  <rect x="30" y="312" width="147" height="24" rx="6" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="329" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Security · 安全策略</text>
+
+  <text x="30" y="348" fill="#6a6a6a" font-size="11" font-weight="600">业务传播</text>
+  <rect x="30" y="362" width="147" height="24" rx="6" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="379" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Analytics · 分析报告</text>
+  <rect x="30" y="390" width="147" height="24" rx="6" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="407" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Comms · 对外材料</text>
+  <rect x="30" y="418" width="147" height="24" rx="6" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="435" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Creative · 创意简报</text>
+  <rect x="30" y="446" width="147" height="24" rx="6" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="463" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Enablement · 知识赋能</text>
+
+  <!-- Arrow: Content Types → Profile System -->
+  <line x1="191" y1="430" x2="208" y2="430" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Profile System -->
+  <rect x="208" y="390" width="552" height="80" rx="10" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="2" filter="url(#shadow-strong)"/>
+  <text x="484" y="415" text-anchor="middle" fill="#1a1a1a" font-size="14" font-weight="700">Profile System · 装配系统</text>
+  <text x="484" y="432" text-anchor="middle" fill="#6a6a6a" font-size="11">contentType × riskClass → {roles, rubric, gates, artifacts}</text>
+
+  <rect x="220" y="438" width="112" height="28" rx="5" fill="#e8b4b8" stroke="#4a4a4a" stroke-width="1.2"/>
+  <text x="276" y="450" text-anchor="middle" fill="#1a1a1a" font-size="9" font-weight="600">Risk Overlay</text>
+  <text x="276" y="461" text-anchor="middle" fill="#4a4a4a" font-size="8">风险叠加层</text>
+
+  <rect x="345" y="438" width="112" height="28" rx="5" fill="#d4a574" stroke="#4a4a4a" stroke-width="1.2"/>
+  <text x="401" y="450" text-anchor="middle" fill="#1a1a1a" font-size="9" font-weight="600">ContentType</text>
+  <text x="401" y="461" text-anchor="middle" fill="#4a4a4a" font-size="8">内容类型层</text>
+
+  <rect x="470" y="438" width="112" height="28" rx="5" fill="#c4956a" stroke="#4a4a4a" stroke-width="1.2"/>
+  <text x="526" y="450" text-anchor="middle" fill="#1a1a1a" font-size="9" font-weight="600">Org Policy</text>
+  <text x="526" y="461" text-anchor="middle" fill="#4a4a4a" font-size="8">组织政策层</text>
+
+  <rect x="595" y="438" width="112" height="28" rx="5" fill="#b3845c" stroke="#4a4a4a" stroke-width="1.2"/>
+  <text x="651" y="450" text-anchor="middle" fill="#1a1a1a" font-size="9" font-weight="600">Task Override</text>
+  <text x="651" y="461" text-anchor="middle" fill="#4a4a4a" font-size="8">任务级覆盖</text>
+
+  <!-- Arrow: Profile → Process -->
+  <line x1="484" y1="470" x2="484" y2="492" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Process Core -->
+  <rect x="208" y="492" width="552" height="165" rx="10" fill="#ffffff" stroke="#4a4a4a" stroke-width="2" filter="url(#shadow-strong)"/>
+  <text x="484" y="514" text-anchor="middle" fill="#1a1a1a" font-size="14" font-weight="700">两轮并行流程骨架</text>
+
+  <!-- State nodes -->
+  <rect x="222" y="528" width="72" height="52" rx="8" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1.8" filter="url(#shadow)"/>
+  <text x="258" y="546" text-anchor="middle" fill="#1a1a1a" font-size="10" font-weight="700">冻结输入</text>
+  <text x="258" y="558" text-anchor="middle" fill="#4a4a4a" font-size="8">FREEZE</text>
+  <text x="258" y="570" text-anchor="middle" fill="#6a6a6a" font-size="8">冻结输入合同</text>
+
+  <line x1="294" y1="554" x2="308" y2="554" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="308" y="528" width="72" height="52" rx="8" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1.8" filter="url(#shadow)"/>
+  <text x="344" y="546" text-anchor="middle" fill="#1a1a1a" font-size="10" font-weight="700">提案轮 R1</text>
+  <text x="344" y="558" text-anchor="middle" fill="#4a4a4a" font-size="8">DISPATCH_R1</text>
+  <text x="344" y="570" text-anchor="middle" fill="#6a6a6a" font-size="8">多角色独立提案</text>
+
+  <line x1="380" y1="554" x2="394" y2="554" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="394" y="528" width="72" height="52" rx="8" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1.8" filter="url(#shadow)"/>
+  <text x="430" y="546" text-anchor="middle" fill="#1a1a1a" font-size="10" font-weight="700">汇总合成</text>
+  <text x="430" y="558" text-anchor="middle" fill="#4a4a4a" font-size="8">SYNTHESIS</text>
+  <text x="430" y="570" text-anchor="middle" fill="#6a6a6a" font-size="8">Option Cards</text>
+
+  <line x1="466" y1="554" x2="480" y2="554" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="480" y="528" width="72" height="52" rx="8" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1.8" filter="url(#shadow)"/>
+  <text x="516" y="546" text-anchor="middle" fill="#1a1a1a" font-size="10" font-weight="700">评审轮 R2</text>
+  <text x="516" y="558" text-anchor="middle" fill="#4a4a4a" font-size="8">DISPATCH_R2</text>
+  <text x="516" y="570" text-anchor="middle" fill="#6a6a6a" font-size="8">定向回答阻塞</text>
+
+  <line x1="552" y1="554" x2="566" y2="554" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="566" y="528" width="72" height="52" rx="8" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1.8" filter="url(#shadow)"/>
+  <text x="602" y="546" text-anchor="middle" fill="#1a1a1a" font-size="10" font-weight="700">裁决评审</text>
+  <text x="602" y="558" text-anchor="middle" fill="#4a4a4a" font-size="8">JUDGING</text>
+  <text x="602" y="570" text-anchor="middle" fill="#6a6a6a" font-size="8">独立 verdict</text>
+
+  <line x1="638" y1="554" x2="652" y2="554" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="652" y="528" width="72" height="52" rx="8" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1.8" filter="url(#shadow)"/>
+  <text x="688" y="546" text-anchor="middle" fill="#1a1a1a" font-size="10" font-weight="700">最终决策</text>
+  <text x="688" y="558" text-anchor="middle" fill="#4a4a4a" font-size="8">FINAL</text>
+  <text x="688" y="570" text-anchor="middle" fill="#6a6a6a" font-size="8">冻结 Profile v1</text>
+
+  <!-- Security Gates -->
+  <text x="220" y="590" fill="#dc2626" font-size="11" font-weight="600">● Security Gates</text>
+  <text x="220" y="606" fill="#6a6a6a" font-size="10">Write-Intent Gate · SSOT 单写者规则 · Scan Gates · Negative Fixtures</text>
+  <text x="220" y="622" fill="#6a6a6a" font-size="10">门禁位置: 冻结输入后 · R1 提案后 · 评审轮后 · 最终决策前</text>
+
+  <!-- RIGHT PANEL: Task Dials -->
+  <rect x="776" y="78" width="168" height="420" rx="10" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="860" y="100" text-anchor="middle" fill="#1a1a1a" font-size="13" font-weight="700">Task Dials</text>
+  <text x="860" y="116" text-anchor="middle" fill="#6a6a6a" font-size="11">任务旋钮 · 每次调参</text>
+
+  <rect x="784" y="128" width="152" height="60" rx="8" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/>
+  <rect x="784" y="128" width="6" height="60" rx="3" fill="#9333ea"/>
+  <text x="800" y="144" fill="#1a1a1a" font-size="11" font-weight="600">创造力</text>
+  <text x="800" y="158" fill="#6a6a6a" font-size="9">creativity</text>
+  <text x="800" y="171" fill="#4a4a4a" font-size="9">low / medium / high</text>
+  <text x="800" y="183" fill="#6a6a6a" font-size="8">决定 moonshot option</text>
+
+  <rect x="784" y="196" width="152" height="60" rx="8" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/>
+  <rect x="784" y="196" width="6" height="60" rx="3" fill="#dc2626"/>
+  <text x="800" y="212" fill="#1a1a1a" font-size="11" font-weight="600">风险容忍度</text>
+  <text x="800" y="226" fill="#6a6a6a" font-size="9">riskTolerance</text>
+  <text x="800" y="239" fill="#4a4a4a" font-size="9">low / med / high / critical</text>
+  <text x="800" y="251" fill="#6a6a6a" font-size="8">评审风险权重与阈值</text>
+
+  <rect x="784" y="264" width="152" height="60" rx="8" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/>
+  <rect x="784" y="264" width="6" height="60" rx="3" fill="#2563eb"/>
+  <text x="800" y="280" fill="#1a1a1a" font-size="11" font-weight="600">通用性</text>
+  <text x="800" y="294" fill="#6a6a6a" font-size="9">generality</text>
+  <text x="800" y="307" fill="#4a4a4a" font-size="9">narrow / medium / broad</text>
+  <text x="800" y="319" fill="#6a6a6a" font-size="8">option 适用范围</text>
+
+  <rect x="784" y="332" width="152" height="60" rx="8" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/>
+  <rect x="784" y="332" width="6" height="60" rx="3" fill="#16a34a"/>
+  <text x="800" y="348" fill="#1a1a1a" font-size="11" font-weight="600">速度</text>
+  <text x="800" y="362" fill="#6a6a6a" font-size="9">speed</text>
+  <text x="800" y="375" fill="#4a4a4a" font-size="9">fast / normal / thorough</text>
+  <text x="800" y="387" fill="#6a6a6a" font-size="8">角色数与阻塞上限</text>
+
+  <rect x="784" y="400" width="152" height="60" rx="8" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/>
+  <rect x="784" y="400" width="6" height="60" rx="3" fill="#d97706"/>
+  <text x="800" y="416" fill="#1a1a1a" font-size="11" font-weight="600">复用优先</text>
+  <text x="800" y="430" fill="#6a6a6a" font-size="9">reuseFirst</text>
+  <text x="800" y="443" fill="#4a4a4a" font-size="9">true / false</text>
+  <text x="800" y="455" fill="#6a6a6a" font-size="8">强制复用已有组件</text>
+
+  <rect x="784" y="468" width="152" height="26" rx="8" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/>
+  <rect x="784" y="468" width="6" height="26" rx="3" fill="#dc2626"/>
+  <text x="800" y="483" fill="#1a1a1a" font-size="10" font-weight="600">安全严格度</text>
+  <text x="860" y="483" fill="#4a4a4a" font-size="9">low/med/high</text>
+
+  <!-- Arrow: Task Dials → Profile System -->
+  <line x1="776" y1="430" x2="760" y2="430" stroke="#5a5a5a" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text x="754" y="426" text-anchor="end" fill="#6a6a6a" font-size="9">配置流程</text>
+
+  <!-- Output: Decision Report -->
+  <rect x="208" y="670" width="250" height="68" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2" filter="url(#shadow-strong)"/>
+  <text x="333" y="694" text-anchor="middle" fill="#1a1a1a" font-size="13" font-weight="700">Decision Report</text>
+  <text x="333" y="711" text-anchor="middle" fill="#6a6a6a" font-size="10">决策报告 · 可回放 · 可验收 · 可审计</text>
+  <text x="333" y="727" text-anchor="middle" fill="#6a6a6a" font-size="9">decision.json (机读) + requirements.md</text>
+
+  <!-- Arrow: Process → Output -->
+  <line x1="484" y1="657" x2="484" y2="670" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Dynamic Sampling -->
+  <rect x="510" y="670" width="250" height="68" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2" filter="url(#shadow-strong)"/>
+  <text x="635" y="694" text-anchor="middle" fill="#1a1a1a" font-size="13" font-weight="700">Dynamic Sampling</text>
+  <text x="635" y="711" text-anchor="middle" fill="#4a4a4a" font-size="10">动态采样 · 按信号扩容</text>
+  <text x="635" y="727" text-anchor="middle" fill="#4a4a4a" font-size="9">Baseline 矩阵 + 多样性/证据/分歧信号</text>
+
+  <!-- Feedback loop: Dynamic Sampling → R1 -->
+  <path d="M 510 704 L 280 704 L 280 580 L 280 568" stroke="#9333ea" stroke-width="1.5" stroke-dasharray="5,3" fill="none" marker-end="url(#arrow-purple)"/>
+  <text x="295" y="700" fill="#9333ea" font-size="10" font-weight="600">动态扩容信号</text>
+
+  <!-- Legend -->
+  <rect x="776" y="510" width="168" height="150" rx="10" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="860" y="530" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="600">图例 Legend</text>
+  <rect x="786" y="539" width="12" height="12" rx="3" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="804" y="550" fill="#4a4a4a" font-size="10">输入 / 配置层</text>
+  <rect x="786" y="556" width="12" height="12" rx="3" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="804" y="567" fill="#4a4a4a" font-size="10">处理 / 裁决层</text>
+  <rect x="786" y="573" width="12" height="12" rx="3" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="804" y="584" fill="#4a4a4a" font-size="10">基础设施 / 输出</text>
+  <rect x="786" y="590" width="12" height="12" rx="3" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="804" y="601" fill="#4a4a4a" font-size="10">存储 / 状态</text>
+  <line x1="786" y1="615" x2="798" y2="615" stroke="#5a5a5a" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="804" y="619" fill="#4a4a4a" font-size="10">主数据流</text>
+  <line x1="786" y1="630" x2="798" y2="630" stroke="#9333ea" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-purple)"/>
+  <text x="804" y="634" fill="#4a4a4a" font-size="10">反馈 / 扩容信号</text>
+  <line x1="786" y1="645" x2="798" y2="645" stroke="#dc2626" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+  <text x="804" y="649" fill="#4a4a4a" font-size="10">安全门禁</text>
+
+  <!-- Bottom tagline -->
+  <text x="480" y="820" text-anchor="middle" fill="#6a6a6a" font-size="12">最小信任 · 层层防御 · 任何层级只允许收紧，禁止放松</text>
+  </svg>
+</div>
+
+<p class="hint">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+  </svg>
+  点击图片放大查看
+</p>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+  <button class="close-btn" id="closeBtn" title="关闭 (Esc)">×</button>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 860" width="960" height="860">
+  <style>
+    text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', 'Microsoft JhengHei', 'SimHei', sans-serif; }
+  </style>
+  <defs>
+    <marker id="lb-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#5a5a5a"/>
+    </marker>
+    <marker id="lb-arrow-blue" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#2563eb"/>
+    </marker>
+    <marker id="lb-arrow-red" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#dc2626"/>
+    </marker>
+    <marker id="lb-arrow-green" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#16a34a"/>
+    </marker>
+    <marker id="lb-arrow-purple" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#9333ea"/>
+    </marker>
+    <filter id="lb-shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#00000010"/>
+    </filter>
+    <filter id="lb-shadow-strong">
+      <feDropShadow dx="0" dy="3" stdDeviation="8" flood-color="#00000018"/>
+    </filter>
+  </defs>
+
+  <rect width="960" height="860" fill="#f8f6f3"/>
+
+  <text x="480" y="38" text-anchor="middle" fill="#1a1a1a" font-size="22" font-weight="700">Swarm Decision 架构总览</text>
+  <text x="480" y="60" text-anchor="middle" fill="#6a6a6a" font-size="13">两轮并行提案评审 · 可配置决策引擎</text>
+
+  <rect x="16" y="78" width="175" height="720" rx="10" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="100" text-anchor="middle" fill="#1a1a1a" font-size="13" font-weight="600">10 类 Content Type</text>
+  <text x="103" y="116" text-anchor="middle" fill="#6a6a6a" font-size="11">输入内容分类</text>
+
+  <text x="30" y="136" fill="#6a6a6a" font-size="11" font-weight="600">研发</text>
+  <rect x="30" y="150" width="147" height="24" rx="6" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="167" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Spec · 技术规格</text>
+  <rect x="30" y="178" width="147" height="24" rx="6" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="195" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">ADR · 选型决策</text>
+  <rect x="30" y="206" width="147" height="24" rx="6" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="223" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Plan · 交付计划</text>
+
+  <text x="30" y="242" fill="#6a6a6a" font-size="11" font-weight="600">运维</text>
+  <rect x="30" y="256" width="147" height="24" rx="6" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="273" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">QA/Audit · 质量审计</text>
+  <rect x="30" y="284" width="147" height="24" rx="6" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="301" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Ops · 运维操作</text>
+  <rect x="30" y="312" width="147" height="24" rx="6" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="329" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Security · 安全策略</text>
+
+  <text x="30" y="348" fill="#6a6a6a" font-size="11" font-weight="600">业务传播</text>
+  <rect x="30" y="362" width="147" height="24" rx="6" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="379" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Analytics · 分析报告</text>
+  <rect x="30" y="390" width="147" height="24" rx="6" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="407" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Comms · 对外材料</text>
+  <rect x="30" y="418" width="147" height="24" rx="6" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="435" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Creative · 创意简报</text>
+  <rect x="30" y="446" width="147" height="24" rx="6" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="103" y="463" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="500">Enablement · 知识赋能</text>
+
+  <line x1="191" y1="430" x2="208" y2="430" stroke="#5a5a5a" stroke-width="2" marker-end="url(#lb-arrow)"/>
+
+  <rect x="208" y="390" width="552" height="80" rx="10" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="2" filter="url(#lb-shadow-strong)"/>
+  <text x="484" y="415" text-anchor="middle" fill="#1a1a1a" font-size="14" font-weight="700">Profile System · 装配系统</text>
+  <text x="484" y="432" text-anchor="middle" fill="#6a6a6a" font-size="11">contentType × riskClass → {roles, rubric, gates, artifacts}</text>
+
+  <rect x="220" y="438" width="112" height="28" rx="5" fill="#e8b4b8" stroke="#4a4a4a" stroke-width="1.2"/>
+  <text x="276" y="450" text-anchor="middle" fill="#1a1a1a" font-size="9" font-weight="600">Risk Overlay</text>
+  <text x="276" y="461" text-anchor="middle" fill="#4a4a4a" font-size="8">风险叠加层</text>
+  <rect x="345" y="438" width="112" height="28" rx="5" fill="#d4a574" stroke="#4a4a4a" stroke-width="1.2"/>
+  <text x="401" y="450" text-anchor="middle" fill="#1a1a1a" font-size="9" font-weight="600">ContentType</text>
+  <text x="401" y="461" text-anchor="middle" fill="#4a4a4a" font-size="8">内容类型层</text>
+  <rect x="470" y="438" width="112" height="28" rx="5" fill="#c4956a" stroke="#4a4a4a" stroke-width="1.2"/>
+  <text x="526" y="450" text-anchor="middle" fill="#1a1a1a" font-size="9" font-weight="600">Org Policy</text>
+  <text x="526" y="461" text-anchor="middle" fill="#4a4a4a" font-size="8">组织政策层</text>
+  <rect x="595" y="438" width="112" height="28" rx="5" fill="#b3845c" stroke="#4a4a4a" stroke-width="1.2"/>
+  <text x="651" y="450" text-anchor="middle" fill="#1a1a1a" font-size="9" font-weight="600">Task Override</text>
+  <text x="651" y="461" text-anchor="middle" fill="#4a4a4a" font-size="8">任务级覆盖</text>
+
+  <line x1="484" y1="470" x2="484" y2="492" stroke="#5a5a5a" stroke-width="2" marker-end="url(#lb-arrow)"/>
+
+  <rect x="208" y="492" width="552" height="165" rx="10" fill="#ffffff" stroke="#4a4a4a" stroke-width="2" filter="url(#lb-shadow-strong)"/>
+  <text x="484" y="514" text-anchor="middle" fill="#1a1a1a" font-size="14" font-weight="700">两轮并行流程骨架</text>
+
+  <rect x="222" y="528" width="72" height="52" rx="8" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1.8" filter="url(#lb-shadow)"/>
+  <text x="258" y="546" text-anchor="middle" fill="#1a1a1a" font-size="10" font-weight="700">冻结输入</text>
+  <text x="258" y="558" text-anchor="middle" fill="#4a4a4a" font-size="8">FREEZE</text>
+  <text x="258" y="570" text-anchor="middle" fill="#6a6a6a" font-size="8">冻结输入合同</text>
+  <line x1="294" y1="554" x2="308" y2="554" stroke="#5a5a5a" stroke-width="2" marker-end="url(#lb-arrow)"/>
+  <rect x="308" y="528" width="72" height="52" rx="8" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1.8" filter="url(#lb-shadow)"/>
+  <text x="344" y="546" text-anchor="middle" fill="#1a1a1a" font-size="10" font-weight="700">提案轮 R1</text>
+  <text x="344" y="558" text-anchor="middle" fill="#4a4a4a" font-size="8">DISPATCH_R1</text>
+  <text x="344" y="570" text-anchor="middle" fill="#6a6a6a" font-size="8">多角色独立提案</text>
+  <line x1="380" y1="554" x2="394" y2="554" stroke="#5a5a5a" stroke-width="2" marker-end="url(#lb-arrow)"/>
+  <rect x="394" y="528" width="72" height="52" rx="8" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1.8" filter="url(#lb-shadow)"/>
+  <text x="430" y="546" text-anchor="middle" fill="#1a1a1a" font-size="10" font-weight="700">汇总合成</text>
+  <text x="430" y="558" text-anchor="middle" fill="#4a4a4a" font-size="8">SYNTHESIS</text>
+  <text x="430" y="570" text-anchor="middle" fill="#6a6a6a" font-size="8">Option Cards</text>
+  <line x1="466" y1="554" x2="480" y2="554" stroke="#5a5a5a" stroke-width="2" marker-end="url(#lb-arrow)"/>
+  <rect x="480" y="528" width="72" height="52" rx="8" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1.8" filter="url(#lb-shadow)"/>
+  <text x="516" y="546" text-anchor="middle" fill="#1a1a1a" font-size="10" font-weight="700">评审轮 R2</text>
+  <text x="516" y="558" text-anchor="middle" fill="#4a4a4a" font-size="8">DISPATCH_R2</text>
+  <text x="516" y="570" text-anchor="middle" fill="#6a6a6a" font-size="8">定向回答阻塞</text>
+  <line x1="552" y1="554" x2="566" y2="554" stroke="#5a5a5a" stroke-width="2" marker-end="url(#lb-arrow)"/>
+  <rect x="566" y="528" width="72" height="52" rx="8" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1.8" filter="url(#lb-shadow)"/>
+  <text x="602" y="546" text-anchor="middle" fill="#1a1a1a" font-size="10" font-weight="700">裁决评审</text>
+  <text x="602" y="558" text-anchor="middle" fill="#4a4a4a" font-size="8">JUDGING</text>
+  <text x="602" y="570" text-anchor="middle" fill="#6a6a6a" font-size="8">独立 verdict</text>
+  <line x1="638" y1="554" x2="652" y2="554" stroke="#5a5a5a" stroke-width="2" marker-end="url(#lb-arrow)"/>
+  <rect x="652" y="528" width="72" height="52" rx="8" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1.8" filter="url(#lb-shadow)"/>
+  <text x="688" y="546" text-anchor="middle" fill="#1a1a1a" font-size="10" font-weight="700">最终决策</text>
+  <text x="688" y="558" text-anchor="middle" fill="#4a4a4a" font-size="8">FINAL</text>
+  <text x="688" y="570" text-anchor="middle" fill="#6a6a6a" font-size="8">冻结 Profile v1</text>
+
+  <text x="220" y="590" fill="#dc2626" font-size="11" font-weight="600">● Security Gates</text>
+  <text x="220" y="606" fill="#6a6a6a" font-size="10">Write-Intent Gate · SSOT 单写者规则 · Scan Gates · Negative Fixtures</text>
+  <text x="220" y="622" fill="#6a6a6a" font-size="10">门禁位置: 冻结输入后 · R1 提案后 · 评审轮后 · 最终决策前</text>
+
+  <rect x="776" y="78" width="168" height="420" rx="10" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="860" y="100" text-anchor="middle" fill="#1a1a1a" font-size="13" font-weight="700">Task Dials</text>
+  <text x="860" y="116" text-anchor="middle" fill="#6a6a6a" font-size="11">任务旋钮 · 每次调参</text>
+
+  <rect x="784" y="128" width="152" height="60" rx="8" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/>
+  <rect x="784" y="128" width="6" height="60" rx="3" fill="#9333ea"/>
+  <text x="800" y="144" fill="#1a1a1a" font-size="11" font-weight="600">创造力</text>
+  <text x="800" y="158" fill="#6a6a6a" font-size="9">creativity</text>
+  <text x="800" y="171" fill="#4a4a4a" font-size="9">low / medium / high</text>
+  <text x="800" y="183" fill="#6a6a6a" font-size="8">决定 moonshot option</text>
+
+  <rect x="784" y="196" width="152" height="60" rx="8" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/>
+  <rect x="784" y="196" width="6" height="60" rx="3" fill="#dc2626"/>
+  <text x="800" y="212" fill="#1a1a1a" font-size="11" font-weight="600">风险容忍度</text>
+  <text x="800" y="226" fill="#6a6a6a" font-size="9">riskTolerance</text>
+  <text x="800" y="239" fill="#4a4a4a" font-size="9">low / med / high / critical</text>
+  <text x="800" y="251" fill="#6a6a6a" font-size="8">评审风险权重与阈值</text>
+
+  <rect x="784" y="264" width="152" height="60" rx="8" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/>
+  <rect x="784" y="264" width="6" height="60" rx="3" fill="#2563eb"/>
+  <text x="800" y="280" fill="#1a1a1a" font-size="11" font-weight="600">通用性</text>
+  <text x="800" y="294" fill="#6a6a6a" font-size="9">generality</text>
+  <text x="800" y="307" fill="#4a4a4a" font-size="9">narrow / medium / broad</text>
+  <text x="800" y="319" fill="#6a6a6a" font-size="8">option 适用范围</text>
+
+  <rect x="784" y="332" width="152" height="60" rx="8" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/>
+  <rect x="784" y="332" width="6" height="60" rx="3" fill="#16a34a"/>
+  <text x="800" y="348" fill="#1a1a1a" font-size="11" font-weight="600">速度</text>
+  <text x="800" y="362" fill="#6a6a6a" font-size="9">speed</text>
+  <text x="800" y="375" fill="#4a4a4a" font-size="9">fast / normal / thorough</text>
+  <text x="800" y="387" fill="#6a6a6a" font-size="8">角色数与阻塞上限</text>
+
+  <rect x="784" y="400" width="152" height="60" rx="8" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/>
+  <rect x="784" y="400" width="6" height="60" rx="3" fill="#d97706"/>
+  <text x="800" y="416" fill="#1a1a1a" font-size="11" font-weight="600">复用优先</text>
+  <text x="800" y="430" fill="#6a6a6a" font-size="9">reuseFirst</text>
+  <text x="800" y="443" fill="#4a4a4a" font-size="9">true / false</text>
+  <text x="800" y="455" fill="#6a6a6a" font-size="8">强制复用已有组件</text>
+
+  <rect x="784" y="468" width="152" height="26" rx="8" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/>
+  <rect x="784" y="468" width="6" height="26" rx="3" fill="#dc2626"/>
+  <text x="800" y="483" fill="#1a1a1a" font-size="10" font-weight="600">安全严格度</text>
+  <text x="860" y="483" fill="#4a4a4a" font-size="9">low/med/high</text>
+
+  <line x1="776" y1="430" x2="760" y2="430" stroke="#5a5a5a" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text x="754" y="426" text-anchor="end" fill="#6a6a6a" font-size="9">配置流程</text>
+
+  <rect x="208" y="670" width="250" height="68" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2" filter="url(#lb-shadow-strong)"/>
+  <text x="333" y="694" text-anchor="middle" fill="#1a1a1a" font-size="13" font-weight="700">Decision Report</text>
+  <text x="333" y="711" text-anchor="middle" fill="#6a6a6a" font-size="10">决策报告 · 可回放 · 可验收 · 可审计</text>
+  <text x="333" y="727" text-anchor="middle" fill="#6a6a6a" font-size="9">decision.json (机读) + requirements.md</text>
+
+  <line x1="484" y1="657" x2="484" y2="670" stroke="#5a5a5a" stroke-width="2" marker-end="url(#lb-arrow)"/>
+
+  <rect x="510" y="670" width="250" height="68" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2" filter="url(#lb-shadow-strong)"/>
+  <text x="635" y="694" text-anchor="middle" fill="#1a1a1a" font-size="13" font-weight="700">Dynamic Sampling</text>
+  <text x="635" y="711" text-anchor="middle" fill="#4a4a4a" font-size="10">动态采样 · 按信号扩容</text>
+  <text x="635" y="727" text-anchor="middle" fill="#4a4a4a" font-size="9">Baseline 矩阵 + 多样性/证据/分歧信号</text>
+
+  <path d="M 510 704 L 280 704 L 280 580 L 280 568" stroke="#9333ea" stroke-width="1.5" stroke-dasharray="5,3" fill="none" marker-end="url(#lb-arrow-purple)"/>
+  <text x="295" y="700" fill="#9333ea" font-size="10" font-weight="600">动态扩容信号</text>
+
+  <rect x="776" y="510" width="168" height="150" rx="10" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="860" y="530" text-anchor="middle" fill="#1a1a1a" font-size="12" font-weight="600">图例 Legend</text>
+  <rect x="786" y="539" width="12" height="12" rx="3" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="804" y="550" fill="#4a4a4a" font-size="10">输入 / 配置层</text>
+  <rect x="786" y="556" width="12" height="12" rx="3" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="804" y="567" fill="#4a4a4a" font-size="10">处理 / 裁决层</text>
+  <rect x="786" y="573" width="12" height="12" rx="3" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="804" y="584" fill="#4a4a4a" font-size="10">基础设施 / 输出</text>
+  <rect x="786" y="590" width="12" height="12" rx="3" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="804" y="601" fill="#4a4a4a" font-size="10">存储 / 状态</text>
+  <line x1="786" y1="615" x2="798" y2="615" stroke="#5a5a5a" stroke-width="1.5" marker-end="url(#lb-arrow)"/>
+  <text x="804" y="619" fill="#4a4a4a" font-size="10">主数据流</text>
+  <line x1="786" y1="630" x2="798" y2="630" stroke="#9333ea" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#lb-arrow-purple)"/>
+  <text x="804" y="634" fill="#4a4a4a" font-size="10">反馈 / 扩容信号</text>
+  <line x1="786" y1="645" x2="798" y2="645" stroke="#dc2626" stroke-width="1.5" marker-end="url(#lb-arrow-red)"/>
+  <text x="804" y="649" fill="#4a4a4a" font-size="10">安全门禁</text>
+
+  <text x="480" y="820" text-anchor="middle" fill="#6a6a6a" font-size="12">最小信任 · 层层防御 · 任何层级只允许收紧，禁止放松</text>
+  </svg>
+  <div class="zoom-hint">点击任意处或按 Esc 关闭</div>
+</div>
+
+<script>
+  const wrapper = document.getElementById('diagramWrapper');
+  const lightbox = document.getElementById('lightbox');
+  const closeBtn = document.getElementById('closeBtn');
+
+  wrapper.addEventListener('click', () => lightbox.classList.add('open'));
+  closeBtn.addEventListener('click', () => lightbox.classList.remove('open'));
+  lightbox.addEventListener('click', (e) => {
+    if (e.target === lightbox) lightbox.classList.remove('open');
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') lightbox.classList.remove('open');
+  });
+</script>
+</body>
+</html>

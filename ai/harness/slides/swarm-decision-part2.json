@@ -1,0 +1,137 @@
+[
+  {
+    "id": 6,
+    "title": "两轮并行流程骨架",
+    "content": {
+      "type": "state-machine",
+      "states": [
+        { "id": "INIT", "label": "初始化", "desc": "创建 runId，装配 Profile" },
+        { "id": "FREEZE_INPUT", "label": "冻结输入", "desc": "冻结输入合同（Problem / Evidence / Constraints / Success / Non-Goals / Rubric）" },
+        { "id": "DISPATCH_R1", "label": "提案轮 R1", "desc": "多角色独立提案（至少 3–5 个角色）" },
+        { "id": "SYNTHESIS", "label": "汇总合成", "desc": "Option Cards + 对比矩阵 + 阻塞问题清单" },
+        { "id": "DISPATCH_R2", "label": "评审轮 R2", "desc": "仅回答阻塞问题（禁止二次发散）" },
+        { "id": "JUDGING", "label": "裁决评审", "desc": "全新角色独立 verdict（pick + confidence + trade-offs + sign-off）" },
+        { "id": "FINAL", "label": "最终决策", "desc": "最终裁决，冻结 Profile v1" },
+        { "id": "META", "label": "元数据", "desc": "trace + requirements（可回放合同）" }
+      ],
+      "transitions": "INIT → FREEZE_INPUT → DISPATCH_R1 → SYNTHESIS → DISPATCH_R2 → JUDGING → FINAL → META"
+    },
+    "notes": "两轮制设计核心：R1 充分发散 → 合成收敛 → R2 定向回答 → 独立裁决。禁止跳过任何阶段，确保决策链路完整可追溯。"
+  },
+  {
+    "id": 7,
+    "title": "提案轮（Round 1）— 独立发散",
+    "content": {
+      "roles": [
+        {
+          "name": "Product",
+          "label": "产品视角",
+          "focus": "可落地性、用户体验",
+          "prompt_anchor": "如果我是产品负责人，这个方案能否真实解决用户痛点？"
+        },
+        {
+          "name": "Architect",
+          "label": "架构视角",
+          "focus": "可扩展性、长期成本",
+          "prompt_anchor": "这套方案在 3 年后的技术债和维护成本是多少？"
+        },
+        {
+          "name": "Implementation",
+          "label": "实现视角",
+          "focus": "工期、依赖、风险",
+          "prompt_anchor": "我能用现有团队在预算内按时完成吗？依赖是否可控？"
+        },
+        {
+          "name": "QA",
+          "label": "质量视角",
+          "focus": "可验证性、回归覆盖",
+          "prompt_anchor": "我们如何量化验证这个方案是否成功？"
+        },
+        {
+          "name": "Risk Security",
+          "label": "风险视角",
+          "focus": "合规、安全、泄密风险",
+          "prompt_anchor": "这个方案在监管合规、数据安全、泄密路径上有哪些隐患？"
+        }
+      ],
+      "key_rule": "每个角色先独立成稿，禁止互相引用后再写"
+    },
+    "notes": "Round 1 的核心原则是\"先发散、再收敛\"。各角色的提案必须独立产出，严禁\"看了别人观点再补自己的\"，否则会形成观点趋同，丧失多视角优势。"
+  },
+  {
+    "id": 8,
+    "title": "汇总阶段 — 观点变选项",
+    "content": {
+      "artifacts": [
+        {
+          "name": "Option Cards",
+          "desc": "每个候选方案的清晰描述",
+          "elements": ["方案名称", "核心做法", "关键假设", "预期收益", "已知局限"]
+        },
+        {
+          "name": "对比矩阵",
+          "desc": "维度评分对比",
+          "dimensions": ["可落地性", "可验证性", "风险", "成本", "采用率"]
+        },
+        {
+          "name": "阻塞问题清单",
+          "desc": "必须回答的关键问题，决定 R2 的方向",
+          "properties": ["来自哪个方案的悬空假设", "跨方案的冲突点", "风险评级 ≥ High 的未决项"]
+        }
+      ],
+      "key_principle": "允许 Composite（组合方案），但必须写成明确 option"
+    },
+    "notes": "汇总阶段不是简单罗列，而是将\"观点\"翻译成\"选项\"。Composite 方案应拆解为若干明确的子选项，每个子选项独立进入对比矩阵，确保 R2 和 Judging 阶段有清晰的选项可裁决。"
+  },
+  {
+    "id": 9,
+    "title": "评审轮 — 全新角色独立裁决",
+    "content": {
+      "judge_roles": [
+        {
+          "name": "Judge Tech",
+          "label": "技术视角",
+          "focus": "技术可行性、架构合理性"
+        },
+        {
+          "name": "Judge Product",
+          "label": "产品视角",
+          "focus": "价值、用户体验"
+        },
+        {
+          "name": "Judge Risk",
+          "label": "风险视角",
+          "focus": "安全、合规、泄密风险",
+          "required": true
+        }
+      ],
+      "verdict_format": {
+        "pick": "选择哪个方案（或放弃全部）",
+        "confidence": "置信度 0–1",
+        "trade_offs": "权衡点",
+        "top_risks": "主要风险",
+        "sign_off_conditions": "验收条件",
+        "required_validations": "必须验证项"
+      }
+    },
+    "notes": "Judging 角色必须与 R1 提案角色完全隔离，避免\"自己评自己\"的确认偏误。Judge Risk 为必选项，安全与合规是不可绕过的守门条件。Verdict 格式统一，确保裁决结果可横向对比。"
+  },
+  {
+    "id": 10,
+    "title": "最终决策 — 可交付报告",
+    "content": {
+      "report_sections": [
+        { "name": "Executive Summary", "label": "执行摘要", "desc": "一句话决策 + 核心依据" },
+        { "name": "Final Decision", "label": "最终决定", "desc": "选定的 Option Card(s)，或放弃全部" },
+        { "name": "Option Cards", "label": "选项卡片", "desc": "所有候选方案的完整描述" },
+        { "name": "Comparison Matrix", "label": "对比矩阵", "desc": "多维度评分与权衡说明" },
+        { "name": "Verdict Summary", "label": "评审汇总", "desc": "三方 Judge 的独立裁决与分歧点" },
+        { "name": "Risks & Sign-off", "label": "风险与签字", "desc": "已识别风险 + 验收签字人" },
+        { "name": "Acceptance Checklist", "label": "验收清单", "desc": "量化验收条件与验证方法" },
+        { "name": "Revisit Triggers", "label": "复盘触发条件", "desc": "触发重新评审的前置事件" }
+      ],
+      "key_insight": "决策必须可回放、可验收、可审计"
+    },
+    "notes": "Decision Report 是 Swarm Decision 的唯一交付物。Revisit Triggers 设计尤为关键——它将\"一次性决策\"升级为\"可演化的决策协议\"，当触发条件被激活时，可自动或手动触发新一轮 Swarm，确保决策不过期。"
+  }
+]
