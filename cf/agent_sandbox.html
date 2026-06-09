@@ -1,0 +1,1780 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Sandbox 三方案对比 — E2B · Kata · Cloudflare Dynamic Workers</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23475569'/><text x='16' y='23' text-anchor='middle' font-size='18' font-weight='bold' fill='white' font-family='sans-serif'>A</text></svg>">
+<meta name="date" content="2026-06-09">
+
+
+<!-- Fonts: Cormorant (display) + IBM Plex Sans (body) — Dark Botanical preset -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ===========================================
+   CSS CUSTOM PROPERTIES — Dark Botanical
+   Elegant, sophisticated, warm-dark theme
+   =========================================== */
+:root {
+    --bg-primary: #0f0f0f;
+    --bg-elevated: #161412;
+    --bg-soft: #1c1916;
+    --text-primary: #e8e4df;
+    --text-secondary: #9a9590;
+    --text-muted: #6a6660;
+    --accent-warm: #d4a574;       /* amber */
+    --accent-pink: #e8b4b8;       /* dusty rose */
+    --accent-gold: #c9b896;       /* champagne */
+    --accent-olive: #8b9a6b;      /* sage */
+    --accent-rust: #c97a5e;       /* terracotta */
+
+    /* Typography */
+    --font-display: 'Cormorant', serif;
+    --font-body: 'IBM Plex Sans', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+
+    /* Spacing (clamp) */
+    --slide-padding: clamp(1.25rem, 3.5vw, 3.5rem);
+    --content-gap: clamp(0.5rem, 1.5vw, 1.5rem);
+    --element-gap: clamp(0.25rem, 0.8vw, 0.75rem);
+
+    /* Motion */
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --duration-normal: 0.7s;
+    --duration-slow: 1.1s;
+}
+
+/* ===========================================
+   BASE
+   =========================================== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    height: 100%;
+    overflow-x: hidden;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+}
+
+body {
+    position: relative;
+}
+
+/* ===========================================
+   VIEWPORT FITTING (MANDATORY BASE)
+   =========================================== */
+.slide {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.slide-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-height: 100%;
+    overflow: hidden;
+    padding: var(--slide-padding);
+}
+
+/* ===========================================
+   ABSTRACT BOTANICAL BACKGROUND
+   Soft, blurred gradient orbs in corners
+   =========================================== */
+.slide::before {
+    content: "";
+    position: absolute;
+    top: -20%;
+    right: -10%;
+    width: 50vw;
+    height: 50vw;
+    max-width: 700px;
+    max-height: 700px;
+    background: radial-gradient(circle, rgba(212, 165, 116, 0.10) 0%, transparent 60%);
+    filter: blur(60px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.slide::after {
+    content: "";
+    position: absolute;
+    bottom: -25%;
+    left: -15%;
+    width: 55vw;
+    height: 55vw;
+    max-width: 750px;
+    max-height: 750px;
+    background: radial-gradient(circle, rgba(232, 180, 184, 0.07) 0%, transparent 60%);
+    filter: blur(70px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.slide-content {
+    position: relative;
+    z-index: 1;
+}
+
+/* ===========================================
+   TYPOGRAPHY
+   =========================================== */
+.eyebrow {
+    font-family: var(--font-body);
+    font-size: clamp(0.6rem, 1vw, 0.8rem);
+    font-weight: 500;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--accent-warm);
+    margin-bottom: clamp(0.5rem, 1.5vh, 1rem);
+}
+
+h1.display {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(2.25rem, 6.5vw, 5.5rem);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+}
+
+h1.display em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--accent-warm);
+}
+
+h2 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(1.75rem, 4.5vw, 3.25rem);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+    margin-bottom: clamp(0.5rem, 1.5vh, 1rem);
+}
+
+h3 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(1.15rem, 2.2vw, 1.65rem);
+    color: var(--text-primary);
+    margin-bottom: 0.4em;
+}
+
+.subtitle {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: clamp(0.9rem, 1.6vw, 1.2rem);
+    line-height: 1.55;
+    color: var(--text-secondary);
+    max-width: 60ch;
+}
+
+.lead {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(1.1rem, 2vw, 1.6rem);
+    line-height: 1.45;
+    color: var(--text-primary);
+}
+
+.muted {
+    color: var(--text-secondary);
+    font-size: var(--body-size, clamp(0.75rem, 1.2vw, 1rem));
+    line-height: 1.55;
+}
+
+.mono {
+    font-family: var(--font-mono);
+    font-size: clamp(0.7rem, 1.05vw, 0.85rem);
+    letter-spacing: 0.02em;
+}
+
+/* ===========================================
+   LAYOUT PRIMITIVES
+   =========================================== */
+.row { display: flex; gap: var(--content-gap); }
+.col { display: flex; flex-direction: column; gap: var(--content-gap); }
+.center { display: flex; align-items: center; justify-content: center; }
+.between { justify-content: space-between; }
+.wrap { flex-wrap: wrap; }
+
+.spacer-1 { height: clamp(0.5rem, 1.5vh, 1rem); }
+.spacer-2 { height: clamp(1rem, 3vh, 2rem); }
+
+.divider {
+    width: clamp(40px, 8vw, 80px);
+    height: 1px;
+    background: var(--accent-warm);
+    margin: clamp(0.5rem, 1.5vh, 1rem) 0;
+}
+
+/* ===========================================
+   TITLE SLIDE
+   =========================================== */
+.title-slide .slide-content {
+    justify-content: space-between;
+    padding-top: clamp(2rem, 6vh, 4rem);
+    padding-bottom: clamp(2rem, 6vh, 4rem);
+}
+
+.title-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+}
+
+.title-tagline {
+    font-family: var(--font-mono);
+    font-size: clamp(0.65rem, 1vw, 0.8rem);
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+}
+
+.title-number {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(2rem, 6vw, 4.5rem);
+    color: var(--accent-warm);
+    opacity: 0.6;
+}
+
+/* ===========================================
+   CARDS / CONTAINERS
+   =========================================== */
+.card {
+    background: rgba(28, 25, 22, 0.55);
+    border: 1px solid rgba(232, 228, 223, 0.06);
+    border-radius: 4px;
+    padding: clamp(0.85rem, 2vw, 1.5rem);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    position: relative;
+}
+
+.card.accent-warm { border-left: 2px solid var(--accent-warm); }
+.card.accent-pink { border-left: 2px solid var(--accent-pink); }
+.card.accent-olive { border-left: 2px solid var(--accent-olive); }
+.card.accent-rust { border-left: 2px solid var(--accent-rust); }
+
+/* ===========================================
+   COMPARISON TABLE
+   =========================================== */
+.compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: clamp(0.7rem, 1.15vw, 0.92rem);
+    margin-top: clamp(0.5rem, 1.5vh, 1rem);
+}
+
+.compare-table th,
+.compare-table td {
+    text-align: left;
+    padding: clamp(0.4rem, 1vh, 0.7rem) clamp(0.5rem, 1vw, 0.85rem);
+    border-bottom: 1px solid rgba(232, 228, 223, 0.06);
+    vertical-align: top;
+    line-height: 1.4;
+}
+
+.compare-table th {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-style: italic;
+    font-size: clamp(0.9rem, 1.5vw, 1.15rem);
+    color: var(--text-primary);
+    border-bottom: 1px solid rgba(212, 165, 116, 0.3);
+    padding-bottom: clamp(0.4rem, 1vh, 0.7rem);
+}
+
+.compare-table th.warm { color: var(--accent-warm); }
+.compare-table th.pink { color: var(--accent-pink); }
+.compare-table th.olive { color: var(--accent-olive); }
+
+.compare-table td.label {
+    font-family: var(--font-body);
+    font-weight: 500;
+    color: var(--text-secondary);
+    width: 14%;
+    white-space: nowrap;
+}
+
+.compare-table td {
+    color: var(--text-primary);
+    width: 28.66%;
+}
+
+/* ===========================================
+   ICON BOX (3-column summary)
+   =========================================== */
+.three-col {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(0.75rem, 2vw, 1.5rem);
+    margin-top: clamp(0.5rem, 1.5vh, 1rem);
+}
+
+.pillar {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.4rem, 1vh, 0.7rem);
+    padding: clamp(0.85rem, 2vw, 1.4rem);
+    background: rgba(28, 25, 22, 0.4);
+    border-top: 1px solid rgba(232, 228, 223, 0.1);
+    position: relative;
+}
+
+.pillar.warm { border-top-color: var(--accent-warm); }
+.pillar.pink { border-top-color: var(--accent-pink); }
+.pillar.olive { border-top-color: var(--accent-olive); }
+
+.pillar-num {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: clamp(1.4rem, 2.5vw, 2rem);
+    color: var(--text-muted);
+    line-height: 1;
+}
+
+.pillar.warm .pillar-num { color: var(--accent-warm); }
+.pillar.pink .pillar-num { color: var(--accent-pink); }
+.pillar.olive .pillar-num { color: var(--accent-olive); }
+
+.pillar h3 {
+    font-size: clamp(1.1rem, 2vw, 1.5rem);
+    margin-bottom: 0.3em;
+}
+
+.pillar p {
+    font-size: clamp(0.75rem, 1.2vw, 0.95rem);
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.pillar .tag {
+    font-family: var(--font-mono);
+    font-size: clamp(0.6rem, 0.95vw, 0.72rem);
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    margin-top: auto;
+    padding-top: 0.5rem;
+}
+
+/* ===========================================
+   DECISION TREE
+   =========================================== */
+.tree {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.4rem, 1.2vh, 0.85rem);
+    margin-top: clamp(0.5rem, 1.5vh, 1rem);
+}
+
+.tree-node {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.5rem, 1.2vw, 0.9rem);
+    padding: clamp(0.55rem, 1.3vh, 0.85rem) clamp(0.7rem, 1.5vw, 1.1rem);
+    background: rgba(28, 25, 22, 0.4);
+    border-left: 2px solid var(--accent-warm);
+    font-size: clamp(0.78rem, 1.25vw, 0.95rem);
+}
+
+.tree-node.alt-pink { border-left-color: var(--accent-pink); }
+.tree-node.alt-olive { border-left-color: var(--accent-olive); }
+
+.tree-q {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 500;
+    color: var(--text-primary);
+    flex: 1;
+    font-size: clamp(0.9rem, 1.5vw, 1.1rem);
+}
+
+.tree-a {
+    font-family: var(--font-body);
+    color: var(--text-secondary);
+    font-size: clamp(0.7rem, 1.1vw, 0.85rem);
+    text-align: right;
+}
+
+.tree-a strong {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* ===========================================
+   SCENARIO GRID
+   =========================================== */
+.scenario {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.4rem, 1vh, 0.7rem);
+}
+
+.scenario-tag {
+    font-family: var(--font-mono);
+    font-size: clamp(0.6rem, 0.95vw, 0.72rem);
+    color: var(--accent-warm);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.scenario h3 {
+    margin-bottom: 0.3em;
+}
+
+.scenario ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.2rem, 0.6vh, 0.4rem);
+}
+
+.scenario li {
+    font-size: clamp(0.7rem, 1.15vw, 0.88rem);
+    line-height: 1.45;
+    color: var(--text-secondary);
+    padding-left: 1em;
+    position: relative;
+}
+
+.scenario li::before {
+    content: "—";
+    position: absolute;
+    left: 0;
+    color: var(--text-muted);
+}
+
+/* ===========================================
+   ARCHITECTURE DIAGRAMS (SVG)
+   =========================================== */
+.diagram-frame {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-height: min(70vh, 560px);
+    margin-top: clamp(0.4rem, 1.2vh, 0.8rem);
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: zoom-in;
+    transition: transform 0.4s var(--ease-out-expo);
+}
+
+.diagram-frame:hover {
+    transform: scale(1.01);
+}
+
+.diagram-frame svg {
+    width: 100%;
+    height: auto;
+    max-height: min(70vh, 560px);
+    display: block;
+}
+
+.diagram-hint {
+    font-family: var(--font-mono);
+    font-size: clamp(0.55rem, 0.85vw, 0.7rem);
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-align: center;
+    margin-top: clamp(0.3rem, 1vh, 0.6rem);
+}
+
+.diagram-hint::before {
+    content: "⤢ ";
+    color: var(--accent-warm);
+}
+
+/* Lightbox for zoomed diagram */
+.lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 15, 15, 0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(1rem, 3vw, 3rem);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    cursor: zoom-out;
+}
+
+.lightbox.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.lightbox-content {
+    max-width: 95vw;
+    max-height: 95vh;
+    overflow: auto;
+    transform: scale(0.95);
+    transition: transform 0.3s var(--ease-out-expo);
+}
+
+.lightbox.show .lightbox-content {
+    transform: scale(1);
+}
+
+.lightbox-content svg {
+    /* Explicit dimensions to prevent collapse in lightbox.
+       viewBox is 1200x620 (~1.935:1 aspect), so we set width and let height auto-scale. */
+    width: min(95vw, 1400px);
+    height: auto;
+    max-height: 90vh;
+    display: block;
+    margin: 0 auto;
+}
+
+.lightbox-close {
+    position: fixed;
+    top: clamp(0.75rem, 2vh, 1.5rem);
+    right: clamp(0.75rem, 2vw, 1.5rem);
+    background: rgba(28, 25, 22, 0.8);
+    color: var(--accent-warm);
+    border: 1px solid rgba(212, 165, 116, 0.3);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.lightbox-close:hover {
+    background: rgba(212, 165, 116, 0.15);
+    transform: rotate(90deg);
+}
+
+/* ===========================================
+   STACKED LAYERS (isolation model)
+   =========================================== */
+.layers {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.35rem, 1vh, 0.65rem);
+    margin-top: clamp(0.5rem, 1.5vh, 1rem);
+}
+
+.layer {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1fr 1fr;
+    gap: clamp(0.5rem, 1.2vw, 0.9rem);
+    align-items: center;
+    padding: clamp(0.5rem, 1.2vh, 0.7rem) clamp(0.6rem, 1.4vw, 1rem);
+    background: rgba(28, 25, 22, 0.4);
+    border-left: 2px solid var(--text-muted);
+    font-size: clamp(0.7rem, 1.15vw, 0.9rem);
+}
+
+.layer.warm { border-left-color: var(--accent-warm); }
+.layer.pink { border-left-color: var(--accent-pink); }
+.layer.olive { border-left-color: var(--accent-olive); }
+
+.layer-name {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(0.95rem, 1.6vw, 1.2rem);
+    color: var(--text-primary);
+}
+
+.layer-iso {
+    color: var(--text-secondary);
+}
+
+.layer-strength {
+    font-family: var(--font-mono);
+    font-size: clamp(0.65rem, 1vw, 0.78rem);
+    color: var(--text-muted);
+    text-align: right;
+}
+
+.layer.warm .layer-strength { color: var(--accent-warm); }
+.layer.pink .layer-strength { color: var(--accent-pink); }
+.layer.olive .layer-strength { color: var(--accent-olive); }
+
+/* ===========================================
+   COMBO / FINAL RECOMMENDATION
+   =========================================== */
+.combo {
+    display: grid;
+    grid-template-columns: 0.8fr 1fr;
+    gap: clamp(1rem, 3vw, 2.5rem);
+    align-items: center;
+    margin-top: clamp(0.5rem, 1.5vh, 1rem);
+}
+
+.combo-side {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.4rem, 1vh, 0.7rem);
+}
+
+.combo-tag {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    color: var(--text-primary);
+    line-height: 1.1;
+}
+
+.combo-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.4rem, 1vh, 0.7rem);
+}
+
+.combo-list li {
+    display: flex;
+    gap: 0.7em;
+    font-size: clamp(0.78rem, 1.2vw, 0.95rem);
+    line-height: 1.45;
+    color: var(--text-secondary);
+}
+
+.combo-list .label {
+    font-family: var(--font-mono);
+    color: var(--accent-warm);
+    flex-shrink: 0;
+    min-width: 5em;
+    letter-spacing: 0.05em;
+}
+
+.combo-list .label.pink { color: var(--accent-pink); }
+.combo-list .label.olive { color: var(--accent-olive); }
+
+/* ===========================================
+   CLOSING SLIDE
+   =========================================== */
+.closing-quote {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(1.4rem, 3.5vw, 2.6rem);
+    line-height: 1.35;
+    color: var(--text-primary);
+    max-width: 28ch;
+    margin-bottom: clamp(1rem, 3vh, 2rem);
+}
+
+.closing-attribution {
+    font-family: var(--font-mono);
+    font-size: clamp(0.7rem, 1.05vw, 0.85rem);
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+}
+
+/* ===========================================
+   TERM TOOLTIPS
+   =========================================== */
+.term {
+    position: relative;
+    border-bottom: 1px dashed rgba(212, 165, 116, 0.5);
+    cursor: pointer;
+    color: var(--accent-warm);
+    font-style: normal;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.term:hover, .term.active {
+    color: var(--accent-warm);
+    border-bottom-color: var(--accent-warm);
+}
+
+.term .tip { display: none; }
+
+.term-pop {
+    position: fixed;
+    z-index: 500;
+    background: rgba(20, 18, 16, 0.97);
+    color: #e8e4df;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-family: var(--font-body);
+    font-style: normal;
+    font-size: clamp(0.7rem, 1.05vw, 0.85rem);
+    line-height: 1.6;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(212, 165, 116, 0.25);
+    max-width: 280px;
+    white-space: normal;
+    text-align: left;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.term-pop.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ===========================================
+   ANIMATIONS
+   =========================================== */
+.reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity var(--duration-normal) var(--ease-out-expo),
+                transform var(--duration-normal) var(--ease-out-expo);
+}
+
+.slide.visible .reveal {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.reveal:nth-child(1) { transition-delay: 0.1s; }
+.reveal:nth-child(2) { transition-delay: 0.2s; }
+.reveal:nth-child(3) { transition-delay: 0.3s; }
+.reveal:nth-child(4) { transition-delay: 0.4s; }
+.reveal:nth-child(5) { transition-delay: 0.5s; }
+.reveal:nth-child(6) { transition-delay: 0.6s; }
+.reveal:nth-child(7) { transition-delay: 0.7s; }
+
+/* ===========================================
+   NAV UI
+   =========================================== */
+.progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 1px;
+    background: var(--accent-warm);
+    z-index: 200;
+    transition: width 0.3s ease;
+}
+
+.nav-dots {
+    position: fixed;
+    right: clamp(0.75rem, 2vw, 1.5rem);
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    z-index: 100;
+}
+
+.nav-dots .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(232, 228, 223, 0.2);
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.3s;
+    padding: 0;
+}
+
+.nav-dots .dot.active {
+    background: var(--accent-warm);
+    transform: scale(1.4);
+}
+
+.slide-counter {
+    position: fixed;
+    left: clamp(0.75rem, 2vw, 1.5rem);
+    bottom: clamp(0.75rem, 2vh, 1.25rem);
+    font-family: var(--font-mono);
+    font-size: clamp(0.6rem, 0.95vw, 0.75rem);
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+    z-index: 100;
+}
+
+.slide-counter .current {
+    color: var(--accent-warm);
+    font-size: 1.3em;
+}
+
+.keyboard-hint {
+    position: fixed;
+    right: clamp(0.75rem, 2vw, 1.5rem);
+    bottom: clamp(0.75rem, 2vh, 1.25rem);
+    font-family: var(--font-mono);
+    font-size: clamp(0.55rem, 0.85vw, 0.7rem);
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    z-index: 100;
+}
+
+/* ===========================================
+   INLINE EDITING UI
+   =========================================== */
+.edit-hotzone {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 80px;
+    height: 80px;
+    z-index: 10000;
+    cursor: pointer;
+}
+
+.edit-toggle {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    background: var(--accent-warm);
+    color: var(--bg-primary);
+    border: none;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.2s ease;
+    z-index: 10001;
+    box-shadow: 0 4px 12px rgba(212, 165, 116, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-toggle.show,
+.edit-toggle.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.edit-toggle:hover {
+    transform: scale(1.08);
+}
+
+.edit-toggle.active {
+    background: var(--accent-pink);
+}
+
+body.edit-mode [contenteditable] {
+    outline: 1px dashed rgba(212, 165, 116, 0.4);
+    outline-offset: 4px;
+    transition: outline 0.2s;
+}
+
+body.edit-mode [contenteditable]:hover {
+    outline-color: var(--accent-warm);
+    background: rgba(212, 165, 116, 0.04);
+}
+
+body.edit-mode [contenteditable]:focus {
+    outline: 2px solid var(--accent-warm);
+    background: rgba(212, 165, 116, 0.06);
+}
+
+.edit-save-toast {
+    position: fixed;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    background: var(--bg-soft);
+    color: var(--accent-warm);
+    padding: 0.5rem 1.2rem;
+    border-radius: 20px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    border: 1px solid rgba(212, 165, 116, 0.3);
+    z-index: 10002;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.edit-save-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ===========================================
+   RESPONSIVE
+   =========================================== */
+@media (max-height: 700px) {
+    :root {
+        --slide-padding: clamp(0.75rem, 3vw, 2rem);
+        --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+    }
+    h1.display { font-size: clamp(1.8rem, 5vw, 3.5rem); }
+    h2 { font-size: clamp(1.4rem, 3.5vw, 2.2rem); }
+}
+
+@media (max-height: 600px) {
+    .nav-dots, .keyboard-hint, .slide-counter { display: none; }
+    :root { --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem); }
+}
+
+@media (max-height: 500px) {
+    h1.display { font-size: clamp(1.5rem, 4vw, 2.5rem); }
+    h2 { font-size: clamp(1.2rem, 3vw, 1.8rem); }
+}
+
+@media (max-width: 800px) {
+    .three-col { grid-template-columns: 1fr; }
+    .combo { grid-template-columns: 1fr; }
+    .layer { grid-template-columns: 1fr 1.2fr; }
+    .layer-iso, .layer-strength { grid-column: 2; }
+    .compare-table { font-size: 0.7rem; }
+    .compare-table td.label { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+    }
+    html { scroll-behavior: auto; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<nav class="nav-dots" id="navDots"></nav>
+<div class="slide-counter" id="slideCounter"><span class="current">01</span> / 09</div>
+<div class="keyboard-hint">↑ ↓ SPACE</div>
+
+<!-- ===========================================
+     SLIDE 1 — TITLE
+     =========================================== -->
+<section class="slide title-slide">
+    <div class="slide-content">
+        <div class="col" style="gap: 0.5rem;">
+            <div class="eyebrow reveal">Technical Selection Guide · 2026</div>
+            <h1 class="display reveal">Agent <em>Sandbox</em><br>三方案对比</h1>
+            <p class="subtitle reveal">E2B · Kata Containers · Cloudflare Dynamic Workers</p>
+        </div>
+        <div class="title-meta reveal">
+            <span class="title-tagline">架构选型 · 隔离模型 · 取舍框架</span>
+            <span class="title-number">i.</span>
+        </div>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 2 — ONE-LINE CONCLUSION
+     =========================================== -->
+<section class="slide">
+    <div class="slide-content">
+        <div class="col" style="gap: clamp(0.75rem, 2.5vh, 2rem);">
+            <div class="eyebrow reveal">TL;DR</div>
+            <h2 class="reveal">一句话结论</h2>
+            <div class="divider reveal"></div>
+            <div class="col" style="gap: clamp(0.6rem, 2vh, 1.1rem); max-width: 70ch;">
+                <p class="lead reveal">做 AI agent 执行 Python/终端/文件/浏览器/长会话——先选 <span class="term">E2B<span class="tip">托管型 sandbox 云服务，基于 Firecracker microVM，开箱即用 Python/Node/终端/文件系统/模板 snapshot。</span></span>。</p>
+                <p class="lead reveal">已有 <span class="term">K8s<span class="tip">Kubernetes，容器编排平台。</span></span>、多云/私有化、合规、自建团队——选 <span class="term">Kata<span class="tip">Kata Containers，硬件虚拟化强隔离的容器 runtime，可作为 K8s runtime class 接入。</span></span> 或 Kata + 自研控制面。</p>
+                <p class="lead reveal">做海量短生命周期、Web API 型、JS/TS 代码、低延迟边缘执行——看 <span class="term">Cloudflare Dynamic Workers<span class="tip">2026/3 进入 open beta 的动态 Worker 创建 primitive，基于 V8 isolate，冷启动接近零。</span></span>。</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 3 — CORE COMPARISON TABLE
+     =========================================== -->
+<section class="slide">
+    <div class="slide-content">
+        <div class="col" style="gap: clamp(0.5rem, 1.5vh, 1rem);">
+            <div class="eyebrow reveal">维度对照</div>
+            <h2 class="reveal">核心区别</h2>
+            <div class="divider reveal"></div>
+            <table class="compare-table reveal">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th class="warm">E2B</th>
+                        <th class="pink">Kata Containers</th>
+                        <th class="olive">Dynamic Workers</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="label">抽象层级</td>
+                        <td>托管 sandbox 产品/API</td>
+                        <td>容器 runtime / K8s runtime class</td>
+                        <td>Workers 动态创建 primitive</td>
+                    </tr>
+                    <tr>
+                        <td class="label">隔离模型</td>
+                        <td>Firecracker <span class="term">microVM<span class="tip">微型虚拟机，通过硬件虚拟化实现强隔离，启动速度比传统 VM 快一个数量级。</span></span></td>
+                        <td>轻量 VM，硬件虚拟化 + K8s 工作流</td>
+                        <td><span class="term">V8 isolate<span class="tip">V8 引擎的进程内隔离机制，共享进程但隔离内存，冷启动极快但隔离强度弱于 VM。</span></span></td>
+                    </tr>
+                    <tr>
+                        <td class="label">语言/环境</td>
+                        <td>Python、Node、终端、FS、可定制镜像</td>
+                        <td>任意容器 workload</td>
+                        <td>JS/TS 最优；Python 走 <span class="term">Pyodide<span class="tip">CPython 编译到 WebAssembly，在 V8 里运行的 Python 实现，不是完整 Linux Python 环境。</span></span></td>
+                    </tr>
+                    <tr>
+                        <td class="label">启动/密度</td>
+                        <td>比普通 VM 轻；模板 <span class="term">snapshot<span class="tip">把运行中的进程状态冻结为镜像，下次直接复用，跳过启动等待。</span></span></td>
+                        <td>比 VM 轻，比普通容器重</td>
+                        <td>极轻、几乎零冷启动</td>
+                    </tr>
+                    <tr>
+                        <td class="label">状态/持久</td>
+                        <td>支持 pause/resume、FS + 内存状态保留</td>
+                        <td>取决于你接的存储/镜像/调度</td>
+                        <td>短生命周期；持久化靠 KV/R2/<span class="term">D1<span class="tip">Cloudflare 的分布式 SQLite 数据库，是 Workers 平台上的关系型持久化方案。</span></span>/<span class="term">Durable Objects<span class="tip">Cloudflare 提供的有状态计算原语，支持长连接和强一致状态。</span></span></td>
+                    </tr>
+                    <tr>
+                        <td class="label">运行时限制</td>
+                        <td>Pro 24h / Base 1h</td>
+                        <td>集群资源决定</td>
+                        <td>Paid 默认 30s，可升至 5 分钟</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 4 — ARCHITECTURE COMPARISON
+     =========================================== -->
+<section class="slide">
+    <div class="slide-content">
+        <div class="col" style="gap: clamp(0.4rem, 1.2vh, 0.8rem);">
+            <div class="eyebrow reveal">架构对比</div>
+            <h2 class="reveal">三种隔离栈的层级结构</h2>
+            <div class="divider reveal"></div>
+            <div class="diagram-frame reveal" data-zoom>
+                <svg viewBox="0 0 1200 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="E2B / Kata / Dynamic Workers 架构对比图">
+                    <defs>
+                        <linearGradient id="grad-warm" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#d4a574" stop-opacity="0.15"/>
+                            <stop offset="100%" stop-color="#d4a574" stop-opacity="0.04"/>
+                        </linearGradient>
+                        <linearGradient id="grad-pink" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#e8b4b8" stop-opacity="0.15"/>
+                            <stop offset="100%" stop-color="#e8b4b8" stop-opacity="0.04"/>
+                        </linearGradient>
+                        <linearGradient id="grad-olive" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#8b9a6b" stop-opacity="0.15"/>
+                            <stop offset="100%" stop-color="#8b9a6b" stop-opacity="0.04"/>
+                        </linearGradient>
+                        <marker id="arrow-warm" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                            <path d="M0,0 L6,4 L0,8 z" fill="#d4a574"/>
+                        </marker>
+                        <marker id="arrow-pink" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                            <path d="M0,0 L6,4 L0,8 z" fill="#e8b4b8"/>
+                        </marker>
+                        <marker id="arrow-olive" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                            <path d="M0,0 L6,4 L0,8 z" fill="#8b9a6b"/>
+                        </marker>
+                    </defs>
+
+                    <!-- Column titles -->
+                    <text x="200" y="40" text-anchor="middle" font-family="Cormorant, serif" font-style="italic" font-size="26" fill="#d4a574" font-weight="500">E2B</text>
+                    <text x="200" y="62" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#6a6660" letter-spacing="2">MANAGED SANDBOX</text>
+
+                    <text x="600" y="40" text-anchor="middle" font-family="Cormorant, serif" font-style="italic" font-size="26" fill="#e8b4b8" font-weight="500">Kata Containers</text>
+                    <text x="600" y="62" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#6a6660" letter-spacing="2">SELF-HOSTED RUNTIME</text>
+
+                    <text x="1000" y="40" text-anchor="middle" font-family="Cormorant, serif" font-style="italic" font-size="26" fill="#8b9a6b" font-weight="500">Dynamic Workers</text>
+                    <text x="1000" y="62" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#6a6660" letter-spacing="2">EDGE ISOLATE</text>
+
+                    <!-- Vertical column backgrounds -->
+                    <rect x="60" y="90" width="280" height="500" rx="4" fill="url(#grad-warm)"/>
+                    <rect x="460" y="90" width="280" height="500" rx="4" fill="url(#grad-pink)"/>
+                    <rect x="860" y="90" width="280" height="500" rx="4" fill="url(#grad-olive)"/>
+
+                    <!-- ===== E2B column ===== -->
+                    <rect x="80" y="110" width="240" height="42" rx="3" fill="#1c1916" stroke="#d4a574" stroke-width="1"/>
+                    <text x="200" y="128" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" fill="#9a9590">Agent / SDK</text>
+                    <text x="200" y="143" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#6a6660">e2b Sandbox()</text>
+
+                    <line x1="200" y1="152" x2="200" y2="172" stroke="#d4a574" stroke-width="1" marker-end="url(#arrow-warm)"/>
+
+                    <rect x="80" y="180" width="240" height="42" rx="3" fill="#1c1916" stroke="#d4a574" stroke-width="1"/>
+                    <text x="200" y="198" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" fill="#9a9590">E2B Control Plane</text>
+                    <text x="200" y="213" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#6a6660">Template · Snapshot · Pause/Resume</text>
+
+                    <line x1="200" y1="222" x2="200" y2="242" stroke="#d4a574" stroke-width="1" marker-end="url(#arrow-warm)"/>
+
+                    <rect x="80" y="250" width="240" height="50" rx="3" fill="#1c1916" stroke="#d4a574" stroke-width="1.5"/>
+                    <text x="200" y="270" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" font-weight="500" fill="#d4a574">Firecracker microVM</text>
+                    <text x="200" y="286" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#9a9590">Linux user-space · 硬件虚拟化</text>
+
+                    <line x1="200" y1="300" x2="200" y2="320" stroke="#d4a574" stroke-width="1" marker-end="url(#arrow-warm)"/>
+
+                    <rect x="80" y="328" width="240" height="100" rx="3" fill="rgba(212,165,116,0.08)" stroke="#d4a574" stroke-width="1" stroke-dasharray="3,2"/>
+                    <text x="200" y="348" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#9a9590">Sandbox 内</text>
+                    <text x="200" y="368" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#e8e4df">Python · Node.js</text>
+                    <text x="200" y="386" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#e8e4df">文件系统 · Shell</text>
+                    <text x="200" y="404" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#e8e4df">pip · apt · 浏览器</text>
+                    <text x="200" y="420" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#6a6660">up to 24h · pause/resume</text>
+
+                    <line x1="200" y1="428" x2="200" y2="448" stroke="#d4a574" stroke-width="1" marker-end="url(#arrow-warm)"/>
+
+                    <rect x="80" y="456" width="240" height="50" rx="3" fill="#1c1916" stroke="#d4a574" stroke-width="1"/>
+                    <text x="200" y="476" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#9a9590">Host (KVM · Linux)</text>
+                    <text x="200" y="492" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#6a6660">物理硬件</text>
+
+                    <text x="200" y="540" text-anchor="middle" font-family="Cormorant, serif" font-style="italic" font-size="13" fill="#d4a574">强隔离 · 真实 Linux</text>
+                    <text x="200" y="560" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#9a9590">托管 / 按 API 计费</text>
+                    <text x="200" y="578" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#6a6660">★ 缺什么：时间</text>
+
+                    <!-- ===== Kata column ===== -->
+                    <rect x="480" y="110" width="240" height="42" rx="3" fill="#1c1916" stroke="#e8b4b8" stroke-width="1"/>
+                    <text x="600" y="128" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" fill="#9a9590">kubectl / Helm</text>
+                    <text x="600" y="143" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#6a6660">K8s API</text>
+
+                    <line x1="600" y1="152" x2="600" y2="172" stroke="#e8b4b8" stroke-width="1" marker-end="url(#arrow-pink)"/>
+
+                    <rect x="480" y="180" width="240" height="42" rx="3" fill="#1c1916" stroke="#e8b4b8" stroke-width="1"/>
+                    <text x="600" y="198" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" fill="#9a9590">kubelet · CRI</text>
+                    <text x="600" y="213" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#6a6660">runtimeClass: kata</text>
+
+                    <line x1="600" y1="222" x2="600" y2="242" stroke="#e8b4b8" stroke-width="1" marker-end="url(#arrow-pink)"/>
+
+                    <rect x="480" y="250" width="240" height="50" rx="3" fill="#1c1916" stroke="#e8b4b8" stroke-width="1.5"/>
+                    <text x="600" y="270" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" font-weight="500" fill="#e8b4b8">Kata Shim + Runtime</text>
+                    <text x="600" y="286" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#9a9590">每 Pod 一个轻量 VM</text>
+
+                    <line x1="600" y1="300" x2="600" y2="320" stroke="#e8b4b8" stroke-width="1" marker-end="url(#arrow-pink)"/>
+
+                    <rect x="480" y="328" width="240" height="100" rx="3" fill="rgba(232,180,184,0.08)" stroke="#e8b4b8" stroke-width="1" stroke-dasharray="3,2"/>
+                    <text x="600" y="348" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#9a9590">VM 内的 Pod</text>
+                    <text x="600" y="368" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#e8e4df">任意容器镜像</text>
+                    <text x="600" y="386" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#e8e4df">独立 Linux 内核</text>
+                    <text x="600" y="404" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#e8e4df">seccomp · cgroup · 审计</text>
+                    <text x="600" y="420" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#6a6660">租户配额 · 镜像白名单</text>
+
+                    <line x1="600" y1="428" x2="600" y2="448" stroke="#e8b4b8" stroke-width="1" marker-end="url(#arrow-pink)"/>
+
+                    <rect x="480" y="456" width="240" height="50" rx="3" fill="#1c1916" stroke="#e8b4b8" stroke-width="1"/>
+                    <text x="600" y="476" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#9a9590">QEMU / KVM Hypervisor</text>
+                    <text x="600" y="492" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#6a6660">物理硬件</text>
+
+                    <text x="600" y="540" text-anchor="middle" font-family="Cormorant, serif" font-style="italic" font-size="13" fill="#e8b4b8">强隔离 · 私有化</text>
+                    <text x="600" y="560" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#9a9590">自建 / 需平台团队</text>
+                    <text x="600" y="578" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#6a6660">★ 缺什么：控制权</text>
+
+                    <!-- ===== Dynamic Workers column ===== -->
+                    <rect x="880" y="110" width="240" height="42" rx="3" fill="#1c1916" stroke="#8b9a6b" stroke-width="1"/>
+                    <text x="1000" y="128" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" fill="#9a9590">Edge Request</text>
+                    <text x="1000" y="143" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#6a6660">用户 → 边缘节点</text>
+
+                    <line x1="1000" y1="152" x2="1000" y2="172" stroke="#8b9a6b" stroke-width="1" marker-end="url(#arrow-olive)"/>
+
+                    <rect x="880" y="180" width="240" height="42" rx="3" fill="#1c1916" stroke="#8b9a6b" stroke-width="1"/>
+                    <text x="1000" y="198" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" fill="#9a9590">Host Worker</text>
+                    <text x="1000" y="213" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#6a6660">env.DYNAMIC_WORKERS · spin up</text>
+
+                    <line x1="1000" y1="222" x2="1000" y2="242" stroke="#8b9a6b" stroke-width="1" marker-end="url(#arrow-olive)"/>
+
+                    <rect x="880" y="250" width="240" height="50" rx="3" fill="#1c1916" stroke="#8b9a6b" stroke-width="1.5"/>
+                    <text x="1000" y="270" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" font-weight="500" fill="#8b9a6b">V8 Isolate</text>
+                    <text x="1000" y="286" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#9a9590">进程内隔离 · 零冷启动</text>
+
+                    <line x1="1000" y1="300" x2="1000" y2="320" stroke="#8b9a6b" stroke-width="1" marker-end="url(#arrow-olive)"/>
+
+                    <rect x="880" y="328" width="240" height="100" rx="3" fill="rgba(139,154,107,0.08)" stroke="#8b9a6b" stroke-width="1" stroke-dasharray="3,2"/>
+                    <text x="1000" y="348" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#9a9590">Dynamic Worker 内</text>
+                    <text x="1000" y="368" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#e8e4df">JS / TS 代码</text>
+                    <text x="1000" y="386" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#e8e4df">Pyodide (WASM Python)</text>
+                    <text x="1000" y="404" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#e8e4df">Bindings: KV / R2 / D1</text>
+                    <text x="1000" y="420" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#6a6660">CPU 30s–5min</text>
+
+                    <line x1="1000" y1="428" x2="1000" y2="448" stroke="#8b9a6b" stroke-width="1" marker-end="url(#arrow-olive)"/>
+
+                    <rect x="880" y="456" width="240" height="50" rx="3" fill="#1c1916" stroke="#8b9a6b" stroke-width="1"/>
+                    <text x="1000" y="476" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#9a9590">V8 进程 · 边缘节点</text>
+                    <text x="1000" y="492" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#6a6660">全球 300+ PoP</text>
+
+                    <text x="1000" y="540" text-anchor="middle" font-family="Cormorant, serif" font-style="italic" font-size="13" fill="#8b9a6b">轻隔离 · 边缘</text>
+                    <text x="1000" y="560" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#9a9590">零运维 / 高密度</text>
+                    <text x="1000" y="578" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#6a6660">★ 缺什么：边缘分发</text>
+
+                    <!-- Bottom note -->
+                    <line x1="60" y1="600" x2="1140" y2="600" stroke="rgba(232,228,223,0.08)" stroke-width="1"/>
+                </svg>
+            </div>
+            <div class="diagram-hint reveal">点击放大查看</div>
+        </div>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 5 — ISOLATION MODEL
+     =========================================== -->
+<section class="slide">
+    <div class="slide-content">
+        <div class="col" style="gap: clamp(0.5rem, 1.5vh, 1rem);">
+            <div class="eyebrow reveal">安全取舍</div>
+            <h2 class="reveal">VM 隔离 <em style="font-style: italic; color: var(--text-muted);">vs</em> Isolate 隔离</h2>
+            <p class="lead reveal" style="max-width: 60ch;">粗略排序：<strong style="color: var(--accent-warm);">Kata / E2B 的 microVM</strong> 强于 V8 isolate；<strong style="color: var(--accent-olive);">V8 isolate</strong> 启动速度和密度更好。</p>
+            <div class="layers reveal">
+                <div class="layer warm">
+                    <span class="layer-name">Firecracker</span>
+                    <span class="layer-iso">microVM · 硬件虚拟化</span>
+                    <span class="layer-strength">E2B · 强</span>
+                </div>
+                <div class="layer pink">
+                    <span class="layer-name">Kata</span>
+                    <span class="layer-iso">轻量 VM + K8s 工作流</span>
+                    <span class="layer-strength">自建 · 强</span>
+                </div>
+                <div class="layer olive">
+                    <span class="layer-name">V8 isolate</span>
+                    <span class="layer-iso">进程内隔离 · 共享 V8</span>
+                    <span class="layer-strength">Dynamic Workers · 中</span>
+                </div>
+            </div>
+            <p class="muted reveal" style="max-width: 70ch; margin-top: clamp(0.4rem, 1.2vh, 0.8rem);">
+                microVM 并非"绝对安全"——仍存在共享硬件、侧信道、内核/<span class="term">VMM<span class="tip">Virtual Machine Monitor，虚拟机监控器；KVM/QEMU 是常见 VMM。</span></span> 漏洞等风险。学术研究也指出，serverless microVM 在<span class="term">微架构攻击<span class="tip">通过 CPU 缓存、流水线等共享硬件资源窃取信息的攻击方式，如 Spectre、Meltdown。</span></span>防护上并非天然完美。
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 5 — SCENARIO GUIDE
+     =========================================== -->
+<section class="slide">
+    <div class="slide-content">
+        <div class="col" style="gap: clamp(0.5rem, 1.5vh, 1rem);">
+            <div class="eyebrow reveal">按场景选型</div>
+            <h2 class="reveal">怎么取舍：三个典型场景</h2>
+            <div class="divider reveal"></div>
+            <div class="three-col reveal">
+                <div class="pillar warm">
+                    <span class="pillar-num">01.</span>
+                    <h3>Agent 会写代码</h3>
+                    <p>LLM 生成 Python，跑数据分析、读写文件、调用 shell、装包、跑 notebook、浏览器自动化、保留 session。</p>
+                    <span class="tag">→ E2B</span>
+                </div>
+                <div class="pillar pink">
+                    <span class="pillar-num">02.</span>
+                    <h3>不可信 K8s 负载</h3>
+                    <p>已有 Kubernetes、私有化、多租户合规；要跑任意容器镜像；平台团队能维护节点池/runtime class/镜像缓存/网络策略。</p>
+                    <span class="tag">→ Kata</span>
+                </div>
+                <div class="pillar olive">
+                    <span class="pillar-num">03.</span>
+                    <h3>边缘短代码</h3>
+                    <p>JS/TS 代码片段、API 编排、用户自定义逻辑、边缘低延迟、高 QPS、单次执行短、无重型系统依赖。</p>
+                    <span class="tag">→ Dynamic Workers</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 6 — DECISION TREE
+     =========================================== -->
+<section class="slide">
+    <div class="slide-content">
+        <div class="col" style="gap: clamp(0.5rem, 1.5vh, 1rem);">
+            <div class="eyebrow reveal">决策框架</div>
+            <h2 class="reveal">推荐决策树</h2>
+            <p class="lead reveal" style="max-width: 60ch;">回答四个关键问题，把选择收敛到具体方案。</p>
+            <div class="tree reveal">
+                <div class="tree-node">
+                    <span class="tree-q">是否需要完整 Linux 环境？</span>
+                    <span class="tree-a">需要 <span class="term">shell<span class="tip">命令行终端，支持任意命令、文件操作、进程管理。</span></span>/<span class="term">apt/pip<span class="tip">Linux 包管理工具，apt 装系统包，pip 装 Python 包。</span></span>/native deps/浏览器/长任务 → <strong>E2B 或 Kata</strong><br>只 JS/TS 短执行 → <strong>Dynamic Workers</strong></span>
+                </div>
+                <div class="tree-node alt-pink">
+                    <span class="tree-q">是否必须私有化或跑在自己的 K8s？</span>
+                    <span class="tree-a">是 → <strong>Kata</strong><br>否 → 优先 <strong>E2B</strong>，上线更快</span>
+                </div>
+                <div class="tree-node alt-olive">
+                    <span class="tree-q">任务生命周期多长？</span>
+                    <span class="tree-a">毫秒到几秒、海量 → <strong>Dynamic Workers</strong><br>几十秒到数小时、需 session → <strong>E2B</strong><br>长期 worker/批处理 → <strong>Kata</strong></span>
+                </div>
+                <div class="tree-node">
+                    <span class="tree-q">团队更缺什么？</span>
+                    <span class="tree-a">缺时间 → <strong>E2B</strong><br>缺成本优化 → 短任务 <strong>Dynamic Workers</strong>，重任务 <strong>Kata</strong><br>缺安全控制权 → <strong>Kata</strong><br>缺全球边缘分发 → <strong>Cloudflare</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 7 — COMBINED STRATEGY
+     =========================================== -->
+<section class="slide">
+    <div class="slide-content">
+        <div class="col" style="gap: clamp(0.5rem, 1.5vh, 1rem);">
+            <div class="eyebrow reveal">组合优于三选一</div>
+            <h2 class="reveal">实用组合方案</h2>
+            <div class="divider reveal"></div>
+            <div class="combo reveal">
+                <div class="combo-side">
+                    <div class="combo-tag">Don't pick one.<br>Pick the <em style="font-style: italic; color: var(--accent-warm);">right</em> one<br>for the <em style="font-style: italic; color: var(--accent-pink);">right</em> job.</div>
+                </div>
+                <div class="combo-side">
+                    <ul class="combo-list">
+                        <li>
+                            <span class="label">默认</span>
+                            <span><strong style="color: var(--text-primary);">E2B</strong>：用于 Python、数据分析、文件、浏览器、需要真实环境的任务。</span>
+                        </li>
+                        <li>
+                            <span class="label pink">工具</span>
+                            <span><strong style="color: var(--text-primary);">Dynamic Workers</strong>：用于 LLM 生成 TypeScript 调 API、用户自定义规则、webhook、插件逻辑。</span>
+                        </li>
+                        <li>
+                            <span class="label olive">私有化</span>
+                            <span><strong style="color: var(--text-primary);">Kata</strong>：用于自建 agent runtime、客户代码执行平台、合规 workload、需要完全控制网络和节点的场景。</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===========================================
+     SLIDE 8 — CLOSING
+     =========================================== -->
+<section class="slide title-slide">
+    <div class="slide-content">
+        <div class="col" style="gap: clamp(0.75rem, 2.5vh, 2rem);">
+            <div class="eyebrow reveal">最终判断</div>
+            <h2 class="closing-quote reveal">先 E2B 起步；<br>当成本、合规或私有化成为瓶颈——<br>再把稳定高频 workload 迁到 Kata。</h2>
+            <p class="lead reveal" style="max-width: 55ch;">对短小、边缘、JS/TS 化的代码执行，则单独用 Dynamic Workers。三者并非互斥，而是分层组合。</p>
+            <div class="divider reveal"></div>
+            <span class="closing-attribution reveal">fin.</span>
+        </div>
+    </div>
+</section>
+
+<!-- ===========================================
+     LIGHTBOX FOR DIAGRAM ZOOM
+     =========================================== -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true">
+    <button class="lightbox-close" id="lightboxClose" aria-label="关闭">✕</button>
+    <div class="lightbox-content" id="lightboxContent"></div>
+</div>
+
+<!-- ===========================================
+     INLINE EDITING UI
+     =========================================== -->
+<div class="edit-hotzone" id="editHotzone" title="Hover then click to edit (E)"></div>
+<button class="edit-toggle" id="editToggle" title="Edit mode (E)">✎</button>
+<div class="edit-save-toast" id="saveToast">SAVED</div>
+
+<script>
+/* ===========================================
+   SLIDE PRESENTATION CONTROLLER
+   =========================================== */
+class SlidePresentation {
+    constructor() {
+        this.slides = document.querySelectorAll('.slide');
+        this.currentSlide = 0;
+        this.isAnimating = false;
+        this.totalSlides = this.slides.length;
+        this.init();
+    }
+
+    init() {
+        this.setupIntersectionObserver();
+        this.setupKeyboardNav();
+        this.setupTouchNav();
+        this.setupWheelNav();
+        this.setupProgressBar();
+        this.setupNavDots();
+        this.updateCounter();
+        // Mark first slide as visible immediately
+        this.slides[0].classList.add('visible');
+    }
+
+    setupIntersectionObserver() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.4 });
+
+        this.slides.forEach(s => observer.observe(s));
+    }
+
+    setupKeyboardNav() {
+        document.addEventListener('keydown', (e) => {
+            // Skip when editing text or using term tooltips
+            if (e.target.getAttribute('contenteditable')) return;
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            if (e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown') {
+                e.preventDefault();
+                this.next();
+            } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+                e.preventDefault();
+                this.prev();
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                this.goTo(0);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                this.goTo(this.totalSlides - 1);
+            }
+        });
+    }
+
+    setupTouchNav() {
+        let startY = 0, endY = 0;
+        document.addEventListener('touchstart', (e) => {
+            startY = e.touches[0].clientY;
+        }, { passive: true });
+        document.addEventListener('touchend', (e) => {
+            endY = e.changedTouches[0].clientY;
+            const diff = startY - endY;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) this.next();
+                else this.prev();
+            }
+        }, { passive: true });
+    }
+
+    setupWheelNav() {
+        let wheelLock = false;
+        document.addEventListener('wheel', (e) => {
+            if (wheelLock) return;
+            if (Math.abs(e.deltaY) < 30) return;
+            wheelLock = true;
+            if (e.deltaY > 0) this.next();
+            else this.prev();
+            setTimeout(() => { wheelLock = false; }, 900);
+        }, { passive: true });
+    }
+
+    setupProgressBar() {
+        const bar = document.getElementById('progressBar');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const idx = Array.from(this.slides).indexOf(entry.target);
+                    const pct = ((idx + 1) / this.totalSlides) * 100;
+                    bar.style.width = pct + '%';
+                    this.currentSlide = idx;
+                    this.updateCounter();
+                    this.updateDots();
+                }
+            });
+        }, { threshold: 0.5 });
+        this.slides.forEach(s => observer.observe(s));
+    }
+
+    setupNavDots() {
+        const container = document.getElementById('navDots');
+        this.slides.forEach((_, i) => {
+            const dot = document.createElement('button');
+            dot.className = 'dot';
+            dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+            dot.addEventListener('click', () => this.goTo(i));
+            container.appendChild(dot);
+        });
+        this.updateDots();
+    }
+
+    updateDots() {
+        const dots = document.querySelectorAll('.nav-dots .dot');
+        dots.forEach((d, i) => d.classList.toggle('active', i === this.currentSlide));
+    }
+
+    updateCounter() {
+        const counter = document.getElementById('slideCounter');
+        const n = String(this.currentSlide + 1).padStart(2, '0');
+        counter.querySelector('.current').textContent = n;
+    }
+
+    next() {
+        if (this.currentSlide < this.totalSlides - 1) this.goTo(this.currentSlide + 1);
+    }
+
+    prev() {
+        if (this.currentSlide > 0) this.goTo(this.currentSlide - 1);
+    }
+
+    goTo(idx) {
+        if (idx === this.currentSlide) return;
+        this.slides[idx].scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+/* ===========================================
+   TERM TOOLTIPS — hover + click
+   =========================================== */
+(function() {
+    let pop = null, activeTerm = null, hoverTimer = null;
+
+    function createPop() {
+        pop = document.createElement('div');
+        pop.className = 'term-pop';
+        document.body.appendChild(pop);
+    }
+
+    function show(term) {
+        const tip = term.querySelector('.tip');
+        if (!tip || !tip.textContent.trim()) return;
+        if (!pop) createPop();
+        activeTerm = term;
+        term.classList.add('active');
+        pop.textContent = tip.textContent.trim();
+        pop.classList.remove('show');
+        const r = term.getBoundingClientRect();
+        const vw = window.innerWidth;
+        pop.style.maxWidth = '280px';
+        const popH = pop.offsetHeight || 60;
+        let top = r.top - 10 - popH, left = r.left + r.width / 2;
+        if (top < 8) top = r.bottom + 10;
+        pop.style.top = top + 'px';
+        pop.style.left = left + 'px';
+        pop.style.transform = 'translateX(-50%) translateY(6px)';
+        requestAnimationFrame(() => {
+            pop.classList.add('show');
+            pop.style.transform = 'translateX(-50%) translateY(0)';
+        });
+        requestAnimationFrame(() => {
+            const pr = pop.getBoundingClientRect();
+            if (pr.left < 8) {
+                pop.style.left = '8px';
+                pop.style.transform = 'translateX(0)';
+            } else if (pr.right > vw - 8) {
+                pop.style.left = (vw - 8) + 'px';
+                pop.style.transform = 'translateX(-100%)';
+            }
+        });
+    }
+
+    function hide() {
+        if (pop) pop.classList.remove('show');
+        if (activeTerm) { activeTerm.classList.remove('active'); activeTerm = null; }
+        clearTimeout(hoverTimer);
+    }
+
+    document.querySelectorAll('.term').forEach(term => {
+        term.addEventListener('mouseenter', () => { hoverTimer = setTimeout(() => show(term), 350); });
+        term.addEventListener('mouseleave', () => { clearTimeout(hoverTimer); hide(); });
+        term.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (activeTerm === term) { hide(); return; }
+            hide();
+            show(term);
+        });
+    });
+
+    document.addEventListener('click', () => hide());
+    document.addEventListener('scroll', () => hide(), { passive: true });
+})();
+
+/* ===========================================
+   INLINE EDITOR
+   =========================================== */
+class InlineEditor {
+    constructor() {
+        this.isActive = false;
+        this.storageKey = 'agent-sandbox-slides-v1';
+        this.toast = document.getElementById('saveToast');
+        this.toastTimer = null;
+        this.init();
+    }
+
+    init() {
+        this.loadFromStorage();
+        this.setupHotzone();
+        this.setupToggle();
+        this.setupKeyboard();
+    }
+
+    setupHotzone() {
+        const hotzone = document.getElementById('editHotzone');
+        const toggle = document.getElementById('editToggle');
+        let hideTimeout = null;
+
+        const showToggle = () => { clearTimeout(hideTimeout); toggle.classList.add('show'); };
+        const scheduleHide = () => {
+            hideTimeout = setTimeout(() => {
+                if (!this.isActive) toggle.classList.remove('show');
+            }, 400);
+        };
+
+        hotzone.addEventListener('mouseenter', showToggle);
+        hotzone.addEventListener('mouseleave', scheduleHide);
+        hotzone.addEventListener('click', () => this.toggleEditMode());
+        toggle.addEventListener('mouseenter', showToggle);
+        toggle.addEventListener('mouseleave', scheduleHide);
+    }
+
+    setupToggle() {
+        document.getElementById('editToggle').addEventListener('click', () => this.toggleEditMode());
+    }
+
+    setupKeyboard() {
+        document.addEventListener('keydown', (e) => {
+            if ((e.key === 'e' || e.key === 'E') && !e.target.getAttribute('contenteditable')) {
+                this.toggleEditMode();
+            }
+        });
+
+        // Ctrl/Cmd + S to save
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                this.save();
+            }
+        });
+    }
+
+    toggleEditMode() {
+        this.isActive = !this.isActive;
+        const toggle = document.getElementById('editToggle');
+        toggle.classList.toggle('active', this.isActive);
+        document.body.classList.toggle('edit-mode', this.isActive);
+
+        if (this.isActive) {
+            this.enableEditing();
+        } else {
+            this.disableEditing();
+            this.save();
+        }
+    }
+
+    enableEditing() {
+        // Make text elements editable
+        const selectors = 'h1, h2, h3, p, li, .eyebrow, .pillar h3, .pillar p, .scenario h3, .scenario li, .tree-q, .tree-a, .combo-tag, .combo-list li, .layer-name, .layer-iso, .layer-strength, .muted, .lead, .subtitle, .title-tagline, .closing-quote, .closing-attribution, .pillar-num, .pillar .tag, .scenario-tag, .compare-table td';
+        document.querySelectorAll(selectors).forEach(el => {
+            el.setAttribute('contenteditable', 'true');
+            el.setAttribute('spellcheck', 'false');
+        });
+    }
+
+    disableEditing() {
+        document.querySelectorAll('[contenteditable]').forEach(el => {
+            el.removeAttribute('contenteditable');
+        });
+    }
+
+    save() {
+        const data = {};
+        document.querySelectorAll('.slide').forEach((slide, i) => {
+            data['slide_' + i] = slide.innerHTML;
+        });
+        try {
+            localStorage.setItem(this.storageKey, JSON.stringify(data));
+            this.showToast('SAVED · ' + new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+        } catch (e) {
+            console.warn('Save failed:', e);
+        }
+    }
+
+    loadFromStorage() {
+        try {
+            const raw = localStorage.getItem(this.storageKey);
+            if (!raw) return;
+            const data = JSON.parse(raw);
+            Object.keys(data).forEach(key => {
+                const idx = parseInt(key.replace('slide_', ''));
+                if (this.slides && this.slides[idx]) {
+                    this.slides[idx].innerHTML = data[key];
+                }
+            });
+        } catch (e) {
+            console.warn('Load failed:', e);
+        }
+    }
+
+    showToast(msg) {
+        if (!this.toast) return;
+        this.toast.textContent = msg;
+        this.toast.classList.add('show');
+        clearTimeout(this.toastTimer);
+        this.toastTimer = setTimeout(() => this.toast.classList.remove('show'), 1800);
+    }
+}
+
+/* ===========================================
+   BOOT
+   =========================================== */
+const presentation = new SlidePresentation();
+const editor = new InlineEditor();
+
+/* ===========================================
+   DIAGRAM ZOOM (lightbox)
+   =========================================== */
+(function() {
+    const lightbox = document.getElementById('lightbox');
+    const lightboxContent = document.getElementById('lightboxContent');
+    const lightboxClose = document.getElementById('lightboxClose');
+
+    function openLightbox(svgEl) {
+        // Clone the SVG so animations/state on original are unaffected
+        const clone = svgEl.cloneNode(true);
+        clone.removeAttribute('style');
+        lightboxContent.innerHTML = '';
+        lightboxContent.appendChild(clone);
+        lightbox.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+        lightbox.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('[data-zoom]').forEach(frame => {
+        frame.addEventListener('click', () => {
+            const svg = frame.querySelector('svg');
+            if (svg) openLightbox(svg);
+        });
+    });
+
+    lightboxClose.addEventListener('click', (e) => { e.stopPropagation(); closeLightbox(); });
+    lightbox.addEventListener('click', (e) => {
+        if (e.target === lightbox) closeLightbox();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && lightbox.classList.contains('show')) closeLightbox();
+    });
+})();
+</script>
+
+</body>
+</html>
