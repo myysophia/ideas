@@ -1,0 +1,2240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Praxist · 自主 R&D 的研究循环编排器</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23c8430a'/><text x='16' y='23' text-anchor='middle' font-size='18' font-weight='bold' fill='white' font-family='sans-serif'>P</text></svg>">
+<meta name="date" content="2026-08-07">
+
+
+<!-- === FONTS (Swiss Modern: Archivo + Nunito) === -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800;900&family=Nunito:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   CSS CUSTOM PROPERTIES · SWISS MODERN THEME
+   Change these to retheme the whole deck.
+   ============================================================ */
+:root {
+    /* === COLORS === */
+    --red:        #ff3300;
+    --red-soft:   rgba(255, 51, 0, 0.08);
+    --red-line:   rgba(255, 51, 0, 0.25);
+    --black:      #0a0a0a;
+    --ink:        #1f1d1a;
+    --paper:      #f4f1ea;
+    --paper-2:    #ebe7dd;
+    --paper-3:    #ddd8cb;
+    --mute:       #6b6358;
+    --mute-2:     #9b9387;
+    --green:      #2d7a3a;          /* for PASS / strong signal */
+    --amber:      #b87333;          /* for INCOMPLETE / pending */
+    --line:       rgba(10, 10, 10, 0.12);
+    --line-strong:#0a0a0a;
+
+    /* === TYPOGRAPHY === */
+    --font-display: 'Archivo', sans-serif;
+    --font-body:    'Nunito', sans-serif;
+    --font-mono:    'JetBrains Mono', monospace;
+    --title-size:   clamp(1.8rem, 4.8vw, 3.8rem);
+    --h1-size:      clamp(1.4rem, 3.2vw, 2.6rem);
+    --h2-size:      clamp(1.1rem, 2.4vw, 1.8rem);
+    --h3-size:      clamp(0.9rem, 1.8vw, 1.3rem);
+    --body-size:    clamp(0.78rem, 1.35vw, 1.05rem);
+    --small-size:   clamp(0.65rem, 1vw, 0.85rem);
+    --tiny-size:    clamp(0.58rem, 0.85vw, 0.72rem);
+    --label-size:   clamp(0.6rem, 0.95vw, 0.78rem);
+
+    /* === SPACING === */
+    --slide-pad:    clamp(1.2rem, 3vw, 2.6rem);
+    --gap-lg:       clamp(1rem, 2.5vh, 2rem);
+    --gap-md:       clamp(0.6rem, 1.5vh, 1.1rem);
+    --gap-sm:       clamp(0.3rem, 0.9vh, 0.6rem);
+    --grid-rail:    clamp(48px, 6vw, 80px);
+
+    /* === MOTION === */
+    --ease:         cubic-bezier(0.22, 1, 0.36, 1);
+    --dur:          0.6s;
+}
+
+/* ============================================================
+   BASE · viewport-base.css (mandatory)
+   ============================================================ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    height: 100%;
+    overflow-x: hidden;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+}
+
+.slide {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    scroll-snap-align: start;
+    display: grid;
+    position: relative;
+    background: var(--paper);
+}
+
+.slide-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-height: 100%;
+    overflow: hidden;
+    padding: var(--slide-pad);
+}
+
+img, .image-container {
+    max-width: 100%;
+    max-height: min(50vh, 400px);
+    object-fit: contain;
+}
+
+/* Short viewports */
+@media (max-height: 700px) {
+    :root {
+        --slide-pad: clamp(0.9rem, 2.2vw, 1.8rem);
+        --title-size: clamp(1.4rem, 4vw, 2.6rem);
+        --h1-size: clamp(1.1rem, 2.6vw, 1.9rem);
+        --body-size: clamp(0.7rem, 1.2vw, 0.92rem);
+    }
+}
+@media (max-height: 600px) {
+    :root {
+        --slide-pad: clamp(0.7rem, 2vw, 1.4rem);
+        --title-size: clamp(1.2rem, 3.6vw, 2rem);
+        --body-size: clamp(0.65rem, 1.1vw, 0.85rem);
+    }
+    .nav-dots, .decorative { display: none; }
+}
+@media (max-height: 500px) {
+    :root {
+        --slide-pad: clamp(0.5rem, 1.6vw, 1rem);
+        --title-size: clamp(1rem, 3vw, 1.5rem);
+    }
+}
+@media (max-width: 600px) {
+    :root { --title-size: clamp(1.2rem, 6vw, 2rem); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+    }
+    html { scroll-behavior: auto; }
+}
+
+/* ============================================================
+   SWISS MODERN · SHARED LAYOUT PRIMITIVES
+   ============================================================ */
+
+/* Top/bottom meta bars + visible grid rails */
+.meta-bar {
+    position: absolute;
+    left: 0; right: 0;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 var(--slide-pad);
+    font-size: var(--label-size);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--mute);
+    z-index: 5;
+}
+.meta-bar.top { top: 0; border-bottom: 1px solid var(--line); }
+.meta-bar.bottom { bottom: 0; border-top: 1px solid var(--line); }
+.meta-bar .spacer { flex: 1; }
+.meta-bar .dot { color: var(--red); margin: 0 0.5em; font-weight: 800; }
+
+/* Left red rail (slide number tag) */
+.rail {
+    position: absolute;
+    left: 0; top: 44px; bottom: 44px;
+    width: 32px;
+    background: var(--red);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 14px 0;
+    z-index: 4;
+}
+.rail span {
+    color: var(--paper);
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: var(--label-size);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+}
+
+/* Content container that respects the rail */
+.frame {
+    position: absolute;
+    top: 44px; bottom: 44px;
+    left: 32px; right: 0;
+    padding: var(--slide-pad);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* === TYPOGRAPHY === */
+.eyebrow {
+    font-size: var(--label-size);
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--mute);
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+.eyebrow::before {
+    content: "";
+    width: 22px; height: 2px;
+    background: var(--red);
+}
+h1.title {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: var(--title-size);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    color: var(--black);
+    margin-top: var(--gap-sm);
+}
+h1.title em { font-style: normal; color: var(--red); }
+h2.h1 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: var(--h1-size);
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    color: var(--black);
+}
+h2.h1 em { font-style: normal; color: var(--red); }
+h3.h2 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--h2-size);
+    line-height: 1.15;
+    color: var(--black);
+}
+p.lead {
+    font-size: var(--body-size);
+    line-height: 1.55;
+    color: var(--ink);
+    max-width: 56ch;
+}
+p.body {
+    font-size: var(--body-size);
+    line-height: 1.6;
+    color: var(--mute);
+}
+.kicker {
+    font-family: var(--font-mono);
+    font-size: var(--tiny-size);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mute-2);
+}
+
+/* === TABLES === */
+table.swiss {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--body-size);
+    background: var(--paper);
+}
+table.swiss th, table.swiss td {
+    text-align: left;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+    line-height: 1.4;
+}
+table.swiss th {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--small-size);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mute);
+    border-bottom: 2px solid var(--black);
+    background: var(--paper-2);
+}
+table.swiss td.num {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+table.swiss tr.highlight td {
+    background: var(--red-soft);
+    font-weight: 700;
+    color: var(--black);
+}
+table.swiss td strong { color: var(--red); font-weight: 700; }
+
+/* === BADGES / CHIPS === */
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    font-family: var(--font-mono);
+    font-size: var(--tiny-size);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border-radius: 0;
+    border: 1px solid currentColor;
+}
+.chip.pass { color: var(--green); background: rgba(45,122,58,0.08); }
+.chip.inc  { color: var(--amber); background: rgba(184,115,51,0.08); }
+.chip.red  { color: var(--red); background: var(--red-soft); }
+.chip.strong { color: var(--red); border-color: var(--red); background: var(--red-soft); font-weight: 700; }
+.chip.weak   { color: var(--mute); border-color: var(--mute); }
+
+/* === DIVIDERS === */
+.hr-red {
+    width: 60px; height: 4px;
+    background: var(--red);
+    border: 0;
+    margin: var(--gap-sm) 0;
+}
+
+/* ============================================================
+   ANIMATION SYSTEM (reveal on visible)
+   ============================================================ */
+.reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity var(--dur) var(--ease),
+                transform var(--dur) var(--ease);
+}
+.slide.visible .reveal { opacity: 1; transform: translateY(0); }
+.slide.visible .reveal:nth-child(1) { transition-delay: 0.05s; }
+.slide.visible .reveal:nth-child(2) { transition-delay: 0.15s; }
+.slide.visible .reveal:nth-child(3) { transition-delay: 0.25s; }
+.slide.visible .reveal:nth-child(4) { transition-delay: 0.35s; }
+.slide.visible .reveal:nth-child(5) { transition-delay: 0.45s; }
+.slide.visible .reveal:nth-child(6) { transition-delay: 0.55s; }
+
+/* ============================================================
+   SLIDE 1 · COVER
+   ============================================================ */
+.slide-cover .frame {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: clamp(1.5rem, 4vw, 3rem);
+    align-items: center;
+}
+.cover-left .big-mark {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(7rem, 22vw, 18rem);
+    line-height: 0.85;
+    color: var(--black);
+    letter-spacing: -0.04em;
+}
+.cover-left .big-mark .dot { color: var(--red); }
+.cover-right { border-left: 1px solid var(--line); padding-left: clamp(1.5rem, 3vw, 2.5rem); }
+.cover-right h1 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(2rem, 4.5vw, 3.6rem);
+    line-height: 1.0;
+    color: var(--black);
+    margin: var(--gap-md) 0;
+    letter-spacing: -0.015em;
+}
+.cover-right h1 em { font-style: normal; color: var(--red); }
+.cover-right .sub {
+    font-size: var(--body-size);
+    line-height: 1.55;
+    color: var(--mute);
+    max-width: 36ch;
+}
+
+/* ============================================================
+   SLIDE 2 · PAIN (three flow diagrams)
+   ============================================================ */
+.pain-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(0.8rem, 1.6vw, 1.4rem);
+    margin-top: var(--gap-lg);
+    flex: 1;
+    align-content: center;
+}
+.pain-card {
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    padding: clamp(1rem, 2vw, 1.6rem);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+.pain-card.bad::after {
+    content: "✕";
+    position: absolute;
+    top: 12px; right: 14px;
+    color: var(--red);
+    font-size: 1.6rem;
+    font-weight: 900;
+    line-height: 1;
+}
+.pain-card.good { background: var(--black); color: var(--paper); border-color: var(--black); }
+.pain-card.good::after {
+    content: "✓";
+    position: absolute;
+    top: 12px; right: 14px;
+    color: var(--red);
+    font-size: 1.6rem;
+    font-weight: 900;
+    line-height: 1;
+}
+.pain-card .label {
+    font-family: var(--font-mono);
+    font-size: var(--tiny-size);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-bottom: 10px;
+}
+.pain-card .flow {
+    font-family: var(--font-mono);
+    font-size: var(--small-size);
+    line-height: 1.6;
+    margin-top: auto;
+}
+.pain-card .verdict {
+    margin-top: 12px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--body-size);
+    line-height: 1.25;
+}
+.pain-card.good .verdict { color: var(--red); }
+
+/* ============================================================
+   SLIDE 3 · POSITIONING (cycle diagram)
+   ============================================================ */
+.position-grid {
+    display: grid;
+    grid-template-columns: 0.85fr 1.15fr;
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+    flex: 1;
+    align-items: center;
+}
+.position-left .not-list {
+    list-style: none;
+    margin: var(--gap-md) 0;
+}
+.position-left .not-list li {
+    font-size: var(--body-size);
+    color: var(--mute);
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--line);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.position-left .not-list li::before {
+    content: "—";
+    color: var(--red);
+    font-weight: 800;
+}
+.position-left .is {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--h3-size);
+    color: var(--black);
+    line-height: 1.3;
+    margin-top: var(--gap-md);
+    padding: 12px 14px;
+    border-left: 4px solid var(--red);
+    background: var(--red-soft);
+}
+.cycle {
+    position: relative;
+    height: clamp(280px, 48vh, 460px);
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.cycle .step {
+    position: absolute;
+    background: var(--paper);
+    border: 1.5px solid var(--black);
+    padding: 8px 14px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--small-size);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--black);
+}
+.cycle .step.acc {
+    background: var(--red);
+    color: var(--paper);
+    border-color: var(--red);
+}
+.cycle svg.lines {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+}
+
+/* ============================================================
+   SLIDE 4 · TASK (two columns)
+   ============================================================ */
+.two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(1rem, 2vw, 1.8rem);
+    flex: 1;
+    margin-top: var(--gap-md);
+    align-content: center;
+}
+.col-card {
+    border: 1px solid var(--line);
+    background: var(--paper-2);
+    padding: clamp(1rem, 2vw, 1.6rem);
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-sm);
+}
+.col-card h4 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: var(--h3-size);
+    color: var(--black);
+    border-bottom: 2px solid var(--black);
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+}
+.col-card .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: var(--body-size);
+    line-height: 1.4;
+    padding: 4px 0;
+    border-bottom: 1px dashed var(--line);
+}
+.col-card .row:last-child { border-bottom: 0; }
+.col-card .row .k { color: var(--mute); }
+.col-card .row .v {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--black);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   SLIDE 5 · DEV/BLIND/HIDDEN
+   ============================================================ */
+.three-tier {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(0.8rem, 1.4vw, 1.2rem);
+    margin-top: var(--gap-md);
+}
+.tier {
+    border: 1px solid var(--line);
+    padding: clamp(0.9rem, 1.8vw, 1.4rem);
+    position: relative;
+    background: var(--paper);
+}
+.tier.dev   { border-top: 6px solid var(--mute); }
+.tier.blind { border-top: 6px solid var(--amber); }
+.tier.hidden{ border-top: 6px solid var(--red); background: var(--paper-2); }
+.tier .tag {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: var(--h2-size);
+    letter-spacing: -0.01em;
+    color: var(--black);
+}
+.tier.hidden .tag { color: var(--red); }
+.tier .use {
+    font-size: var(--small-size);
+    color: var(--mute);
+    margin-top: 6px;
+    line-height: 1.4;
+}
+.tier .visibility {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--line);
+    font-family: var(--font-mono);
+    font-size: var(--tiny-size);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink);
+}
+.fact-box {
+    margin-top: var(--gap-md);
+    padding: 10px 14px;
+    background: var(--red-soft);
+    border-left: 4px solid var(--red);
+    font-size: var(--body-size);
+    color: var(--black);
+    line-height: 1.5;
+}
+
+/* ============================================================
+   SLIDE 6 · TRUST BOUNDARY (four defenses)
+   ============================================================ */
+.defense-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(0.8rem, 1.6vw, 1.2rem);
+    flex: 1;
+    margin-top: var(--gap-md);
+    align-content: center;
+}
+.defense {
+    border: 1px solid var(--line);
+    background: var(--paper-2);
+    padding: clamp(1rem, 2vw, 1.5rem);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+}
+.defense .num {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: var(--h2-size);
+    color: var(--red);
+    line-height: 1;
+}
+.defense .name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--h3-size);
+    color: var(--black);
+    line-height: 1.25;
+}
+.defense .desc {
+    font-size: var(--small-size);
+    line-height: 1.5;
+    color: var(--mute);
+}
+.bottom-tag {
+    margin-top: var(--gap-md);
+    padding: 10px 14px;
+    background: var(--black);
+    color: var(--paper);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--body-size);
+    letter-spacing: -0.005em;
+    display: inline-block;
+    align-self: flex-start;
+}
+.bottom-tag .red { color: var(--red); }
+
+/* ============================================================
+   SLIDE 7 · PHASE A (infrastructure freeze)
+   ============================================================ */
+.phase-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(1rem, 2vw, 1.6rem);
+    flex: 1;
+    margin-top: var(--gap-md);
+    align-content: center;
+}
+.step-card {
+    border: 1px solid var(--line);
+    background: var(--paper);
+    padding: clamp(1rem, 2vw, 1.6rem);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+.step-card .step-num {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: var(--h2-size);
+    color: var(--red);
+    line-height: 1;
+    margin-bottom: 8px;
+}
+.step-card h4 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: var(--h3-size);
+    color: var(--black);
+    margin-bottom: 8px;
+    line-height: 1.2;
+}
+.step-card p {
+    font-size: var(--small-size);
+    color: var(--mute);
+    line-height: 1.5;
+    flex: 1;
+}
+.step-card .ok {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
+    color: var(--green);
+    font-family: var(--font-mono);
+    font-size: var(--tiny-size);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+.phase-result {
+    margin-top: var(--gap-md);
+    padding: 12px 16px;
+    background: var(--black);
+    color: var(--paper);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--body-size);
+    letter-spacing: 0.02em;
+}
+.phase-result .acc { color: var(--red); }
+
+/* ============================================================
+   SLIDE 8 · COHORT TABLE
+   ============================================================ */
+.cohort-meta {
+    display: flex;
+    gap: var(--gap-md);
+    margin: var(--gap-sm) 0 var(--gap-md) 0;
+    flex-wrap: wrap;
+    align-items: center;
+    font-size: var(--small-size);
+    color: var(--mute);
+}
+.cohort-meta code {
+    font-family: var(--font-mono);
+    background: var(--paper-2);
+    padding: 3px 8px;
+    border: 1px solid var(--line);
+    color: var(--black);
+    font-size: var(--tiny-size);
+}
+.cohort-meta .strong { color: var(--red); font-weight: 700; }
+.cohort-table-wrap {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}
+
+/* ============================================================
+   SLIDE 9 · CROSS-MODE CONSISTENCY
+   ============================================================ */
+.consistency-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+    flex: 1;
+    align-items: center;
+}
+.consistency-left .statement {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: var(--h1-size);
+    line-height: 1.05;
+    color: var(--black);
+    margin: var(--gap-md) 0;
+    letter-spacing: -0.015em;
+}
+.consistency-left .statement em { color: var(--red); font-style: normal; }
+.consistency-left .conclusion {
+    padding: 10px 14px;
+    background: var(--red-soft);
+    border-left: 4px solid var(--red);
+    font-size: var(--body-size);
+    color: var(--black);
+    line-height: 1.5;
+}
+
+/* ============================================================
+   SLIDE 10 · HMAC PIPELINE
+   ============================================================ */
+.pipeline {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(0.8rem, 1.4vw, 1.2rem);
+    flex: 1;
+    margin-top: var(--gap-md);
+    align-content: center;
+}
+.pipe-step {
+    border: 1.5px solid var(--black);
+    background: var(--paper);
+    padding: clamp(1rem, 2vw, 1.5rem);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+.pipe-step::after {
+    content: "→";
+    position: absolute;
+    right: -14px; top: 50%;
+    transform: translateY(-50%);
+    background: var(--paper);
+    padding: 0 4px;
+    font-size: 1.4rem;
+    color: var(--red);
+    font-weight: 900;
+    z-index: 2;
+}
+.pipe-step:last-child::after { display: none; }
+.pipe-step .when {
+    font-family: var(--font-mono);
+    font-size: var(--tiny-size);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--red);
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+.pipe-step h4 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: var(--h3-size);
+    color: var(--black);
+    line-height: 1.2;
+    margin-bottom: 6px;
+}
+.pipe-step p {
+    font-size: var(--small-size);
+    color: var(--mute);
+    line-height: 1.5;
+}
+.pipe-result {
+    margin-top: var(--gap-md);
+    padding: 10px 14px;
+    background: var(--black);
+    color: var(--paper);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--body-size);
+}
+.pipe-result .acc { color: var(--red); }
+
+/* ============================================================
+   SLIDE 11/12/13 · SIGNAL DETAIL
+   ============================================================ */
+.signal-headline {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: var(--h1-size);
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    color: var(--black);
+    margin: var(--gap-sm) 0 var(--gap-md) 0;
+}
+.signal-headline em { color: var(--red); font-style: normal; }
+.signal-headline .num-big {
+    color: var(--red);
+    font-variant-numeric: tabular-nums;
+}
+.signal-body {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: clamp(1.2rem, 2.4vw, 2rem);
+    flex: 1;
+    align-items: center;
+}
+.meaning-card {
+    background: var(--black);
+    color: var(--paper);
+    padding: clamp(1rem, 2vw, 1.5rem);
+    border-left: 4px solid var(--red);
+}
+.meaning-card .label {
+    font-family: var(--font-mono);
+    font-size: var(--tiny-size);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 8px;
+}
+.meaning-card p {
+    font-size: var(--body-size);
+    line-height: 1.55;
+}
+.meaning-card p + p { margin-top: 8px; color: rgba(244,241,234,0.7); font-size: var(--small-size); }
+
+/* ============================================================
+   SLIDE 15 · NEXT STEPS
+   ============================================================ */
+.next-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(1.2rem, 2.4vw, 2rem);
+    flex: 1;
+    margin-top: var(--gap-md);
+    align-content: center;
+}
+.delivered, .planned {
+    padding: clamp(1.2rem, 2.4vw, 1.8rem);
+    border: 1px solid var(--line);
+}
+.delivered { background: var(--paper-2); }
+.planned { background: var(--black); color: var(--paper); border-color: var(--black); }
+.delivered h4, .planned h4 {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: var(--h2-size);
+    letter-spacing: -0.01em;
+    margin-bottom: var(--gap-sm);
+}
+.delivered h4 { color: var(--black); }
+.delivered h4 em { color: var(--green); font-style: normal; }
+.planned h4 { color: var(--paper); }
+.planned h4 em { color: var(--red); font-style: normal; }
+.delivered ul, .planned ol {
+    list-style: none;
+    font-size: var(--body-size);
+    line-height: 1.5;
+}
+.delivered li, .planned li {
+    padding: 7px 0;
+    border-bottom: 1px dashed var(--line);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+.delivered li:last-child, .planned li:last-child { border-bottom: 0; }
+.delivered li::before {
+    content: "✓";
+    color: var(--green);
+    font-weight: 900;
+}
+.planned li {
+    color: rgba(244,241,234,0.9);
+    counter-increment: step;
+}
+.planned li::before {
+    content: counter(step);
+    background: var(--red);
+    color: var(--paper);
+    width: 22px; height: 22px;
+    border-radius: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: var(--tiny-size);
+    flex-shrink: 0;
+}
+.planned { counter-reset: step; }
+.planned li b { color: var(--paper); font-weight: 700; }
+
+/* ============================================================
+   SLIDE 16 · CLOSING
+   ============================================================ */
+.closing .frame {
+    justify-content: center;
+    align-items: flex-start;
+}
+.closing-lines {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+    margin-top: var(--gap-lg);
+    max-width: 760px;
+}
+.closing-lines .line {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: clamp(1rem, 2vw, 1.5rem);
+    align-items: baseline;
+}
+.closing-lines .line .num {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: var(--h2-size);
+    color: var(--red);
+    line-height: 1;
+}
+.closing-lines .line .text {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--h3-size);
+    line-height: 1.35;
+    color: var(--black);
+}
+.closing-lines .line .text em { color: var(--red); font-style: normal; }
+
+/* ============================================================
+   PROGRESS BAR + NAV DOTS
+   ============================================================ */
+.progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    background: var(--red);
+    z-index: 1000;
+    transition: width 0.2s ease;
+}
+.nav-dots {
+    position: fixed;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 100;
+}
+.nav-dots .dot {
+    width: 8px;
+    height: 8px;
+    background: var(--mute-2);
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+.nav-dots .dot.active {
+    background: var(--red);
+    transform: scale(1.4);
+}
+
+/* ============================================================
+   TERM TOOLTIPS · adapted for Swiss Modern (light theme)
+   ============================================================ */
+.term {
+    position: relative;
+    border-bottom: 1px dashed var(--red);
+    cursor: pointer;
+    color: var(--red);
+    font-style: normal;
+    transition: filter 0.2s;
+}
+.term:hover, .term.active { filter: brightness(1.15); }
+.term .tip { display: none; }
+.term-pop {
+    position: fixed;
+    z-index: 500;
+    background: var(--black);
+    color: var(--paper);
+    padding: 10px 14px;
+    border-radius: 0;
+    font-family: var(--font-body);
+    font-style: normal;
+    font-size: var(--small-size);
+    line-height: 1.55;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+    border-left: 3px solid var(--red);
+    max-width: 280px;
+    white-space: normal;
+    text-align: left;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.2s, transform 0.2s;
+}
+.term-pop.show { opacity: 1; transform: translateY(0); }
+
+/* ============================================================
+   INLINE EDITING (user opted in)
+   ============================================================ */
+.edit-hotzone {
+    position: fixed; top: 0; left: 0;
+    width: 80px; height: 80px;
+    z-index: 10000;
+    cursor: pointer;
+}
+.edit-toggle {
+    position: fixed;
+    top: 50px; left: 14px;
+    width: 36px; height: 36px;
+    background: var(--black);
+    color: var(--paper);
+    border: 2px solid var(--red);
+    border-radius: 0;
+    font-size: 16px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.edit-toggle.show, .edit-toggle.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+.edit-toggle.active { background: var(--red); color: var(--paper); }
+
+[contenteditable="true"] {
+    outline: 1px dashed var(--red);
+    outline-offset: 2px;
+    background: var(--red-soft);
+}
+[contenteditable="true"]:focus {
+    outline: 2px solid var(--red);
+    background: var(--paper);
+}
+
+/* Keyboard hint */
+.kbd-hint {
+    position: fixed;
+    bottom: 50px; right: 14px;
+    background: var(--black);
+    color: var(--paper);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 6px 10px;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.4s;
+    pointer-events: none;
+}
+.kbd-hint.show { opacity: 0.85; }
+</style>
+</head>
+<body>
+
+<!-- === PROGRESS BAR === -->
+<div class="progress-bar" id="progressBar" style="width:0%"></div>
+
+<!-- === NAV DOTS (generated by JS) === -->
+<nav class="nav-dots" id="navDots" aria-label="Slide navigation"></nav>
+
+<!-- === EDIT MODE UI === -->
+<div class="edit-hotzone" id="editHotzone" aria-label="Edit mode hotzone"></div>
+<button class="edit-toggle" id="editToggle" title="Edit mode (E)" aria-label="Toggle edit mode">✏</button>
+<div class="kbd-hint" id="kbdHint">E 编辑 · ← → 翻页</div>
+
+<!-- ============================================================
+     SLIDE 1 · COVER
+     ============================================================ -->
+<section class="slide slide-cover" data-slide="1">
+    <div class="meta-bar top">
+        <span>Praxist<span class="dot">·</span>Research Orchestrator</span>
+        <span class="spacer"></span>
+        <span>2026-08-04 → 08-06</span>
+    </div>
+    <div class="rail"><span>01 / 16</span></div>
+    <div class="frame">
+        <div class="cover-left reveal">
+            <div class="kicker">Technical Report · v1</div>
+            <div class="big-mark">P<span class="dot">.</span></div>
+        </div>
+        <div class="cover-right reveal">
+            <div class="eyebrow">Praxist · 自主 R&amp;D</div>
+            <h1>让研究循环<br><em>可信 · 可复现</em></h1>
+            <hr class="hr-red">
+            <p class="sub">在 100 篇冻结 arXiv AI Agent 论文上的 <span class="term">cohort<span class="tip">同代 Peer 组：一个 generation 内并行运行的多个 AI 研究工作者</span></span> 闭环与 RAG 质量分层信号——一条不可伪造的研究证据链。</p>
+        </div>
+    </div>
+    <div class="meta-bar bottom">
+        <span>Internal Technical Report</span>
+        <span class="spacer"></span>
+        <span>v1 · 2026-08-06</span>
+    </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 2 · PAIN
+     ============================================================ -->
+<section class="slide" data-slide="2">
+    <div class="meta-bar top">
+        <span>02<span class="dot">·</span>Problem</span>
+        <span class="spacer"></span>
+        <span>Pain Point</span>
+    </div>
+    <div class="rail"><span>PAIN</span></div>
+    <div class="frame">
+        <div class="eyebrow reveal">核心痛点</div>
+        <h2 class="h1 reveal">多 Agent 并行 <em>≠</em> 自主 R&amp;D</h2>
+        <div class="pain-grid">
+            <div class="pain-card bad reveal">
+                <div class="label">Single Agent</div>
+                <div class="flow">跑 → 出结果 → 结束</div>
+                <div class="verdict">只是"实验"</div>
+            </div>
+            <div class="pain-card bad reveal">
+                <div class="label">Multi-Agent · 无协调</div>
+                <div class="flow">跑 × N → 各自结果</div>
+                <div class="verdict">仍是"重复"，不是"研究"</div>
+            </div>
+            <div class="pain-card good reveal">
+                <div class="label">Praxist · 多代循环</div>
+                <div class="flow">假设 → 验证 → finding → frontier → 下一代</div>
+                <div class="verdict">跨代继承的可审计证据链</div>
+            </div>
+        </div>
+        <p class="body reveal" style="margin-top: var(--gap-md);">Agent 自己拼路径、自己写 summary、自己挑策略 → <strong style="color:var(--red)">不可复现、可伪造</strong>。</p>
+    </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 3 · POSITIONING
+     ============================================================ -->
+<section class="slide" data-slide="3">
+    <div class="meta-bar top">
+        <span>03<span class="dot">·</span>Positioning</span>
+        <span class="spacer"></span>
+        <span>What Praxist Is</span>
+    </div>
+    <div class="rail"><span>POSITION</span></div>
+    <div class="frame">
+        <div class="eyebrow reveal">Praxist 的定位</div>
+        <h2 class="h1 reveal">Research <em>Orchestrator</em></h2>
+        <div class="position-grid">
+            <div class="position-left reveal">
+                <ul class="not-list">
+                    <li>不是 RAG 系统</li>
+                    <li>不是模型</li>
+                    <li>不是 benchmark</li>
+                </ul>
+                <div class="is">是把研究循环组织成<br><span class="term">solution lineage<span class="tip">解决方案谱系：跨代累积的假设、尝试、finding 和 frontier 证据链</span></span> 的 orchestrator</div>
+            </div>
+            <div class="position-right reveal">
+                <div class="cycle">
+                    <svg class="lines" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                        <circle cx="200" cy="200" r="150" fill="none" stroke="#0a0a0a" stroke-width="1" stroke-dasharray="4 4"/>
+                        <path d="M 200 50 Q 320 110 350 200" fill="none" stroke="#ff3300" stroke-width="2"/>
+                        <path d="M 350 200 Q 320 320 200 350" fill="none" stroke="#0a0a0a" stroke-width="2"/>
+                        <path d="M 200 350 Q 80 320 50 200" fill="none" stroke="#0a0a0a" stroke-width="2"/>
+                        <path d="M 50 200 Q 80 80 200 50" fill="none" stroke="#0a0a0a" stroke-width="2"/>
+                    </svg>
+                    <div class="step acc" style="top:6%; left:50%; transform:translateX(-50%);">Hypotheses</div>
+                    <div class="step" style="top:42%; right:6%;">Attempts</div>
+                    <div class="step" style="bottom:6%; left:50%; transform:translateX(-50%);">Findings</div>
+                    <div class="step" style="top:42%; left:6%;">Frontier</div>
+                    <div class="step" style="top:75%; right:18%; background:var(--black); color:var(--paper); border-color:var(--black);">PI / Chair</div>
+                    <div class="step" style="top:18%; left:18%;">Experiments</div>
+                </div>
+            </div>
+        </div>
+        <p class="kicker reveal" style="margin-top:var(--gap-sm);">输出不是单个 code diff，是跨代继承的可审计证据链</p>
+    </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 4 · TASK
+     ============================================================ -->
+<section class="slide" data-slide="4">
+    <div class="meta-bar top">
+        <span>04<span class="dot">·</span>Task</span>
+        <span class="spacer"></span>
+        <span>100 Papers · 4,359 Chunks</span>
+    </div>
+    <div class="rail"><span>TASK</span></div>
+    <div class="frame">
+        <div class="eyebrow reveal">实验任务</div>
+        <h2 class="h1 reveal">100 篇 AI Agent 论文 <em>RAG</em></h2>
+        <div class="two-col">
+            <div class="col-card reveal">
+                <h4>冻结语料</h4>
+                <div class="row"><span class="k">论文数</span><span class="v">100 篇 arXiv</span></div>
+                <div class="row"><span class="k"><span class="term">canonical chunks<span class="tip">规范化分块：按页面边界切分的、带 page 标记的独立检索单元</span></span></span><span class="v">4,359</span></div>
+                <div class="row"><span class="k">空 / 超长 chunk</span><span class="v">0 / 0</span></div>
+                <div class="row"><span class="k">PDF 总大小</span><span class="v">≈ 506 MiB</span></div>
+                <div class="row"><span class="k">冻结时间戳</span><span class="v">2026-08-04T03:31:09Z</span></div>
+            </div>
+            <div class="col-card reveal">
+                <h4>基础设施</h4>
+                <div class="row"><span class="k">Embedding</span><span class="v">Qwen3-Embedding-4B</span></div>
+                <div class="row"><span class="k">维度 / 归一化</span><span class="v">2,560 · L2 normalize</span></div>
+                <div class="row"><span class="k">向量库</span><span class="v">Milvus FLAT / COSINE</span></div>
+                <div class="row"><span class="k">collection</span><span class="v">praxist_agent_papers_qwen3e4b_v1</span></div>
+                <div class="row"><span class="k">分块参数</span><span class="v">4,500 / 重叠 500 / ±700</span></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 5 · DEV/BLIND/HIDDEN
+     ============================================================ -->
+<section class="slide" data-slide="5">
+    <div class="meta-bar top">
+        <span>05<span class="dot">·</span>Evaluation</span>
+        <span class="spacer"></span>
+        <span>Three-Tier Split</span>
+    </div>
+    <div class="rail"><span>SPLITS</span></div>
+    <div class="frame">
+        <div class="eyebrow reveal">评测三层划分</div>
+        <h2 class="h1 reveal">Dev / Blind / Hidden <em>防过拟合</em></h2>
+        <div class="three-tier">
+            <div class="tier dev reveal">
+                <div class="tag">Dev</div>
+                <div class="use">调策略、调参、出信号。<br>实验者可反复看、反复试。</div>
+                <div class="visibility">● 实验者可见</div>
+            </div>
+            <div class="tier blind reveal">
+                <div class="tag">Blind</div>
+                <div class="use">一次性最终评测。<br>不能用来调参。</div>
+                <div class="visibility">● 一次性可见</div>
+            </div>
+            <div class="tier hidden reveal">
+                <div class="tag">Hidden</div>
+                <div class="use">第三方封存验收。<br>实验者完全不可见。</div>
+                <div class="visibility">● 第三方封存</div>
+            </div>
+        </div>
+        <div class="fact-box reveal">
+            <strong style="color:var(--red)">fact-family 物理隔离</strong>——同一事实、同一方法、同一 <span class="term">evidence<span class="tip">答必证据 chunk：query 的 ground-truth 相关文本段</span></span> 不跨 split。隔离不靠 prompt 约定，靠 fact family 表强制。
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 6 · TRUST BOUNDARY
+     ============================================================ -->
+<section class="slide" data-slide="6">
+    <div class="meta-bar top">
+        <span>06<span class="dot">·</span>Trust</span>
+        <span class="spacer"></span>
+        <span>Unforgeable Evidence Chain</span>
+    </div>
+    <div class="rail"><span>TRUST</span></div>
+    <div class="frame">
+        <div class="eyebrow reveal">信任边界</div>
+        <h2 class="h1 reveal">不可伪造的 <em>证据链</em></h2>
+        <div class="defense-grid">
+            <div class="defense reveal">
+                <div class="num">01</div>
+                <div class="name">Trusted Evaluator 独立服务</div>
+                <div class="desc">Unix socket + <span class="term">HMAC<span class="tip">基于哈希的消息认证码：用密钥对消息生成签名，验证消息未被篡改且来自持有密钥的发送方</span></span> receipt，Peer 不可直连。</div>
+            </div>
+            <div class="defense reveal">
+                <div class="num">02</div>
+                <div class="name">Peer 三不可读</div>
+                <div class="desc">不可读 <span class="term">qrels<span class="tip">query relevance 标注集：每条 query 对应的 ground-truth chunk 相关性判断</span></span>，不可直连 Milvus，不可读模型密钥。</div>
+            </div>
+            <div class="defense reveal">
+                <div class="num">03</div>
+                <div class="name">Root-only Finding 发布</div>
+                <div class="desc">Finding 物化必须由 root-only trusted publisher 触发，Peer 不能自写。</div>
+            </div>
+            <div class="defense reveal">
+                <div class="num">04</div>
+                <div class="name">路径绑定 HMAC</div>
+                <div class="desc">Strategy hash + variant + output_dir 绑定进 HMAC 签名，路径漂移即拒绝。</div>
+            </div>
+        </div>
+        <div class="bottom-tag reveal">边界即产品<span class="red"> · </span>The boundary IS the product</div>
+    </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 7 · PHASE A
+     ============================================================ -->
+<section class="slide" data-slide="7">
+    <div class="meta-bar top">
+        <span>07<span class="dot">·</span>Phase A</span>
+        <span class="spacer"></span>
+        <span>2026-08-04 · Infrastructure Freeze</span>
+    </div>
+    <div class="rail"><span>FREEZE</span></div>
+    <div class="frame">
+        <div class="eyebrow reveal">阶段一 · 基础设施冻结</div>
+        <h2 class="h1 reveal">2026-08-04 · <em>全冻结、可复现</em></h2>
+        <div class="phase-steps">
+            <div class="step-card reveal">
+                <div class="step-num">01</div>
+                <h4>语料冻结</h4>
+                <p>100 篇 PDF + Markdown + 4,359 chunks + <span class="term">SHA-256 manifest<span class="tip">用 SHA-256 哈希值登记每个文件内容的清单，任何改动都会让哈希变化，从而被检测</span></span>。</p>
+                <div class="ok">✓ 100 / 100 / 100</div>
+            </div>
+            <div class="step-card reveal">
+                <div class="step-num">02</div>
+                <h4>向量库验收</h4>
+                <p>Milvus collection 4,359 条，FLAT / COSINE 合同通过，embedding 维度 2,560 一致。</p>
+                <div class="ok">✓ Contract verified</div>
+            </div>
+            <div class="step-card reveal">
+                <div class="step-num">03</div>
+                <h4>评测边界上线</h4>
+                <p>Trusted evaluator 服务化，Unix socket + HMAC key 部署完毕，Peer 隔离策略生效。</p>
+                <div class="ok">✓ Service online</div>
+            </div>
+        </div>
+        <div class="phase-result reveal">实验环境<span class="acc">全冻结 · 可复现</span> · 禁止运行时连 arXiv</div>
+    </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 8 · COHORT
+     ============================================================ -->
+<section class="slide" data-slide="8">
+    <div class="meta-bar top">
+        <span>08<span class="dot">·</span>Phase B</span>
+        <span class="spacer"></span>
+        <span>Cohort Closed Loop</span>
+    </div>
+    <div class="rail"><span>COHORT</span></div>
+    <div class="frame">
+        <div class="eyebrow reveal">阶段二 · 真实 Cohort 闭环</div>
+        <h2 class="h1 reveal">2026-08-06 · <em>1G × 3P</em></h2>
+        <div class="cohort-meta reveal">
+            <span>Run: <code>cohort-1g3p-20260806T1220</code></span>
+            <span>Runtime: <code>deepseek</code></span>
+            <span>Result: <span class="strong">3/3 receipt 验签通过</span></span>
+            <span>耗时: <code>~107s</code></span>
+        </div>
+        <div class="cohort-table-wrap reveal">
+            <table class="swiss">
+                <thead>
+                    <tr>
+                        <th>Peer</th>
+                        <th>策略</th>
+                        <th>Receipt / Gate</th>
+                        <th class="num">nDCG@10</th>
+                        <th class="num">Recall@10</th>
+                        <th class="num">Evidence cov</th>
+                        <th class="num">P95 (ms)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlight">
+                        <td>gen0_peer0</td>
+                        <td>dense-baseline-v1</td>
+                        <td><span class="chip pass">SUCCEEDED / PASS</span></td>
+                        <td class="num"><strong>0.4170</strong></td>
+                        <td class="num"><strong>0.3795</strong></td>
+                        <td class="num">0.875</td>
+                        <td class="num">5028</td>
+                    </tr>
+                    <tr>
+                        <td>gen0_peer1</td>
+                        <td>p1-context-expand-v1</td>
+                        <td><span class="chip inc">INCOMPLETE</span></td>
+                        <td class="num">0.3013</td>
+                        <td class="num">0.3515</td>
+                        <td class="num"><strong>1.000</strong></td>
+                        <td class="num">5349</td>
+                    </tr>
+                    <tr>
+                        <td>gen0_peer2</td>
+                        <td>p1-paper-diverse-v1</td>
+                        <td><span class="chip inc">INCOMPLETE</span></td>
+                        <td class="num">0.2260</td>
+                        <td class="num">0.2314</td>
+                        <td class="num">0.750</td>
+                        <td class="num">5824</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="kicker reveal" style="margin-top:var(--gap-sm);">variant + output + strategy 经单一 run-local assignment manifest 注入 · 控制面耗时 ~107s</p>
+    </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 9 · CONSISTENCY
+     ============================================================ -->
+<section class="slide" data-slide="9">
+    <div class="meta-bar top">
+        <span>09<span class="dot">·</span>Value 1</span>
+        <span class="spacer"></span>
+        <span>Zero Noise Across Modes</span>
+    </div>
+    <div class="rail"><span>REPEAT</span></div>
+    <div class="frame">
+        <div class="eyebrow reveal">价值证明（一）· 编排无噪声</div>
+        <h2 class="h1 reveal">跨日期、跨模式 <em>数字一致</em></h2>
+        <div class="consistency-grid">
+            <div class="consistency-left reveal">
+                <div class="statement">Dense baseline <em>三次复现</em> 完全一致</div>
+                <div class="conclusion">Praxist 编排层没有引入噪声——无论是否走 Agent、是否并行，结果可复现。</div>
+            </div>
+            <div class="consistency-right reveal">
+                <table class="swiss">
+                    <thead>
+                        <tr>
+                            <th>来源</th>
+                            <th>日期</th>
+                            <th class="num">nDCG@10</th>
+                            <th class="num">Recall@10</th>
+                            <th class="num">Evid cov</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Agent control smoke</td>
+                            <td>2026-08-05</td>
+                            <td class="num">0.4170</td>
+                            <td class="num">0.3795</td>
+                            <td class="num">0.875</td>
+                        </tr>
+                        <tr>
+                            <td>QUICK_POC_PARALLEL</td>
+                            <td>2026-08-06</td>
+                            <td class="num">0.4170</td>
+                            <td class="num">0.3795</td>
+                            <td class="num">0.875</td>
+                        </tr>
+                        <tr class="highlight">
+                            <td><strong>Cohort 1G3P</strong><br><span style="font-size:var(--tiny-size); color:var(--mute);">Agent 真实闭环</span></td>
+                            <td>2026-08-06</td>
+                            <td class="num"><strong>0.4170</strong></td>
+                            <td class="num"><strong>0.3795</strong></td>
+                            <td class="num"><strong>0.875</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 10 · HMAC PIPELINE
+     ============================================================ -->
+<section class="slide" data-slide="10">
+    <div class="meta-bar top">
+        <span>10<span class="dot">·</span>Value 2</span>
+        <span class="spacer"></span>
+        <span>Unforgeable Trust Chain</span>
+    </div>
+    <div class="rail"><span>TRUST</span></div>
+    <div class="frame">
+        <div class="eyebrow reveal">价值证明（二）· 信任链不可绕过</div>
+        <h2 class="h1 reveal">三层 HMAC + <em>一次性 admission</em></h2>
+        <div class="pipeline">
+            <div class="pipe-step reveal">
+                <div class="when">评测前</div>
+                <h4>预登记</h4>
+                <p>variant + output_dir + strategy hash 预登记 → <span class="term">admission lease<span class="tip">准入租约：评测前预登记的一次性许可，原子消费、daemon 重启后不会重新放行</span></span> 原子消费</p>
+            </div>
+            <div class="pipe-step reveal">
+                <div class="when">评测中</div>
+                <h4>路径绑定签名</h4>
+                <p>evaluator 用 HMAC key 对 variant + output + 指标签名，生成路径绑定 receipt</p>
+            </div>
+            <div class="pipe-step reveal">
+                <div class="when">评测后</div>
+                <h4>Root-only 发布</h4>
+                <p>trusted publisher 验证 HMAC、key ID、路径后发布 finding；越权 / 伪造即 fail-closed</p>
+            </div>
+        </div>
+        <div class="pipe-result reveal">8月6日 cohort · <span class="acc">3/3 receipt 验签通过</span> · 无伪造 · 无路径漂移 · 无重复提交</div>
+    </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 11 · STRONG SIGNAL · hard-negative FP
+     ============================================================ -->
+<section class="slide" data-slide="11">
+    <div class="meta-bar top">
+        <span>11<span class="dot">·</span>Signal 1</span>
+        <span class="spacer"></span>
+        <span>Strong · CI Entirely Below Zero</span>
+    </div>
+    <div class="rail"><span>SIGNAL 1</span></div>
+    <div class="frame">
+        <div class="eyebrow reveal">RAG 质量信号 · <span class="chip strong">强信号</span></div>
+        <h2 class="signal-headline reveal">P2 rerank 把 <em>hard-negative</em> 误召回降低 <span class="num-big">18.3pp</span></h2>
+        <div class="signal-body">
+            <div class="reveal">
+                <table class="swiss">
+                    <thead>
+                        <tr>
+                            <th>策略</th>
+                            <th class="num">FP rate</th>
+                            <th class="num">95% CI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>P1 Dense</td>
+                            <td class="num">0.2547</td>
+                            <td class="num">—</td>
+                        </tr>
+                        <tr class="highlight">
+                            <td><strong>P2 + DashScope rerank</strong></td>
+                            <td class="num"><strong>0.0718</strong></td>
+                            <td class="num"><strong>[-0.237, -0.131]</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="kicker" style="margin-top:10px;">指标 · <span class="term">hard-negative FP<span class="tip">硬负例误召回率：被策略判为相关、实际标注为对抗性负例的 chunk 占比，越低越好</span></span> · paired bootstrap · 60 条 Dev</p>
+            </div>
+            <div class="meaning-card reveal">
+                <div class="label">解读</div>
+                <p>CI 整个区间在 0 以下 → <strong style="color:var(--red)">统计可信的确定收益</strong>。</p>
+                <p>rerank 在过滤"看似相关实则无关"的 chunk 上有真实效果——这正是 RAG 系统在生产中最常见的故障模式。</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 12 · ENGINEERING SIGNAL · evidence coverage
+     ============================================================ -->
+<section class="slide" data-slide="12">
+    <div class="meta-bar top">
+        <span>12<span class="dot">·</span>Signal 2</span>
+        <span class="spacer"></span>
+        <span>Engineering · Recall Maxed</span>
+    </div>
+    <div class="rail"><span>SIGNAL 2</span></div>
+    <div class="frame">
+        <div class="eyebrow reveal">RAG 质量信号 · <span class="chip red">工程信号</span></div>
+        <h2 class="signal-headline reveal">Context-expand 把 <em>evidence coverage</em> 拉满到 <span class="num-big">1.000</span></h2>
+        <div class="signal-body">
+            <div class="reveal">
+                <table class="swiss">
+                    <thead>
+                        <tr>
+                            <th>策略</th>
+                            <th class="num">Evidence cov</th>
+                            <th class="num">nDCG@10</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>P1 Dense baseline</td>
+                            <td class="num">0.875</td>
+                            <td class="num">0.4170</td>
+                        </tr>
+                        <tr class="highlight">
+                            <td><strong>P1 Context-expand</strong></td>
+                            <td class="num"><strong>1.000</strong></td>
+                            <td class="num">0.3013</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="kicker" style="margin-top:10px;">指标 · <span class="term">EvidenceCoverage@4096<span class="tip">4,096 token 上下文窗口覆盖到全部答必证据 chunk 的比例</span></span></p>
+            </div>
+            <div class="meaning-card reveal">
+                <div class="label">解读 · 已知代价不掩盖</div>
+                <p>扩大上下文窗口能覆盖到 <strong style="color:var(--red)">全部</strong> 答必证据——适合"召回优先 / 容忍精度下降"的下游场景。</p>
+                <p>代价：nDCG 略降，精度被稀释。在 slides 上明确呈现。</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 13 · PENDING SIGNAL · nDCG
+     ============================================================ -->
+<section class="slide" data-slide="13">
+    <div class="meta-bar top">
+        <span>13<span class="dot">·</span>Signal 3</span>
+        <span class="spacer"></span>
+        <span>Pending · CI Crosses Zero</span>
+    </div>
+    <div class="rail"><span>SIGNAL 3</span></div>
+    <div class="frame">
+        <div class="eyebrow reveal">RAG 质量信号 · <span class="chip inc">待加强信号</span></div>
+        <h2 class="signal-headline reveal">P2 nDCG 点估计正向 <em>·</em> CI <span class="num-big">待收紧</span></h2>
+        <div class="signal-body">
+            <div class="reveal">
+                <table class="swiss">
+                    <thead>
+                        <tr>
+                            <th>指标</th>
+                            <th class="num">P1</th>
+                            <th class="num">P2</th>
+                            <th class="num">Δ</th>
+                            <th class="num">95% CI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="highlight">
+                            <td><strong>nDCG@10</strong></td>
+                            <td class="num">0.3807</td>
+                            <td class="num">0.4289</td>
+                            <td class="num"><strong>+0.041</strong></td>
+                            <td class="num"><strong>[-0.065, +0.149]</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Recall@5</td>
+                            <td class="num">0.5294</td>
+                            <td class="num">0.5490</td>
+                            <td class="num">+0.017</td>
+                            <td class="num">—</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="kicker" style="margin-top:10px;">macro nDCG@10 · 60 条 Dev · <span class="term">paired bootstrap<span class="tip">配对自助法：对同一组 query 的两个策略结果做配对重采样，估计指标差异的置信区间</span></span></p>
+            </div>
+            <div class="meaning-card reveal">
+                <div class="label">解读 · 方向正确，待扩样本</div>
+                <p>点估计正向，<strong style="color:var(--red)">方向正确</strong>。</p>
+                <p>当前 60 query 样本 CI 跨 0，未达统计显著。扩到 30/60 Dev 并跑 Blind 后，CI 收紧有望达标。</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 14 · METRIC PANORAMA
+     ============================================================ -->
+<section class="slide" data-slide="14">
+    <div class="meta-bar top">
+        <span>14<span class="dot">·</span>Panorama</span>
+        <span class="spacer"></span>
+        <span>Full Picture on 60-Dev</span>
+    </div>
+    <div class="rail"><span>ALL</span></div>
+    <div class="frame">
+        <div class="eyebrow reveal">指标全景</div>
+        <h2 class="h1 reveal">60 条 Dev 上的 <em>完整对比</em></h2>
+        <div style="flex:1; overflow:hidden; display:flex; align-items:center; margin-top:var(--gap-sm);">
+            <table class="swiss reveal" style="width:100%;">
+                <thead>
+                    <tr>
+                        <th>指标</th>
+                        <th class="num">P1 Dense</th>
+                        <th class="num">P2 + rerank</th>
+                        <th class="num">Δ</th>
+                        <th>信号强度</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>macro nDCG@10</td>
+                        <td class="num">0.3807</td>
+                        <td class="num">0.4289</td>
+                        <td class="num">+0.041</td>
+                        <td><span class="chip inc">方向正 / 待加强</span></td>
+                    </tr>
+                    <tr>
+                        <td>Recall@5</td>
+                        <td class="num">0.5294</td>
+                        <td class="num">0.5490</td>
+                        <td class="num">+0.017</td>
+                        <td><span class="chip weak">弱正</span></td>
+                    </tr>
+                    <tr>
+                        <td>Recall@10</td>
+                        <td class="num">0.5784</td>
+                        <td class="num">0.5490</td>
+                        <td class="num">-0.025</td>
+                        <td><span class="chip weak">略负</span></td>
+                    </tr>
+                    <tr class="highlight">
+                        <td><strong>hard-negative FP</strong></td>
+                        <td class="num"><strong>0.2547</strong></td>
+                        <td class="num"><strong>0.0718</strong></td>
+                        <td class="num"><strong>-0.183</strong></td>
+                        <td><span class="chip strong">强 · CI 全负</span></td>
+                    </tr>
+                    <tr>
+                        <td>Evidence coverage</td>
+                        <td class="num">0.706</td>
+                        <td class="num">0.647</td>
+                        <td class="num">-0.050</td>
+                        <td><span class="chip weak">略负</span></td>
+                    </tr>
+                    <tr>
+                        <td>P95 延迟 (P1)</td>
+                        <td class="num">4472 ms</td>
+                        <td class="num">—</td>
+                        <td class="num">—</td>
+                        <td><span class="chip weak">—</span></td>
+                    </tr>
+                    <tr>
+                        <td>60× embedding 成本</td>
+                        <td class="num">$0.0000537</td>
+                        <td class="num">—</td>
+                        <td class="num">—</td>
+                        <td><span class="chip weak">—</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 15 · NEXT STEPS
+     ============================================================ -->
+<section class="slide" data-slide="15">
+    <div class="meta-bar top">
+        <span>15<span class="dot">·</span>Next</span>
+        <span class="spacer"></span>
+        <span>From Signal to Conclusion</span>
+    </div>
+    <div class="rail"><span>NEXT</span></div>
+    <div class="frame">
+        <div class="eyebrow reveal">从信号到结论 · 三步加强</div>
+        <h2 class="h1 reveal">本次已交付 <em>·</em> 下一步加强</h2>
+        <div class="next-grid">
+            <div class="delivered reveal">
+                <h4>已交付 <em>✓</em></h4>
+                <ul>
+                    <li>基础设施冻结<br><span style="color:var(--mute); font-size:var(--small-size);">100 论文 · Milvus · evaluator</span></li>
+                    <li>真实 cohort 闭环<br><span style="color:var(--mute); font-size:var(--small-size);">1×3 · 3/3 receipt 验签</span></li>
+                    <li>分层 RAG 质量信号<br><span style="color:var(--mute); font-size:var(--small-size);">强 / 工程 / 待加强</span></li>
+                </ul>
+            </div>
+            <div class="planned reveal">
+                <h4>三个加强动作 <em>→</em></h4>
+                <ol>
+                    <li><b>扩量</b> · 30/60-query Dev，收紧 nDCG CI 到显著区</li>
+                    <li><b>盲测</b> · Blind 一次性评测 + 人工裁决升级 qrels 到 <code style="background:rgba(255,255,255,0.1); padding:1px 6px;">adjudicated</code></li>
+                    <li><b>多代</b> · 触发正式 <code style="background:rgba(255,255,255,0.1); padding:1px 6px;">2 generations × 3 peers</code>，验证跨代 frontier 继承</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 16 · CLOSING
+     ============================================================ -->
+<section class="slide closing" data-slide="16">
+    <div class="meta-bar top">
+        <span>16<span class="dot">·</span>Closing</span>
+        <span class="spacer"></span>
+        <span>Summary</span>
+    </div>
+    <div class="rail"><span>END</span></div>
+    <div class="frame">
+        <div class="eyebrow reveal">总结</div>
+        <h1 class="title reveal">Praxist 让自主 R&amp;D<br><em>可信 · 可复现 · 可分层</em></h1>
+        <hr class="hr-red reveal">
+        <div class="closing-lines">
+            <div class="line reveal">
+                <div class="num">01</div>
+                <div class="text"><em>基础设施 + 编排闭环</em> 已通过验收，跨日期跨模式数字一致。</div>
+            </div>
+            <div class="line reveal">
+                <div class="num">02</div>
+                <div class="text"><em>RAG 质量信号分层</em>：hard-negative FP 强信号、evidence coverage 工程信号、nDCG 方向正向待加强。</div>
+            </div>
+            <div class="line reveal">
+                <div class="num">03</div>
+                <div class="text"><em>下一步明确</em>：扩量 + 盲测 + 多代 → 把待加强升级为显著，把显著升级为可推广。</div>
+            </div>
+        </div>
+    </div>
+    <div class="meta-bar bottom">
+        <span>Praxist · Internal Technical Report · v1</span>
+        <span class="spacer"></span>
+        <span>2026-08-06 · END</span>
+    </div>
+</section>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+/* ============================================================
+   SLIDE PRESENTATION CONTROLLER
+   ============================================================ */
+class SlidePresentation {
+    constructor() {
+        this.slides = document.querySelectorAll('.slide');
+        this.currentSlide = 0;
+        this.isScrolling = false;
+
+        this.setupIntersectionObserver();
+        this.setupKeyboardNav();
+        this.setupTouchNav();
+        this.setupProgressBar();
+        this.setupNavDots();
+        this.setupClickNav();
+    }
+
+    /* Intersection Observer · reveal animations on scroll */
+    setupIntersectionObserver() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    const idx = Array.from(this.slides).indexOf(entry.target);
+                    if (idx !== -1) {
+                        this.currentSlide = idx;
+                        this.updateNavDots();
+                        this.updateProgressBar();
+                    }
+                }
+            });
+        }, { threshold: 0.5 });
+
+        this.slides.forEach(slide => observer.observe(slide));
+    }
+
+    /* Keyboard: arrows, space, page up/down, E for edit */
+    setupKeyboardNav() {
+        document.addEventListener('keydown', (e) => {
+            // Skip when editing text
+            if (e.target.getAttribute('contenteditable') === 'true') return;
+
+            switch (e.key) {
+                case 'ArrowRight':
+                case 'ArrowDown':
+                case ' ':
+                case 'PageDown':
+                    e.preventDefault();
+                    this.goToSlide(this.currentSlide + 1);
+                    break;
+                case 'ArrowLeft':
+                case 'ArrowUp':
+                case 'PageUp':
+                    e.preventDefault();
+                    this.goToSlide(this.currentSlide - 1);
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    this.goToSlide(0);
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    this.goToSlide(this.slides.length - 1);
+                    break;
+            }
+        });
+    }
+
+    /* Touch / swipe */
+    setupTouchNav() {
+        let startY = 0;
+        document.addEventListener('touchstart', (e) => {
+            startY = e.touches[0].clientY;
+        }, { passive: true });
+
+        document.addEventListener('touchend', (e) => {
+            const endY = e.changedTouches[0].clientY;
+            const diff = startY - endY;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) this.goToSlide(this.currentSlide + 1);
+                else this.goToSlide(this.currentSlide - 1);
+            }
+        }, { passive: true });
+    }
+
+    /* Click on nav dots */
+    setupClickNav() {
+        document.querySelectorAll('.nav-dots .dot').forEach((dot, i) => {
+            dot.addEventListener('click', () => this.goToSlide(i));
+        });
+    }
+
+    goToSlide(index) {
+        if (index < 0 || index >= this.slides.length) return;
+        this.slides[index].scrollIntoView({ behavior: 'smooth' });
+        this.currentSlide = index;
+        this.updateNavDots();
+        this.updateProgressBar();
+    }
+
+    setupProgressBar() {
+        this.progressBar = document.getElementById('progressBar');
+        this.updateProgressBar();
+    }
+
+    updateProgressBar() {
+        if (!this.progressBar) return;
+        const pct = ((this.currentSlide + 1) / this.slides.length) * 100;
+        this.progressBar.style.width = pct + '%';
+    }
+
+    setupNavDots() {
+        const nav = document.getElementById('navDots');
+        if (!nav) return;
+        nav.innerHTML = '';
+        this.slides.forEach((slide, i) => {
+            const dot = document.createElement('div');
+            dot.className = 'dot' + (i === 0 ? ' active' : '');
+            dot.title = `Slide ${i + 1}`;
+            dot.addEventListener('click', () => this.goToSlide(i));
+            nav.appendChild(dot);
+        });
+    }
+
+    updateNavDots() {
+        document.querySelectorAll('.nav-dots .dot').forEach((dot, i) => {
+            dot.classList.toggle('active', i === this.currentSlide);
+        });
+    }
+}
+
+/* ============================================================
+   TERM TOOLTIP SYSTEM · hover + click with smart positioning
+   ============================================================ */
+(function setupTermTooltips() {
+    let pop = null, activeTerm = null, hoverTimer = null;
+
+    function createPop() {
+        pop = document.createElement('div');
+        pop.className = 'term-pop';
+        document.body.appendChild(pop);
+    }
+
+    function show(term) {
+        const tip = term.querySelector('.tip');
+        if (!tip || !tip.textContent.trim()) return;
+        if (!pop) createPop();
+        activeTerm = term;
+        term.classList.add('active');
+        pop.textContent = tip.textContent.trim();
+        pop.classList.remove('show');
+        const r = term.getBoundingClientRect();
+        const vw = window.innerWidth;
+        pop.style.maxWidth = '280px';
+        const popH = pop.offsetHeight || 60;
+        let top = r.top - 10 - popH;
+        let left = r.left + r.width / 2;
+        if (top < 8) top = r.bottom + 10;
+        pop.style.top = top + 'px';
+        pop.style.left = left + 'px';
+        pop.style.transform = 'translateX(-50%) translateY(6px)';
+        requestAnimationFrame(() => {
+            pop.classList.add('show');
+            pop.style.transform = 'translateX(-50%) translateY(0)';
+        });
+        requestAnimationFrame(() => {
+            const pr = pop.getBoundingClientRect();
+            if (pr.left < 8) {
+                pop.style.left = '8px';
+                pop.style.transform = 'translateX(0)';
+            } else if (pr.right > vw - 8) {
+                pop.style.left = (vw - 8) + 'px';
+                pop.style.transform = 'translateX(-100%)';
+            }
+        });
+    }
+
+    function hide() {
+        if (pop) pop.classList.remove('show');
+        if (activeTerm) {
+            activeTerm.classList.remove('active');
+            activeTerm = null;
+        }
+        clearTimeout(hoverTimer);
+    }
+
+    document.addEventListener('mousemove', () => {}); // dummy to ensure mouse events fire
+
+    function bindAll() {
+        document.querySelectorAll('.term').forEach(term => {
+            if (term._bound) return;
+            term._bound = true;
+            term.addEventListener('mouseenter', () => {
+                hoverTimer = setTimeout(() => show(term), 350);
+            });
+            term.addEventListener('mouseleave', () => {
+                clearTimeout(hoverTimer);
+                hide();
+            });
+            term.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (activeTerm === term) { hide(); return; }
+                hide();
+                show(term);
+            });
+        });
+    }
+
+    bindAll();
+    document.addEventListener('click', () => hide());
+    document.addEventListener('scroll', () => hide(), { passive: true });
+})();
+
+/* ============================================================
+   INLINE EDITING SYSTEM (user opted in)
+   ============================================================ */
+class InlineEditor {
+    constructor() {
+        this.isActive = false;
+        this.editableSelector = 'h1, h2, h3, h4, p, td, th, li, span:not(.dot):not(.chip), div.flow, div.verdict, div.use, div.name, div.desc, div.when, p.sub, p.lead, p.body, p.kicker';
+        this.storageKey = 'praxist-slides-edits';
+    }
+
+    toggleEditMode() {
+        this.isActive = !this.isActive;
+        const toggle = document.getElementById('editToggle');
+        if (this.isActive) {
+            toggle.classList.add('active');
+            this.enableEditing();
+        } else {
+            toggle.classList.remove('active');
+            this.disableEditing();
+        }
+    }
+
+    enableEditing() {
+        document.querySelectorAll('.slide').forEach(slide => {
+            slide.querySelectorAll(this.editableSelector).forEach(el => {
+                if (el.closest('.term-pop') || el.closest('.nav-dots') || el.closest('.meta-bar') || el.closest('.kbd-hint')) return;
+                el.setAttribute('contenteditable', 'true');
+                el.addEventListener('blur', this.saveHandler);
+            });
+        });
+        this.loadEdits();
+    }
+
+    disableEditing() {
+        document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+            el.removeAttribute('contenteditable');
+            el.removeEventListener('blur', this.saveHandler);
+        });
+        this.saveAll();
+    }
+
+    saveHandler(e) {
+        editor.saveAll();
+    }
+
+    getPath(el) {
+        const path = [];
+        let node = el;
+        while (node && node.tagName !== 'SECTION') {
+            const parent = node.parentNode;
+            if (!parent) break;
+            const index = Array.from(parent.children).indexOf(node);
+            path.unshift(`${node.tagName.toLowerCase()}:${index}`);
+            node = parent;
+        }
+        const slide = el.closest('.slide');
+        const slideIdx = slide ? Array.from(document.querySelectorAll('.slide')).indexOf(slide) : 0;
+        return `${slideIdx}/${path.join('>')}`;
+    }
+
+    saveAll() {
+        const data = {};
+        document.querySelectorAll('.slide').forEach((slide, sIdx) => {
+            slide.querySelectorAll(this.editableSelector).forEach(el => {
+                if (el.closest('.term-pop') || el.closest('.nav-dots') || el.closest('.meta-bar') || el.closest('.kbd-hint')) return;
+                const path = this.getPath(el);
+                const text = el.innerText;
+                data[path] = text;
+            });
+        });
+        try {
+            localStorage.setItem(this.storageKey, JSON.stringify(data));
+        } catch (e) {
+            console.warn('Could not save edits:', e);
+        }
+    }
+
+    loadEdits() {
+        try {
+            const raw = localStorage.getItem(this.storageKey);
+            if (!raw) return;
+            const data = JSON.parse(raw);
+            document.querySelectorAll('.slide').forEach((slide, sIdx) => {
+                slide.querySelectorAll(this.editableSelector).forEach(el => {
+                    if (el.closest('.term-pop') || el.closest('.nav-dots') || el.closest('.meta-bar') || el.closest('.kbd-hint')) return;
+                    const path = this.getPath(el);
+                    if (data[path] !== undefined) {
+                        el.innerText = data[path];
+                    }
+                });
+            });
+        } catch (e) {
+            console.warn('Could not load edits:', e);
+        }
+    }
+
+    exportEdits() {
+        const raw = localStorage.getItem(this.storageKey) || '{}';
+        const blob = new Blob([raw], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'praxist-slides-edits.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+}
+
+const editor = new InlineEditor();
+
+/* === EDIT TOGGLE BINDINGS === */
+document.getElementById('editToggle').addEventListener('click', () => {
+    editor.toggleEditMode();
+});
+
+const hotzone = document.getElementById('editHotzone');
+const editToggle = document.getElementById('editToggle');
+let hideTimeout = null;
+
+hotzone.addEventListener('mouseenter', () => {
+    clearTimeout(hideTimeout);
+    editToggle.classList.add('show');
+});
+hotzone.addEventListener('mouseleave', () => {
+    hideTimeout = setTimeout(() => {
+        if (!editor.isActive) editToggle.classList.remove('show');
+    }, 400);
+});
+editToggle.addEventListener('mouseenter', () => clearTimeout(hideTimeout));
+editToggle.addEventListener('mouseleave', () => {
+    hideTimeout = setTimeout(() => {
+        if (!editor.isActive) editToggle.classList.remove('show');
+    }, 400);
+});
+hotzone.addEventListener('click', () => editor.toggleEditMode());
+
+document.addEventListener('keydown', (e) => {
+    if ((e.key === 'e' || e.key === 'E') && !e.target.getAttribute('contenteditable')) {
+        editor.toggleEditMode();
+    }
+});
+
+/* === KEYBOARD HINT · briefly visible on load === */
+const kbdHint = document.getElementById('kbdHint');
+setTimeout(() => {
+    kbdHint.classList.add('show');
+    setTimeout(() => kbdHint.classList.remove('show'), 3500);
+}, 800);
+
+/* === SHOW HINT ON ARROW PRESS === */
+document.addEventListener('keydown', (e) => {
+    if (['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', ' '].includes(e.key)) {
+        kbdHint.classList.add('show');
+        clearTimeout(window._hintTimer);
+        window._hintTimer = setTimeout(() => kbdHint.classList.remove('show'), 1500);
+    }
+});
+
+/* === BOOT === */
+new SlidePresentation();
+
+/* Apply any saved edits on page load (even if not in edit mode) */
+window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem(editor.storageKey);
+    if (saved) {
+        editor.isActive = true;
+        editor.enableEditing();
+        editor.disableEditing();
+    }
+});
+</script>
+
+</body>
+</html>
